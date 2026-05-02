@@ -1,54 +1,51 @@
-# UniversalInvoiceMail v2.2.3
+# UniversalInvoiceMail
 
-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails.
 Desktop tool for downloading, converting, and archiving invoices and receipts from email accounts.
 
-![UniversalInvoiceMail Vorschau](README/screenshots/main.png)
+> **Deutsche Dokumentation:** [README-DE.md](README-DE.md)
 
-## Überblick
+![UniversalInvoiceMail Preview](README/screenshots/main.png)
 
-UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmail API mit einem lokalen PDF-Archiv-Workflow. Das Tool lädt Anhänge, rendert Bestellbestätigungen als PDF, erkennt Duplikate per Hash und speichert die Ergebnisse strukturiert pro Profil oder Shop.
+## Features
 
-## Funktionen / Features
+- Universal IMAP for Gmail, Outlook, GMX, Web.de, T-Online, and other providers
+- Optional Gmail API integration for faster and more robust Gmail runs
+- Profile-based filters for sender, subject, body, and date ranges
+- Downloads PDF attachments and converts other attachment types to PDF
+- Supported conversions: images (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`, `.webp`), `.docx`, `.xlsx`
+- Optional legacy conversion for `.doc` and `.xls` via Word/Excel-COM or LibreOffice
+- Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
+- Hash-based duplicate detection across local archive folders
+- Secure credential storage via `keyring`
 
-- Universal IMAP für Gmail, Outlook, GMX, Web.de, T-Online und weitere Provider
-- Optionale Gmail-API-Anbindung für schnellere und robustere Gmail-Läufe
-- Profilbasierte Filter für Absender, Betreff, Body und Zeiträume
-- Download von PDF-Anhängen sowie Konvertierung weiterer Anhangstypen nach PDF
-- Unterstützte Konvertierung: Bilder (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`, `.webp`), `.docx`, `.xlsx`
-- Optionale Legacy-Konvertierung für `.doc` und `.xls` via Word/Excel-COM oder LibreOffice
-- Optionales OCR für bildbasierte PDFs mit Tesseract und `pypdfium2`
-- Hash-basierte Duplikat-Erkennung über lokale Archivordner
-- Sichere Passwortspeicherung via `keyring`
-
-## Schnellstart / Quick Start
+## Quick Start
 
 ### Windows
 
-1. `start.bat` ausführen
-2. Mailkonto anlegen
-3. Profil oder Shop-Vorlage konfigurieren
-4. Zeitraum und Zielordner festlegen
-5. `Rechnungen abrufen` starten
+1. Run `start.bat`
+2. Add a mail account
+3. Configure a profile or shop template
+4. Set date range and target folder
+5. Click "Fetch Invoices"
 
-### Manuell / Manual
+### Manual
 
 ```bash
 pip install -r requirements.txt
 python UniversalInvoiceMail.py
 ```
 
-## Typischer Workflow
+## Typical Workflow
 
-1. Konto für IMAP oder Gmail API anlegen
-2. Suchprofil mit Filtern und Zielordner konfigurieren
-3. Optional OCR und PDF-Modus einstellen
-4. Scan auslösen
-5. Ergebnisse im lokalen Rechnungsarchiv prüfen
+1. Add an IMAP or Gmail API account
+2. Configure a search profile with filters and target folder
+3. Optionally enable OCR and PDF mode
+4. Start a scan
+5. Review results in the local invoice archive
 
-## Lokale Daten / Local Data
+## Local Data
 
-Konfigurations- und Laufzeitdaten werden unter `%USERPROFILE%\.universal_invoice_mail\` gespeichert:
+Runtime data is stored in `%USERPROFILE%\.universal_invoice_mail\`:
 
 ```text
 %USERPROFILE%\.universal_invoice_mail\
@@ -58,52 +55,30 @@ Konfigurations- und Laufzeitdaten werden unter `%USERPROFILE%\.universal_invoice
 └── token.json
 ```
 
-Standardmäßig landen archivierte Dateien unter `%USERPROFILE%\Documents\Rechnungen\`.
+Archived files are written to `%USERPROFILE%\Documents\Rechnungen\` by default.
 
-## Optionale Komponenten
+## Optional Components
 
 - Gmail API: `google-api-python-client`, `google-auth`, `google-auth-oauthlib`
 - OCR: `pytesseract`, `pypdfium2`, `pypdf`, Tesseract OCR
-- Legacy Office: `pywin32` oder ein lokales LibreOffice mit `soffice.exe`
+- Legacy Office: `pywin32` or a local LibreOffice with `soffice.exe`
 
-Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht unterstützte Schritte werden protokolliert und übersprungen.
+When no OCR or Office backend is available, unsupported steps are logged and skipped; the run remains robust.
 
 ## Tests
 
 ```bash
 pytest tests -v
-python -m pytest tests
 ```
 
-Vorhanden sind Unit-Tests für Hilfsfunktionen sowie Integrations-Tests für IMAP- und Gmail-Workflows mit Mocks.
+Unit tests for helper functions and integration tests for IMAP and Gmail workflows with mocks.
 
-## Datenschutz / Privacy
+## Privacy
 
-- Zugangsdaten werden nicht im Projektordner gespeichert
-- Lokale Beispielausgaben und Portable-Bundles sind bewusst per `.gitignore` aus zukünftigen Repositories ausgeschlossen
-- Release-Artefakte bleiben unter `releases/` lokal
+- Credentials are not stored in the project folder
+- Local sample outputs and portable bundles are excluded via `.gitignore`
+- Release artifacts remain in `releases/` locally
 
-## Lizenz / License
+## License
 
 [MIT](LICENSE)
-
-## English
-
-UniversalInvoiceMail is a desktop application for collecting invoices and receipts from IMAP mailboxes or the Gmail API, converting supported attachments to PDF, and storing them in a structured local archive.
-
-### Highlights
-
-- Universal IMAP plus optional Gmail API
-- PDF conversion for images, `.docx`, and `.xlsx`
-- Optional legacy Office conversion via COM or LibreOffice
-- Optional OCR for image-based PDFs
-- Hash-based duplicate detection
-- Secure credential handling via `keyring`
-
-### Local Storage
-
-Runtime data is stored in `%USERPROFILE%\.universal_invoice_mail\`, while archived files are written to `%USERPROFILE%\Documents\Rechnungen\` by default.
-
-### License
-
-MIT License
