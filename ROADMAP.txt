@@ -1,0 +1,88 @@
+ROADMAP - UniversalInvoiceMail
+==============================
+
+AKTUELL: v1.8.1
+===============
+[x] Import-Feature: Neue PDFs in Profilordnern automatisch erkennen
+[x] Mehrfachauswahl mit Checkboxen in Rechnungsliste
+[x] Loeschen ohne Bestaetigung (Design: nichts Schlimmes kann passieren)
+[x] Query-Fix: Subject-Filter hebelt hardcoded Filter nicht mehr aus
+[x] Link-Umbruch in PDFs verbessert
+[x] Hinweise-Box (Mini-README) in Einstellungen
+[x] Typ-Symbol in Rechnungsliste (Anhang vs Body-PDF)
+[x] Blacklist-Filter im Profil
+[x] Body-Filter: "muss enthalten" / "darf nicht enthalten"
+[x] Merge-Option: Body an PDF-Anhaenge anfuegen
+[x] Hybrid-Design: Mail-Header in Body-PDFs (Datum, Betreff, Absender)
+
+BUGS (zu beheben):
+==================
+[ ] Hyperlinks gehen ueber PDF-Rand hinaus (xhtml2pdf word-break Problem)
+[ ] Typ-Spalte zeigt "..." statt Bueroklammer-Emoji (Spaltenbreite/Font?)
+
+GEPLANT: v1.9 (Mail-Dateien Import)
+===================================
+[ ] E-Mail-Dateien (.eml) im Ordner unterstuetzen
+[ ] Body + Anhaenge in EINE PDF zusammenfuehren
+[ ] Original .eml nach Konvertierung loeschen
+[ ] Optional: .msg Support (Outlook)
+Siehe: IMPLEMENTATION_GUIDE_IMPORT.md
+
+GEPLANT: v2.0 (Code-Qualitaet)
+==============================
+[ ] Policy anwenden: UTF-8 Header + ae->ä, oe->ö, ue->ü
+[ ] Code mit c_standard_fixer.py --with-policies bearbeiten
+[ ] Konsistente Encoding-Deklaration
+
+FEATURE-ANALYSE (zu pruefen):
+=============================
+[x] Weitere Anhangstypen herunterladen und zu PDF konvertieren -- erledigt 2026-04-29
+    Implementiert:
+    - .docx (python-docx)
+    - .xlsx (openpyxl)
+    - .jpg/.png und weitere Bildformate (Pillow)
+    Offen:
+    - Legacy .doc/.xls nur bei echtem Bedarf ueber LibreOffice/COM nachruesten
+
+GEPLANT: v2.1+ (Mailintegration)
+================================
+[ ] Direkte Anbindung an weitere Mail-Provider
+[ ] Erweiterte OAuth-Unterstuetzung
+[ ] Microsoft Graph API fuer Outlook.com
+
+IDEEN (v3.x+):
+==============
+[ ] Intelligente Kategorisierung (PDF-Inhalt -> Shop erkennen)
+[ ] OCR fuer gescannte Rechnungen (pytesseract)
+[ ] System-Tray mit Fortschritt -> nein überflüssig streichen
+[ ] Automatischer Zeitplan: Taeglicher/woechentlicher Abruf -> nein überflüssig
+[ ] Dark Mode -> überflüssig 
+[ ] Statistik-Dashboard: Ausgaben pro Shop/Monat -> überflüssig
+
+BEKANNTE EINSCHRAENKUNGEN:
+==========================
+- Gmail API: Erfordert OAuth-Credentials von Google Cloud Console
+- IMAP: Nur ein Sender-Filter wird fuer IMAP-Suche verwendet
+- Max 5 Ordner werden durchsucht (Performance)
+- xhtml2pdf: Keine CSS-Gradients, eingeschraenkter word-break Support
+
+ABGESCHLOSSEN:
+==============
+v1.8.1 - Header-Fix, Body-Filter (muss/darf nicht enthalten)
+v1.8.0 - Merge Body+PDF, Hybrid-Design Header
+v1.7.5 - Typ-Symbol, Blacklist-Filter
+v1.7.4 - Mehrfachauswahl, Loeschen, Query-Fix, Hinweise-Box
+v1.7.0 - Import-Feature (Ordner-Scan)
+v1.6   - Dateiliste-Sync mit Dateisystem
+v1.5   - CSV Export
+v1.4   - Von/Bis Datum-Auswahl, Bestellnummer aus Body
+v1.3   - Konto bearbeiten, Papierkorb-Option, Tooltips
+v1.2   - PDF-Layout fix, Alle Ordner durchsuchen
+v1.1   - Start-Button fix, Credentials auto-suche
+v1.0   - Initial Release
+
+DOKUMENTATION:
+==============
+- AUFGABEN.txt - Aktuelle Bugs und offene Tasks
+- IMPLEMENTATION_GUIDE_IMPORT.md - Detaillierte Implementierungsanleitung
+- Code-Referenzen aus DokuZentrum (watcher.py, merger.py, file_index.py)
