@@ -83,6 +83,16 @@ Vorhanden sind Unit-Tests für Hilfsfunktionen sowie Integrations-Tests für IMA
 - Lokale Beispielausgaben und Portable-Bundles sind bewusst per `.gitignore` ausgeschlossen
 - Release-Artefakte bleiben unter `releases/` lokal
 
+## Verwandte Tools
+
+Teil der [doc-bricks](https://github.com/doc-bricks) Mail-Suite:
+
+| Tool | Beschreibung |
+|------|--------------|
+| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | System-Tray-Launcher für alle Universal Mail Tools |
+| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | Regelbasierter IMAP-Cleaner mit Safe-Mode |
+| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | Dokumente und Anhänge aus IMAP-Mails herunterladen |
+
 ## Lizenz
 
 [MIT](LICENSE)

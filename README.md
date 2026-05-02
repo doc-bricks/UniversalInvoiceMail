@@ -79,6 +79,16 @@ Unit tests for helper functions and integration tests for IMAP and Gmail workflo
 - Local sample outputs and portable bundles are excluded via `.gitignore`
 - Release artifacts remain in `releases/` locally
 
+## Related Tools
+
+Part of the [doc-bricks](https://github.com/doc-bricks) mail suite:
+
+| Tool | Description |
+|------|-------------|
+| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | System tray launcher for all Universal Mail Tools |
+| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | Rule-based IMAP mailbox cleaner with safe mode |
+| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | Download documents and attachments from IMAP mail |
+
 ## License
 
 [MIT](LICENSE)
