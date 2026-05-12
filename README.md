@@ -15,6 +15,7 @@ Desktop tool for downloading, converting, and archiving invoices and receipts fr
 - Supported conversions: images (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`, `.webp`), `.docx`, `.xlsx`
 - Optional legacy conversion for `.doc` and `.xls` via Word/Excel-COM or LibreOffice
 - Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
+- Manual invoice amount column plus DATEV export for selected invoices
 - Hash-based duplicate detection across local archive folders
 - Secure credential storage via `keyring`
 
@@ -41,7 +42,8 @@ python UniversalInvoiceMail.py
 2. Configure a search profile with filters and target folder
 3. Optionally enable OCR and PDF mode
 4. Start a scan
-5. Review results in the local invoice archive
+5. Enter invoice amounts for entries that should flow into accounting
+6. Review results in the local invoice archive or export them as DATEV CSV
 
 ## Local Data
 
@@ -62,8 +64,16 @@ Archived files are written to `%USERPROFILE%\Documents\Rechnungen\` by default.
 - Gmail API: `google-api-python-client`, `google-auth`, `google-auth-oauthlib`
 - OCR: `pytesseract`, `pypdfium2`, `pypdf`, Tesseract OCR
 - Legacy Office: `pywin32` or a local LibreOffice with `soffice.exe`
+- DATEV export uses the bundled `datev_exporter.py` and writes cp1252 CSV files
 
 When no OCR or Office backend is available, unsupported steps are logged and skipped; the run remains robust.
+
+## Accounting Export
+
+- The invoice table exposes an editable amount column in EUR.
+- `DATEV exportieren` creates DATEV booking batches from the selected invoices.
+- `berater_nr` and `mandant_nr` are configurable in the export dialog.
+- Invoices without an entered amount are skipped deliberately and called out after export.
 
 ## Tests
 
@@ -75,9 +85,9 @@ Unit tests for helper functions and integration tests for IMAP and Gmail workflo
 
 ## Privacy
 
-- Credentials are not stored in the project folder
-- Local sample outputs and portable bundles are excluded via `.gitignore`
-- Release artifacts remain in `releases/` locally
+- Credentials and Gmail OAuth tokens are stored under `%USERPROFILE%\.universal_invoice_mail\`, not in the repository.
+- `.gitignore` excludes `credentials.json`, `client_secret*.json`, `token.json`, local databases, sample output folders, and portable OCR bundles.
+- Real invoices, attachments, and generated release artifacts should remain local.
 
 ## Related Tools
 

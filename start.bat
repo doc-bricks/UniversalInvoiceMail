@@ -3,11 +3,11 @@ chcp 65001 >nul 2>&1
 title UniversalInvoiceMail
 
 echo ========================================
-echo   UniversalInvoiceMail v2.2.3
+echo   UniversalInvoiceMail v2.3.0
 echo ========================================
 echo.
 
-REM Pruefe ob Python verfuegbar ist
+REM Prüfe ob Python verfügbar ist
 where python >nul 2>&1
 if %errorlevel% neq 0 (
     echo [FEHLER] Python nicht gefunden!
@@ -19,23 +19,23 @@ if %errorlevel% neq 0 (
 REM Wechsle ins Script-Verzeichnis
 cd /d "%~dp0"
 
-echo Pruefe Abhaengigkeiten...
+echo Prüfe Abhängigkeiten...
 
-REM Pruefe PySide6
+REM Prüfe PySide6
 pip show PySide6 >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere PySide6...
     pip install PySide6
 )
 
-REM Pruefe xhtml2pdf
+REM Prüfe xhtml2pdf
 pip show xhtml2pdf >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere xhtml2pdf...
     pip install xhtml2pdf
 )
 
-REM Pruefe keyring
+REM Prüfe keyring
 pip show keyring >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere keyring...

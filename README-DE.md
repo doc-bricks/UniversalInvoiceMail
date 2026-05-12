@@ -1,4 +1,4 @@
-# UniversalInvoiceMail v2.2.3
+# UniversalInvoiceMail v2.3.0
 
 Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails.
 
@@ -19,6 +19,8 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 - Unterstützte Konvertierung: Bilder (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`, `.webp`), `.docx`, `.xlsx`
 - Optionale Legacy-Konvertierung für `.doc` und `.xls` via Word/Excel-COM oder LibreOffice
 - Optionales OCR für bildbasierte PDFs mit Tesseract und `pypdfium2`
+- Editierbare Rechnungsbeträge direkt in der Tabelle für nachgelagerte Buchhaltung
+- Optionaler DATEV-Export mit konfigurierbarer Berater-/Mandantennummer und Konten-Mapping im SKR03-Stil
 - Hash-basierte Duplikat-Erkennung über lokale Archivordner
 - Sichere Passwortspeicherung via `keyring`
 
@@ -45,7 +47,8 @@ python UniversalInvoiceMail.py
 2. Suchprofil mit Filtern und Zielordner konfigurieren
 3. Optional OCR und PDF-Modus einstellen
 4. Scan auslösen
-5. Ergebnisse im lokalen Rechnungsarchiv prüfen
+5. Für buchungsrelevante Einträge Rechnungsbeträge ergänzen
+6. Ergebnisse im lokalen Rechnungsarchiv prüfen oder als DATEV-CSV exportieren
 
 ## Lokale Daten
 
@@ -66,8 +69,16 @@ Standardmäßig landen archivierte Dateien unter `%USERPROFILE%\Documents\Rechnu
 - Gmail API: `google-api-python-client`, `google-auth`, `google-auth-oauthlib`
 - OCR: `pytesseract`, `pypdfium2`, `pypdf`, Tesseract OCR
 - Legacy Office: `pywin32` oder ein lokales LibreOffice mit `soffice.exe`
+- DATEV-Export nutzt das mitgelieferte `datev_exporter.py` und schreibt `cp1252`-CSV-Dateien
 
 Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht unterstützte Schritte werden protokolliert und übersprungen.
+
+## Buchhaltungs-Export
+
+- Die Rechnungstabelle enthält eine editierbare Spalte `Betrag (€)`.
+- `DATEV exportieren` erzeugt einen DATEV-Buchungsstapel aus ausgewählten Rechnungen.
+- `berater_nr` und `mandant_nr` bleiben im Exportdialog konfigurierbar.
+- Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und danach ausgewiesen.
 
 ## Tests
 
@@ -79,9 +90,9 @@ Vorhanden sind Unit-Tests für Hilfsfunktionen sowie Integrations-Tests für IMA
 
 ## Datenschutz
 
-- Zugangsdaten werden nicht im Projektordner gespeichert
-- Lokale Beispielausgaben und Portable-Bundles sind bewusst per `.gitignore` ausgeschlossen
-- Release-Artefakte bleiben unter `releases/` lokal
+- Zugangsdaten und Gmail-OAuth-Tokens werden unter `%USERPROFILE%\.universal_invoice_mail\` gespeichert, nicht im Repository.
+- `.gitignore` schließt `credentials.json`, `client_secret*.json`, `token.json`, lokale Datenbanken, Beispielausgaben und portable OCR-Bundles aus.
+- Echte Rechnungen, Anhänge und erzeugte Release-Artefakte bleiben lokal.
 
 ## Verwandte Tools
 

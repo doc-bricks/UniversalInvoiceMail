@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-UniversalInvoiceMail V2.2.3
+UniversalInvoiceMail V2.3.0
 ===========================
 Vereinfachte, fokussierte App zum Extrahieren von Rechnungen aus E-Mails.
 
@@ -10,6 +10,7 @@ Features:
 - Gmail API als Alternative (schneller, weniger Rate-Limits)
 - Vorkonfigurierte Profile für beliebte Shops
 - PDF-Anhänge + Mail-Body-zu-PDF Konvertierung
+- DATEV-Export für ausgewählte Rechnungen
 - Hash-basierte Duplikat-Erkennung
 - Sichere Passwort-Speicherung via Keyring
 
@@ -164,7 +165,7 @@ logger = logging.getLogger(__name__)
 # ==================== KONFIGURATION ====================
 
 APP_NAME = "UniversalInvoiceMail"
-VERSION = "2.2.3"
+VERSION = "2.3.0"
 BASE_DIR = Path.home() / ".universal_invoice_mail"
 BASE_DIR.mkdir(parents=True, exist_ok=True)
 CONFIG_FILE = BASE_DIR / "config.json"
@@ -2959,7 +2960,7 @@ class MainWindow(QMainWindow):
         btn_export_csv.setToolTip("Rechnungsliste als CSV exportieren (filterbar in Excel)")
         btn_datev = QPushButton("DATEV exportieren")
         btn_datev.clicked.connect(self._export_datev)
-        btn_datev.setToolTip("Ausgewaehlte Rechnungen als DATEV-Buchungsstapel exportieren")
+        btn_datev.setToolTip("Ausgewählte Rechnungen als DATEV-Buchungsstapel exportieren")
         btn_datev.setEnabled(DATEV_AVAILABLE)
         if not DATEV_AVAILABLE:
             btn_datev.setToolTip("datev_exporter.py nicht gefunden")
@@ -3772,9 +3773,9 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 break
 
     def _export_datev(self):
-        """Exportiert ausgewaehlte (oder alle) Rechnungen als DATEV-Buchungsstapel."""
+        """Exportiert ausgewählte (oder alle) Rechnungen als DATEV-Buchungsstapel."""
         if not DATEV_AVAILABLE:
-            QMessageBox.warning(self, "DATEV nicht verfuegbar",
+            QMessageBox.warning(self, "DATEV nicht verfügbar",
                                 "datev_exporter.py wurde nicht gefunden.\n"
                                 "Bitte sicherstellen, dass die Datei im selben Ordner liegt.")
             return
@@ -3840,8 +3841,8 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             skipped = len(inv_dicts) - with_amount
             msg = f"DATEV-Export erfolgreich:\n{filepath}\n\n{with_amount} Buchungen exportiert."
             if skipped:
-                msg += (f"\n{skipped} Rechnungen uebersprungen (kein Betrag eingetragen).\n\n"
-                        "Tipp: Betraege koennen manuell in der exportierten CSV ergaenzt werden.")
+                msg += (f"\n{skipped} Rechnungen übersprungen (kein Betrag eingetragen).\n\n"
+                        "Tipp: Beträge können manuell in der exportierten CSV ergänzt werden.")
             QMessageBox.information(self, "DATEV-Export", msg)
         except Exception as e:
             QMessageBox.critical(self, "Fehler", f"DATEV-Export fehlgeschlagen:\n{e}")

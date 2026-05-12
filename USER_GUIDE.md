@@ -1,6 +1,6 @@
 # UniversalInvoiceMail – User Guide
 
-Version 2.2.3 | Stand: 2026-03-14
+Version 2.3.0 | Stand: 2026-05-13
 
 ---
 
@@ -10,8 +10,9 @@ Version 2.2.3 | Stand: 2026-03-14
 2. [Einrichtung: Gmail API](#einrichtung-gmail-api)
 3. [Profile konfigurieren](#profile-konfigurieren)
 4. [Rechnungen abrufen](#rechnungen-abrufen)
-5. [Troubleshooting](#troubleshooting)
-6. [FAQ](#faq)
+5. [DATEV-Export](#datev-export)
+6. [Troubleshooting](#troubleshooting)
+7. [FAQ](#faq)
 
 ---
 
@@ -71,14 +72,14 @@ pip install google-auth-oauthlib google-api-python-client
 4. **APIs & Services → Anmeldedaten** → **"OAuth 2.0-Client-IDs"** erstellen
    - Anwendungstyp: **Desktop-App**
 5. `credentials.json` herunterladen
-6. `credentials.json` in den Programmordner legen
+6. `credentials.json` unter `%USERPROFILE%\.universal_invoice_mail\` ablegen
 
 ### In UniversalInvoiceMail einrichten
 
 1. **"Mailkonto hinzufügen"** → **"Gmail API"**
 2. Klicke **"Autorisieren"** → Browser öffnet sich → Google-Konto auswählen
 3. Berechtigungen bestätigen
-4. Token wird als `token.json` im Programmordner gespeichert (einmalig)
+4. Token wird als `token.json` unter `%USERPROFILE%\.universal_invoice_mail\` gespeichert (einmalig)
 5. **"Speichern"**
 
 ---
@@ -138,7 +139,20 @@ dass ein PDF-Anhang vorhanden ist.
 
 ---
 
-## 5. Troubleshooting {#troubleshooting}
+## 5. DATEV-Export {#datev-export}
+
+1. Markiere die Rechnungen, die in den Buchungsstapel sollen.
+2. Trage in der Tabelle den Betrag in der Spalte **Betrag (€)** ein.
+3. Klicke auf **DATEV exportieren**.
+4. Prüfe Beraternummer und Mandantennummer im Dialog.
+5. Speichere die CSV-Datei für die Übergabe an die Buchhaltung.
+
+Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und nach dem Export gemeldet.
+Der Export wird als `cp1252`-CSV geschrieben, passend für DATEV-nahe Import-Workflows.
+
+---
+
+## 6. Troubleshooting {#troubleshooting}
 
 ### Auth-Fehler / "Authentication failed"
 
@@ -176,7 +190,7 @@ dass ein PDF-Anhang vorhanden ist.
 
 ---
 
-## 6. FAQ {#faq}
+## 7. FAQ {#faq}
 
 **F: Welche Mail-Anbieter werden unterstützt?**
 A: Alle Anbieter mit IMAP-Unterstützung: Gmail, Outlook (eingeschränkt), GMX, web.de,
