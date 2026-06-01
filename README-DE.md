@@ -1,5 +1,7 @@
 # UniversalInvoiceMail v2.3.0
 
+[![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
+
 Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails.
 
 > **English documentation:** [README.md](README.md)
@@ -14,6 +16,7 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 
 - Universal IMAP für Gmail, Outlook, GMX, Web.de, T-Online und weitere Provider
 - Optionale Gmail-API-Anbindung für schnellere und robustere Gmail-Läufe
+- Optionaler Gmail-Query-Builder pro Profil für Gmail API und Gmail-IMAP mit `X-GM-RAW`
 - Profilbasierte Filter für Absender, Betreff, Body und Zeiträume
 - Download von PDF-Anhängen sowie Konvertierung weiterer Anhangstypen nach PDF
 - Unterstützte Konvertierung: Bilder (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`, `.webp`), `.docx`, `.xlsx`
@@ -83,10 +86,10 @@ Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht
 ## Tests
 
 ```bash
-pytest tests -v
+PYTHONIOENCODING=utf-8 python -m pytest -q
 ```
 
-Vorhanden sind Unit-Tests für Hilfsfunktionen sowie Integrations-Tests für IMAP- und Gmail-Workflows mit Mocks.
+Vorhanden sind aktuell 53 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
 
 ## Datenschutz
 

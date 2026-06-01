@@ -1,0 +1,26 @@
+# UniversalInvoiceMail
+
+Canonical repository: https://github.com/doc-bricks/UniversalInvoiceMail
+
+UniversalInvoiceMail is a local-first Windows desktop app for collecting invoices and receipts from email accounts. It supports IMAP, optional Gmail API access, profile-based filters, attachment-to-PDF conversion, OCR hooks, duplicate detection and DATEV-style CSV export.
+
+Important files:
+
+- `README.md`: English user-facing project overview.
+- `README-DE.md`: German project overview.
+- `USER_GUIDE.md`: German setup and workflow guide.
+- `EXPORTFORMAT.md`: planned `universalinvoicemail-invoicebundle-v1.json` exchange contract.
+- `UniversalInvoiceMail.py`: PySide6 desktop application.
+- `datev_exporter.py`: DATEV CSV export helper.
+- `tests/`: mocked unit and integration tests.
+
+Safety boundary:
+
+- Do not commit real invoices, mailbox exports, Gmail OAuth tokens, `credentials.json`, `token.json`, passwords or local archive folders.
+- Runtime data belongs under `%USERPROFILE%\.universal_invoice_mail\`.
+- The exchange format is metadata-first; full attachments or mail bodies must be explicit opt-in exports.
+
+Verification:
+
+- Run `PYTHONIOENCODING=utf-8 python -m pytest -q`.
+- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py`.

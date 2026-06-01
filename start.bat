@@ -7,7 +7,15 @@ echo   UniversalInvoiceMail v2.3.0
 echo ========================================
 echo.
 
-REM Prüfe ob Python verfügbar ist
+cd /d "%~dp0"
+
+if exist "dist\UniversalInvoiceMail_v2.3.0\UniversalInvoiceMail_v2.3.0.exe" (
+    echo Starte EXE...
+    start "" "dist\UniversalInvoiceMail_v2.3.0\UniversalInvoiceMail_v2.3.0.exe"
+    exit /b 0
+)
+
+REM Pruefe ob Python verfuegbar ist
 where python >nul 2>&1
 if %errorlevel% neq 0 (
     echo [FEHLER] Python nicht gefunden!
@@ -16,26 +24,23 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Wechsle ins Script-Verzeichnis
-cd /d "%~dp0"
+echo Pruefe Abhaengigkeiten...
 
-echo Prüfe Abhängigkeiten...
-
-REM Prüfe PySide6
+REM Pruefe PySide6
 pip show PySide6 >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere PySide6...
     pip install PySide6
 )
 
-REM Prüfe xhtml2pdf
+REM Pruefe xhtml2pdf
 pip show xhtml2pdf >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere xhtml2pdf...
     pip install xhtml2pdf
 )
 
-REM Prüfe keyring
+REM Pruefe keyring
 pip show keyring >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installiere keyring...
@@ -46,7 +51,6 @@ echo.
 echo Starte Anwendung...
 echo.
 
-REM Starte die App
 python UniversalInvoiceMail.py
 
 if %errorlevel% neq 0 (

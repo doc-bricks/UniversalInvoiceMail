@@ -47,9 +47,9 @@ from PySide6.QtWidgets import (
     QMessageBox, QDialog, QFormLayout, QComboBox, QGroupBox, QCheckBox,
     QTabWidget, QDialogButtonBox, QLineEdit, QFileDialog, QPlainTextEdit,
     QListWidget, QListWidgetItem, QSpinBox, QProgressBar, QFrame,
-    QSplitter, QStyle
+    QSplitter, QStyle, QDateEdit, QGridLayout, QRadioButton
 )
-from PySide6.QtCore import Qt, QThread, Signal, QUrl, QSize
+from PySide6.QtCore import Qt, QThread, Signal, QUrl, QSize, QDate
 from PySide6.QtGui import QColor, QPalette, QDesktopServices, QFont, QIcon
 
 # PDF Konvertierung
@@ -236,10 +236,10 @@ class MailAccount:
     port: int = 993
     username: str = ""
     use_gmail_api: bool = False
-    
+
     def to_dict(self) -> dict:
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, d: dict) -> 'MailAccount':
         return cls(**d)
@@ -253,18 +253,22 @@ class InvoiceProfile:
     account_id: str
     sender_filter: str = ""      # z.B. "amazon" oder "amazon.de,amazon.com"
     subject_filter: str = ""     # z.B. "Rechnung,Invoice,Bestellung"
+    gmail_query: str = ""        # Optional: Gmail Raw Query / X-GM-RAW
     blacklist: str = ""          # Darf NICHT enthalten (Betreff/Body), kommasepariert
     body_must_contain: str = ""  # Body MUSS enthalten (kommasepariert, ODER)
     body_must_not_contain: str = ""  # Body darf NICHT enthalten (kommasepariert)
     enabled: bool = True
     target_subfolder: str = ""   # Optional: Unterordner
-    
+
     def to_dict(self) -> dict:
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, d: dict) -> 'InvoiceProfile':
-        return cls(**d)
+        known = {f.name for f in fields(cls)}
+        filtered = {k: v for k, v in d.items() if k in known}
+        filtered.setdefault("gmail_query", "")
+        return cls(**filtered)
 
 
 @dataclass
@@ -326,7 +330,8 @@ def sanitize_filename(name: str) -> str:
     s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', name)
     s = re.sub(r'\s+', '_', s)
     s = re.sub(r'_+', '_', s)
-    return s.strip('_')[:120]
+    cleaned = s.strip('_')[:120]
+    return cleaned or "unnamed"
 
 
 def format_imap_date(dt: datetime) -> str:
@@ -609,7 +614,7 @@ class OCRProcessor:
             Tuple of (success: bool, message: str).
         """
         if not OCR_AVAILABLE:
-            return False, "OCR nicht verfuegbar (pytesseract/pypdfium2 fehlt)"
+            return False, "OCR nicht verfügbar (pytesseract/pypdfium2 fehlt)"
 
         try:
             temp_path = pdf_path.with_suffix(".ocr_temp.pdf")
@@ -657,7 +662,7 @@ class OCRProcessor:
             Tuple of (success: bool, message: str).
         """
         if not OCR_AVAILABLE:
-            return False, "OCR nicht verfuegbar (pytesseract/pypdfium2 fehlt)"
+            return False, "OCR nicht verfügbar (pytesseract/pypdfium2 fehlt)"
 
         try:
             # PDF zu Bildern konvertieren (OHNE Poppler!)
@@ -705,7 +710,7 @@ pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5;
                 with open(ocr_pdf_path, "wb") as f:
                     pisa.CreatePDF(ocr_html, dest=f, encoding='utf-8')
             else:
-                return False, "xhtml2pdf nicht verfuegbar fuer OCR-Seite"
+                return False, "xhtml2pdf nicht verfügbar für OCR-Seite"
 
             if not ocr_pdf_path.exists() or ocr_pdf_path.stat().st_size == 0:
                 return False, "OCR-Seite konnte nicht erstellt werden"
@@ -771,7 +776,7 @@ class BrowserPDFRenderer:
                 self.driver = None
 
         if not SELENIUM_AVAILABLE:
-            self.log("Browser-Modus nicht verfuegbar (Selenium fehlt)")
+            self.log("Browser-Modus nicht verfügbar (Selenium fehlt)")
             return False
 
         # Versuche Edge zuerst, dann Chrome
@@ -822,7 +827,7 @@ class BrowserPDFRenderer:
                 logger.debug(f"{browser_type} start failed: {e}")
                 continue
 
-        self.log("Kein Browser (Edge/Chrome) verfuegbar")
+        self.log("Kein Browser (Edge/Chrome) verfügbar")
         return False
 
     def render_html_to_pdf(self, html_content: str, output_path: Path,
@@ -1038,7 +1043,7 @@ a {{ word-wrap: break-word; overflow-wrap: anywhere; word-break: break-all; }}
             else:
                 # 0-Byte Datei loeschen (PDF-Erstellung fehlgeschlagen)
                 output_path.unlink(missing_ok=True)
-                logger.warning(f"PDF leer, geloescht: {output_path.name}")
+                logger.warning(f"PDF leer, gelöscht: {output_path.name}")
                 return False
         return False
     except Exception as e:
@@ -1064,7 +1069,7 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
     """
     if not XHTML2PDF_AVAILABLE:
         return False
-    
+
     try:
         from PyPDF2 import PdfMerger, PdfReader
     except ImportError:
@@ -1072,32 +1077,32 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
         import shutil
         shutil.copy2(pdf_path, output_path)
         return True
-    
+
     try:
         # Body zu temporaerem PDF
         import tempfile
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
             tmp_body_path = Path(tmp.name)
-        
+
         if not html_to_pdf(body_html, tmp_body_path, mail_meta, mode="fast"):
             # Body-PDF fehlgeschlagen - nur Original kopieren
             # Hinweis: Merge immer mit "fast" da nur Body-Kontext benoetigt
             import shutil
             shutil.copy2(pdf_path, output_path)
             return True
-        
+
         # PDFs mergen: Original + Body
         merger = PdfMerger()
         merger.append(str(pdf_path))
         merger.append(str(tmp_body_path))
-        
+
         with open(output_path, 'wb') as f:
             merger.write(f)
         merger.close()
-        
+
         # Temp-Datei loeschen
         tmp_body_path.unlink(missing_ok=True)
-        
+
         return output_path.exists()
     except Exception as e:
         # Bei Fehler: Original kopieren
@@ -1484,7 +1489,7 @@ class InvoiceWorker(QThread):
     progress = Signal(int, int)  # current, total
     invoice_found = Signal(object)  # Invoice
     finished_signal = Signal(int)  # Anzahl gefundener Rechnungen
-    
+
     def __init__(self, accounts: List[MailAccount], profiles: List[InvoiceProfile],
                  settings: AppSettings, existing_hashes: set):
         super().__init__()
@@ -1494,65 +1499,65 @@ class InvoiceWorker(QThread):
         self.existing_hashes = existing_hashes
         self.should_stop = False
         self.found_count = 0
-    
+
     def stop(self):
         self.should_stop = True
-    
+
     def run(self):
         self.found_count = 0
-        
+
         for account in self.accounts:
             if self.should_stop:
                 break
-                
+
             # Profile für diesen Account filtern
             account_profiles = [p for p in self.profiles if p.account_id == account.id and p.enabled]
             if not account_profiles:
                 continue
-            
+
             self.log.emit(f"\n{'='*50}")
             self.log.emit(f"📧 Verarbeite Account: {account.name}")
             self.log.emit(f"{'='*50}")
-            
+
             if account.use_gmail_api:
                 self._process_gmail_api(account, account_profiles)
             else:
                 self._process_imap(account, account_profiles)
-        
+
         self.finished_signal.emit(self.found_count)
-    
+
     def _process_gmail_api(self, account: MailAccount, profiles: List[InvoiceProfile]):
         """Processes an account via the Gmail API."""
         if not GMAIL_API_AVAILABLE:
             self.log.emit("❌ Gmail API nicht verfügbar (google-api-python-client fehlt)")
             return
-        
+
         try:
             creds = self._get_gmail_credentials()
             if not creds:
                 return
-            
+
             service = build("gmail", "v1", credentials=creds, cache_discovery=False)
-            
+
             for profile in profiles:
                 if self.should_stop:
                     break
                 self._search_gmail(service, profile)
-                
+
         except Exception as e:
             self.log.emit(f"❌ Gmail API Fehler: {e}")
-    
+
     def _get_gmail_credentials(self) -> Optional[Credentials]:
         """Retrieves or refreshes Gmail API credentials, running OAuth flow if needed."""
         creds = None
-        
+
         if TOKEN_FILE.exists():
             try:
                 creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), GMAIL_SCOPES)
             except (OSError, ValueError):
                 # Token-Datei korrupt oder nicht lesbar, neu authentifizieren
                 TOKEN_FILE.unlink(missing_ok=True)
-        
+
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 try:
@@ -1562,7 +1567,7 @@ class InvoiceWorker(QThread):
                     self.log.emit("⚠️ Token abgelaufen - Neu-Login erforderlich")
                     TOKEN_FILE.unlink(missing_ok=True)
                     creds = None
-            
+
             if not creds:
                 if not CREDENTIALS_FILE.exists():
                     # Auto-Suche nach vorhandenen credentials.json
@@ -1584,76 +1589,128 @@ class InvoiceWorker(QThread):
                         self.log.emit("   - Downloads")
                         self.log.emit("   - OneDrive\\.SOFTWARE\\TOOLS")
                         return None
-                
+
                 self.log.emit("🌐 Starte Browser für Google Login...")
                 try:
                     flow = InstalledAppFlow.from_client_secrets_file(
                         str(CREDENTIALS_FILE), GMAIL_SCOPES)
                     creds = flow.run_local_server(port=0)
-                    
+
                     with open(TOKEN_FILE, "w") as f:
                         f.write(creds.to_json())
                     self.log.emit("✅ Gmail Authentifizierung erfolgreich")
                 except Exception as e:
                     self.log.emit(f"❌ Auth Fehler: {e}")
                     return None
-        
+
         return creds
-    
-    def _search_gmail(self, service, profile: InvoiceProfile):
-        """Searches for emails via the Gmail API using the given profile's filters."""
-        self.log.emit(f"\n[SEARCH] Profil: {profile.name}")
-        
-        # Query bauen
+
+    @staticmethod
+    def _quote_imap_string(value: str) -> str:
+        """Escapes a string for IMAP search arguments."""
+        escaped = (value or "").replace("\\", "\\\\").replace('"', '\\"').strip()
+        return f'"{escaped}"'
+
+    @staticmethod
+    def _supports_gmail_raw(mail) -> bool:
+        """Returns True when the IMAP server supports Gmail's X-GM-RAW extension."""
+        capabilities = getattr(mail, "capabilities", ()) or ()
+        normalized = {
+            cap.decode("ascii", errors="ignore").upper() if isinstance(cap, bytes) else str(cap).upper()
+            for cap in capabilities
+        }
+        return "X-GM-EXT-1" in normalized
+
+    def _build_gmail_search_query(self, profile: InvoiceProfile) -> str:
+        """Builds a Gmail-style search query from saved raw query and profile filters."""
         query_parts = []
-        
-        # Sender Filter
+
+        if getattr(profile, "gmail_query", "").strip():
+            query_parts.append(profile.gmail_query.strip())
+
         if profile.sender_filter:
             senders = [s.strip() for s in profile.sender_filter.split(",") if s.strip()]
             if senders:
                 sender_q = " OR ".join([f"from:{s}" for s in senders])
                 query_parts.append(f"({sender_q})")
-        
-        # Subject Filter
+
         if profile.subject_filter:
             subjects = [s.strip() for s in profile.subject_filter.split(",") if s.strip()]
             if subjects:
                 subj_q = " OR ".join([f'subject:"{s}"' for s in subjects])
                 query_parts.append(f"({subj_q})")
-        
-        # Datumsfilter - Von/Bis
+
         if self.settings.date_from:
             query_parts.append(f"after:{self.settings.date_from.replace('-', '/')}")
         if self.settings.date_to:
             query_parts.append(f"before:{self.settings.date_to.replace('-', '/')}")
-        
-        # Fallback auf alte Logik
+
         if not self.settings.date_from and self.settings.date_filter_months > 0:
             since = datetime.now() - timedelta(days=self.settings.date_filter_months * 30)
             query_parts.append(f"after:{since.strftime('%Y/%m/%d')}")
-        
-        # Nur Mails mit Anhängen oder typischen Rechnungs-Keywords
-        # ABER: Nur wenn kein eigener Subject-Filter gesetzt ist!
+
         if not profile.subject_filter:
             query_parts.append("(has:attachment OR subject:rechnung OR subject:invoice)")
-        
-        query = " ".join(query_parts)
+
+        return " ".join(part for part in query_parts if part).strip()
+
+    def _build_imap_search_args(self, profile: InvoiceProfile) -> List[str]:
+        """Builds standard IMAP search arguments for servers without X-GM-RAW."""
+        search_args: List[str] = []
+
+        if self.settings.date_from:
+            try:
+                from_date = datetime.strptime(self.settings.date_from, "%Y-%m-%d")
+                search_args.extend(["SINCE", format_imap_date(from_date)])
+            except ValueError:
+                pass
+
+        if self.settings.date_to:
+            try:
+                to_date = datetime.strptime(self.settings.date_to, "%Y-%m-%d")
+                to_date_plus1 = to_date + timedelta(days=1)
+                search_args.extend(["BEFORE", format_imap_date(to_date_plus1)])
+            except ValueError:
+                pass
+
+        if not search_args and self.settings.date_filter_months > 0:
+            since = datetime.now() - timedelta(days=self.settings.date_filter_months * 30)
+            search_args.extend(["SINCE", format_imap_date(since)])
+
+        if profile.sender_filter:
+            senders = [s.strip() for s in profile.sender_filter.split(",") if s.strip()]
+            if senders:
+                safe_sender = senders[0].replace('"', '')
+                search_args.extend(["FROM", self._quote_imap_string(safe_sender)])
+
+        subjects = [s.strip() for s in profile.subject_filter.split(",") if s.strip()]
+        if len(subjects) == 1:
+            safe_subject = subjects[0].replace('"', '')
+            search_args.extend(["SUBJECT", self._quote_imap_string(safe_subject)])
+
+        return search_args or ["ALL"]
+
+    def _search_gmail(self, service, profile: InvoiceProfile):
+        """Searches for emails via the Gmail API using the given profile's filters."""
+        self.log.emit(f"\n[SEARCH] Profil: {profile.name}")
+
+        query = self._build_gmail_search_query(profile)
         self.log.emit(f"   Query: {query}")
-        
+
         try:
             results = service.users().messages().list(
                 userId="me", q=query, maxResults=self.settings.max_emails_per_run
             ).execute()
-            
+
             messages = results.get("messages", [])
             self.log.emit(f"   📬 {len(messages)} Mails gefunden")
-            
+
             for i, msg_ref in enumerate(messages):
                 if self.should_stop:
                     break
-                
+
                 self.progress.emit(i + 1, len(messages))
-                
+
                 try:
                     msg = service.users().messages().get(
                         userId="me", id=msg_ref["id"], format="full"
@@ -1666,18 +1723,18 @@ class InvoiceWorker(QThread):
 
                 except Exception as e:
                     self.log.emit(f"   ⚠️ Fehler bei Mail: {e}")
-                    
+
         except Exception as e:
             self.log.emit(f"❌ Gmail Suche fehlgeschlagen: {e}")
-    
+
     def _process_gmail_message(self, service, msg: dict, profile: InvoiceProfile):
         """Processes a single Gmail message: applies filters, downloads attachments, converts body."""
         headers = {h['name'].lower(): h['value'] for h in msg['payload'].get('headers', [])}
-        
+
         sender = headers.get('from', 'Unknown')
         subject = headers.get('subject', 'No Subject')
         date_str = headers.get('date', '')
-        
+
         # Body nur einmal holen wenn noetig fuer Filter
         blacklist = getattr(profile, 'blacklist', '')
         body_must = getattr(profile, 'body_must_contain', '')
@@ -1699,14 +1756,15 @@ class InvoiceWorker(QThread):
 
         # Zielordner
         target_dir = self._compute_target_dir(profile)
-        
+
         found_any = False
+        safe_profile_name = sanitize_filename(profile.name)
         body_html = self._get_message_body(msg['payload']) if self.settings.merge_body_with_attachments else ""
-        
+
         # 1. Anhänge verarbeiten
         if self.settings.download_attachments:
             parts = self._get_all_parts(msg['payload'])
-            
+
             for part in parts:
                 filename = part.get('filename', '')
                 attachment_type = get_attachment_conversion_type(filename)
@@ -1746,16 +1804,16 @@ class InvoiceWorker(QThread):
 
                     except Exception as e:
                         self.log.emit(f"   ⚠️ Anhang-Fehler: {e}")
-        
+
         # 2. Body zu PDF (nur wenn keine Anhaenge gefunden und Option aktiv)
         if not found_any and self.settings.convert_body_to_pdf:
             body_html = self._get_message_body(msg['payload'])
             if body_html and len(body_html) > 200:
                 body_hash = calculate_hash(body_html.encode('utf-8'))
-                
+
                 if self.settings.enable_hash_check and body_hash in self.existing_hashes:
                     return
-                
+
                 # Bestellnummer aus Subject oder Body extrahieren
                 order_id = extract_order_id(subject)
                 if not order_id:
@@ -1763,10 +1821,10 @@ class InvoiceWorker(QThread):
                 if not order_id:
                     # MD5 als sicherer Fallback (keine zufaelligen Woerter)
                     order_id = hashlib.md5(msg['id'].encode()).hexdigest()[:8]
-                
-                safe_name = f"{profile.name}_{fmt_date}_{order_id}_mail.pdf"
+
+                safe_name = f"{safe_profile_name}_{fmt_date}_{order_id}_mail.pdf"
                 output_path = target_dir / safe_name
-                
+
                 # Hybrid-Design: Mail-Header in Body-PDF
                 mail_meta = {'sender': sender, 'subject': subject, 'date': fmt_date}
 
@@ -1799,7 +1857,7 @@ class InvoiceWorker(QThread):
                     self.invoice_found.emit(inv)
                     self.existing_hashes.add(body_hash)
                     self.found_count += 1
-    
+
     def _get_all_parts(self, payload: dict) -> List[dict]:
         """Recursively extracts all MIME parts from a message payload."""
         parts = []
@@ -1809,7 +1867,7 @@ class InvoiceWorker(QThread):
         else:
             parts.append(payload)
         return parts
-    
+
     def _get_message_body(self, payload: dict) -> str:
         """Extracts the HTML/text body from a message payload, preferring HTML.
 
@@ -1847,7 +1905,7 @@ class InvoiceWorker(QThread):
                 parts.append((mime_type, decoded))
 
         return parts
-    
+
     def _check_message_filters(self, profile: 'InvoiceProfile', subject: str,
                                 body_text: str) -> bool:
         """Applies profile-level content filters to a message.
@@ -1873,14 +1931,14 @@ class InvoiceWorker(QThread):
             blacklist_terms = [b.strip().lower() for b in blacklist.split(",") if b.strip()]
             for term in blacklist_terms:
                 if term in subject_lower or term in body_text:
-                    self.log.emit(f"   ⛔ Blacklist: '{term}' gefunden, uebersprungen")
+                    self.log.emit(f"   ⛔ Blacklist: '{term}' gefunden, übersprungen")
                     return False
 
         # Body MUSS enthalten (mindestens eines)
         if body_must:
             must_terms = [t.strip().lower() for t in body_must.split(",") if t.strip()]
             if must_terms and not any(term in body_text for term in must_terms):
-                self.log.emit(f"   ⏭️ Body enthaelt keines von: {body_must[:30]}...")
+                self.log.emit(f"   ⏭️ Body enthält keines von: {body_must[:30]}...")
                 return False
 
         # Body darf NICHT enthalten
@@ -1888,7 +1946,7 @@ class InvoiceWorker(QThread):
             must_not_terms = [t.strip().lower() for t in body_must_not.split(",") if t.strip()]
             for term in must_not_terms:
                 if term in body_text:
-                    self.log.emit(f"   ⛔ Body-Blacklist: '{term}' gefunden, uebersprungen")
+                    self.log.emit(f"   ⛔ Body-Blacklist: '{term}' gefunden, übersprungen")
                     return False
 
         return True
@@ -1919,17 +1977,18 @@ class InvoiceWorker(QThread):
         fallback_seed: str,
     ) -> Tuple[Path, str]:
         """Builds a unique PDF path for a converted attachment."""
+        safe_profile_name = sanitize_filename(profile.name)
         order_id = extract_order_id(subject)
         if not order_id:
             safe_seed = fallback_seed or subject or profile.name
             order_id = hashlib.md5(safe_seed.encode("utf-8", errors="ignore")).hexdigest()[:8]
 
-        safe_name = f"{profile.name}_{fmt_date}_{order_id}.pdf"
+        safe_name = f"{safe_profile_name}_{fmt_date}_{order_id}.pdf"
         output_path = target_dir / safe_name
         counter = 1
 
         while output_path.exists():
-            safe_name = f"{profile.name}_{fmt_date}_{order_id}_{counter}.pdf"
+            safe_name = f"{safe_profile_name}_{fmt_date}_{order_id}_{counter}.pdf"
             output_path = target_dir / safe_name
             counter += 1
 
@@ -1950,7 +2009,7 @@ class InvoiceWorker(QThread):
         """Converts/saves a supported attachment and emits the resulting invoice."""
         file_hash = calculate_hash(file_data)
         if self.settings.enable_hash_check and file_hash in self.existing_hashes:
-            self.log.emit(f"   ⏭️ Duplikat uebersprungen: {source_name}")
+            self.log.emit(f"   ⏭️ Duplikat übersprungen: {source_name}")
             return False
 
         output_path, safe_name = self._build_attachment_output_path(
@@ -1966,7 +2025,7 @@ class InvoiceWorker(QThread):
 
             success, message = convert_attachment_to_pdf(file_data, source_name, temp_pdf_path)
             if not success:
-                self.log.emit(f"   ⏭️ Anhang uebersprungen: {source_name} ({message})")
+                self.log.emit(f"   ⏭️ Anhang übersprungen: {source_name} ({message})")
                 return False
 
             merge_requested = self.settings.merge_body_with_attachments and len(body_html or "") > 100
@@ -2046,16 +2105,16 @@ class InvoiceWorker(QThread):
             Path.home() / ".invoicemaster",
             Path.home() / ".gmail_credentials",
         ]
-        
+
         for base_dir in search_dirs:
             if not base_dir.exists():
                 continue
-            
+
             # Direkt im Ordner
             cred_file = base_dir / "credentials.json"
             if cred_file.exists():
                 return cred_file
-            
+
             # Rekursiv suchen (max 3 Ebenen)
             try:
                 for depth in range(1, 4):
@@ -2065,22 +2124,22 @@ class InvoiceWorker(QThread):
                             return found
             except OSError:
                 continue
-        
+
         return None
 
     def _get_imap_folders(self, mail, host: str) -> List[str]:
         """Ermittelt relevante IMAP-Ordner zum Durchsuchen"""
         folders = []
-        
+
         try:
             # Liste aller Ordner holen
             _, folder_list = mail.list()
-            
+
             # Ordnernamen die uebersprungen werden (ausser wenn include_trash)
-            skip_names = ['Spam', 'Junk', 'Drafts', 'Entwuerfe']
+            skip_names = ['Spam', 'Junk', 'Drafts', 'Entwürfe']
             if not self.settings.include_trash:
-                skip_names.extend(['Trash', 'Papierkorb', 'Deleted', 'Geloescht'])
-            
+                skip_names.extend(['Trash', 'Papierkorb', 'Deleted', 'Gelöscht'])
+
             all_folders = []
             for folder_info in folder_list:
                 if folder_info:
@@ -2094,13 +2153,13 @@ class InvoiceWorker(QThread):
                         all_folders.append(folder_name)
                     except (UnicodeDecodeError, ValueError, IndexError):
                         continue
-            
+
             # Gmail: "All Mail" enthält alles
             if 'gmail' in host.lower():
                 for f in all_folders:
                     if 'All Mail' in f or 'Alle Nachrichten' in f or 'Alle Mails' in f:
                         return [f]
-            
+
             # Andere Provider: Relevante Ordner
             for f in all_folders:
                 skip = False
@@ -2110,16 +2169,16 @@ class InvoiceWorker(QThread):
                         break
                 if not skip:
                     folders.append(f)
-            
+
             if not folders:
                 folders = ['INBOX']
-            
+
             return folders[:5]  # Max 5 Ordner
-            
+
         except Exception as e:
             self.log.emit(f"   [!] Ordnerliste: {e}")
             return ['INBOX']
-    
+
     def _process_imap(self, account: MailAccount, profiles: List[InvoiceProfile]):
         """Connects to an IMAP account and processes all enabled profiles.
 
@@ -2136,21 +2195,21 @@ class InvoiceWorker(QThread):
                 password = keyring.get_password(APP_NAME, account.id)
             except (OSError, RuntimeError):
                 pass
-        
+
         if not password:
             self.log.emit(f"❌ Kein Passwort für {account.name} gespeichert")
             return
-        
+
         try:
             self.log.emit(f"Verbinde mit {account.host}:{account.port}...")
-            
+
             mail = imaplib.IMAP4_SSL(account.host, account.port)
             mail.login(account.username, password)
-            
+
             # Ordner zum Durchsuchen ermitteln
             folders_to_search = self._get_imap_folders(mail, account.host)
             self.log.emit(f"[OK] IMAP Login erfolgreich - {len(folders_to_search)} Ordner")
-            
+
             for folder in folders_to_search:
                 if self.should_stop:
                     break
@@ -2159,7 +2218,7 @@ class InvoiceWorker(QThread):
                     if status != 'OK':
                         continue
                     self.log.emit(f"Durchsuche: {folder}")
-                    
+
                     for profile in profiles:
                         if self.should_stop:
                             break
@@ -2167,15 +2226,15 @@ class InvoiceWorker(QThread):
                 except Exception as e:
                     self.log.emit(f"   [!] Ordner {folder}: {e}")
                     continue
-            
+
             mail.logout()
-            
+
         except imaplib.IMAP4.error as e:
             self.log.emit(f"❌ IMAP Fehler: {e}")
             self.log.emit("💡 Bei Gmail: App-Passwort in Google Konto erstellen")
         except Exception as e:
             self.log.emit(f"❌ Verbindungsfehler: {e}")
-    
+
     def _search_imap(self, mail, profile: InvoiceProfile):
         """Searches the currently selected IMAP folder using profile filters.
 
@@ -2188,69 +2247,47 @@ class InvoiceWorker(QThread):
             profile: InvoiceProfile whose filters define the search criteria.
         """
         self.log.emit(f"\n[SEARCH] Profil: {profile.name}")
-        
-        # IMAP Suchkriterien bauen
-        search_parts = []
-        
-        # Datumsfilter - Von/Bis
-        if self.settings.date_from:
-            try:
-                from_date = datetime.strptime(self.settings.date_from, "%Y-%m-%d")
-                search_parts.append(f'SINCE {format_imap_date(from_date)}')
-            except ValueError:
-                pass
-        
-        if self.settings.date_to:
-            try:
-                to_date = datetime.strptime(self.settings.date_to, "%Y-%m-%d")
-                # Fix #7: IMAP BEFORE ist exklusiv, daher +1 Tag
-                to_date_plus1 = to_date + timedelta(days=1)
-                search_parts.append(f'BEFORE {format_imap_date(to_date_plus1)}')
-            except ValueError:
-                pass
-        
-        # Fallback auf alte Logik
-        if not search_parts and self.settings.date_filter_months > 0:
-            since = datetime.now() - timedelta(days=self.settings.date_filter_months * 30)
-            search_parts.append(f'SINCE {format_imap_date(since)}')
-        
-        # Sender Filter
-        if profile.sender_filter:
-            senders = [s.strip() for s in profile.sender_filter.split(",") if s.strip()]
-            if senders:
-                safe_sender = senders[0].replace('"', '')
-                search_parts.append(f'FROM "{safe_sender}"')
-        
-        search_criteria = " ".join(search_parts) if search_parts else "ALL"
-        self.log.emit(f"   IMAP Suche: {search_criteria}")
-        
+
+        gmail_query = self._build_gmail_search_query(profile)
+        use_gmail_raw = bool(getattr(profile, "gmail_query", "").strip()) and self._supports_gmail_raw(mail)
+
+        if use_gmail_raw:
+            search_args = (None, "X-GM-RAW", self._quote_imap_string(gmail_query))
+            self.log.emit(f"   Gmail-RAW Suche: {gmail_query}")
+        else:
+            if getattr(profile, "gmail_query", "").strip():
+                self.log.emit("   Gmail-Query gespeichert, aber Server unterstützt kein X-GM-RAW. Fallback auf IMAP-Filter.")
+            imap_args = self._build_imap_search_args(profile)
+            search_args = (None, *imap_args)
+            self.log.emit(f"   IMAP Suche: {' '.join(imap_args)}")
+
         try:
-            _, message_ids = mail.search(None, search_criteria)
+            _, message_ids = mail.search(*search_args)
             ids = message_ids[0].split()
-            
+
             # Limit
             ids = ids[-self.settings.max_emails_per_run:]
             self.log.emit(f"   📬 {len(ids)} Mails gefunden")
-            
+
             for i, msg_id in enumerate(ids):
                 if self.should_stop:
                     break
-                
+
                 self.progress.emit(i + 1, len(ids))
-                
+
                 try:
                     _, msg_data = mail.fetch(msg_id, "(RFC822)")
                     raw_email = msg_data[0][1]
                     msg = email.message_from_bytes(raw_email)
-                    
+
                     self._process_imap_message(msg, profile)
-                    
+
                 except Exception as e:
                     self.log.emit(f"   ⚠️ Mail-Fehler: {e}")
-                    
+
         except Exception as e:
             self.log.emit(f"❌ IMAP Suche fehlgeschlagen: {e}")
-    
+
     def _process_imap_message(self, msg, profile: InvoiceProfile):
         """Processes a single IMAP message: applies filters, downloads PDFs, converts body.
 
@@ -2265,7 +2302,7 @@ class InvoiceWorker(QThread):
         sender = decode_mail_header(msg.get('From', ''))
         subject = decode_mail_header(msg.get('Subject', ''))
         date_str = msg.get('Date', '')
-        
+
         # Body nur einmal extrahieren wenn noetig fuer Filter
         blacklist = getattr(profile, 'blacklist', '')
         body_must = getattr(profile, 'body_must_contain', '')
@@ -2293,21 +2330,22 @@ class InvoiceWorker(QThread):
 
         # Zielordner
         target_dir = self._compute_target_dir(profile)
-        
+
         found_any = False
+        safe_profile_name = sanitize_filename(profile.name)
         body_html = self._get_imap_message_body(msg) if self.settings.merge_body_with_attachments else ""
-        
+
         # Anhänge verarbeiten
         if self.settings.download_attachments:
             for part in msg.walk():
                 if part.get_content_maintype() == 'multipart':
                     continue
-                
+
                 filename = part.get_filename()
                 attachment_type = get_attachment_conversion_type(filename)
                 if filename and attachment_type:
                     filename = decode_mail_header(filename)
-                    
+
                     try:
                         file_data = part.get_payload(decode=True)
                         if not file_data:
@@ -2325,32 +2363,32 @@ class InvoiceWorker(QThread):
                             body_html=body_html,
                         ):
                             found_any = True
-                        
+
                     except Exception as e:
                         self.log.emit(f"   ⚠️ Anhang-Fehler: {e}")
-        
+
         # Body zu PDF
         if not found_any and self.settings.convert_body_to_pdf:
             body_html = self._get_imap_message_body(msg)
             if body_html and not body_html.lstrip().startswith("<"):
                 body_html = f"<pre>{escape(body_html)}</pre>"
-            
+
             if body_html and len(body_html) > 200:
                 body_hash = calculate_hash(body_html.encode('utf-8'))
-                
+
                 if self.settings.enable_hash_check and body_hash in self.existing_hashes:
                     return
-                
+
                 # Bestellnummer aus Subject oder Body extrahieren
                 order_id = extract_order_id(subject)
                 if not order_id:
                     order_id = extract_order_id(body_html)
                 if not order_id:
                     order_id = hashlib.md5(subject.encode()).hexdigest()[:8]
-                
-                safe_name = f"{profile.name}_{fmt_date}_{order_id}_mail.pdf"
+
+                safe_name = f"{safe_profile_name}_{fmt_date}_{order_id}_mail.pdf"
                 output_path = target_dir / safe_name
-                
+
                 # Hybrid-Design: Mail-Header in Body-PDF
                 mail_meta = {'sender': sender, 'subject': subject, 'date': fmt_date}
 
@@ -2389,66 +2427,66 @@ class InvoiceWorker(QThread):
 
 class AccountDialog(QDialog):
     """Dialog for creating or editing a mail account configuration."""
-    
+
     def __init__(self, account: MailAccount = None, parent=None):
         super().__init__(parent)
         self.account = account
         self.setup_ui()
-    
+
     def setup_ui(self):
         self.setWindowTitle("E-Mail Konto" if not self.account else "Konto bearbeiten")
         self.resize(450, 300)
-        
+
         layout = QVBoxLayout(self)
-        
+
         form = QFormLayout()
-        
+
         # Name
         self.inp_name = QLineEdit()
         self.inp_name.setPlaceholderText("z.B. 'Mein Gmail'")
         form.addRow("Anzeigename:", self.inp_name)
-        
+
         # Provider Auswahl
         self.cb_provider = QComboBox()
         self.cb_provider.addItems(list(IMAP_PRESETS.keys()))
         self.cb_provider.currentTextChanged.connect(self.on_provider_changed)
         form.addRow("Anbieter:", self.cb_provider)
-        
+
         # Gmail API Option
         self.ck_gmail_api = QCheckBox("Gmail API nutzen (empfohlen für Gmail)")
         self.ck_gmail_api.setToolTip("Schneller und zuverlässiger als IMAP")
         form.addRow("", self.ck_gmail_api)
-        
+
         # Separator
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         form.addRow(line)
-        
+
         # IMAP Settings
         self.lbl_imap = QLabel("IMAP Einstellungen:")
         self.lbl_imap.setStyleSheet("font-weight: bold; margin-top: 10px;")
         form.addRow(self.lbl_imap)
-        
+
         self.inp_host = QLineEdit()
         self.inp_host.setPlaceholderText("imap.example.com")
         form.addRow("Server:", self.inp_host)
-        
+
         self.inp_port = QSpinBox()
         self.inp_port.setRange(1, 65535)
         self.inp_port.setValue(993)
         form.addRow("Port:", self.inp_port)
-        
+
         self.inp_user = QLineEdit()
         self.inp_user.setPlaceholderText("email@example.com")
         form.addRow("Benutzername:", self.inp_user)
-        
+
         self.inp_pass = QLineEdit()
         self.inp_pass.setEchoMode(QLineEdit.EchoMode.Password)
         self.inp_pass.setPlaceholderText("Passwort / App-Passwort")
         form.addRow("Passwort:", self.inp_pass)
-        
+
         layout.addLayout(form)
-        
+
         # Buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -2456,7 +2494,7 @@ class AccountDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
-        
+
         # Daten laden falls Bearbeitung
         if self.account:
             self.inp_name.setText(self.account.name)
@@ -2464,26 +2502,26 @@ class AccountDialog(QDialog):
             self.inp_port.setValue(self.account.port)
             self.inp_user.setText(self.account.username)
             self.ck_gmail_api.setChecked(self.account.use_gmail_api)
-            self.inp_pass.setPlaceholderText("Leer lassen = unveraendert")
-            
+            self.inp_pass.setPlaceholderText("Leer lassen = unverändert")
+
             # Provider finden
             for provider, preset in IMAP_PRESETS.items():
                 if preset.get('host') == self.account.host:
                     self.cb_provider.setCurrentText(provider)
                     break
-    
+
     def on_provider_changed(self, provider: str):
         """Füllt IMAP-Einstellungen basierend auf Provider"""
         preset = IMAP_PRESETS.get(provider, {})
         if preset.get('host'):
             self.inp_host.setText(preset['host'])
             self.inp_port.setValue(preset.get('port', 993))
-        
+
         # Gmail API nur bei Gmail anzeigen
         is_gmail = provider == "Gmail"
         self.ck_gmail_api.setVisible(is_gmail)
         self.ck_gmail_api.setChecked(is_gmail)
-    
+
     def get_account(self) -> Tuple[MailAccount, str]:
         """Gibt Account und Passwort zurück"""
         account = MailAccount(
@@ -2498,34 +2536,164 @@ class AccountDialog(QDialog):
         return account, self.inp_pass.text()
 
 
+class QueryBuilderDialog(QDialog):
+    """Small helper dialog for building Gmail Raw queries without manual syntax work."""
+
+    def __init__(self, current_query: str = "", parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Gmail Query Builder")
+        self.resize(560, 420)
+
+        layout = QVBoxLayout(self)
+
+        scope_group = QGroupBox("1. Bereich")
+        scope_layout = QHBoxLayout(scope_group)
+        self.rb_all = QRadioButton("Überall außer Papierkorb")
+        self.rb_all.setChecked(True)
+        self.rb_inbox = QRadioButton("Nur Inbox")
+        self.rb_sent = QRadioButton("Gesendet")
+        self.rb_trash = QRadioButton("Auch Papierkorb")
+        scope_layout.addWidget(self.rb_all)
+        scope_layout.addWidget(self.rb_inbox)
+        scope_layout.addWidget(self.rb_sent)
+        scope_layout.addWidget(self.rb_trash)
+        layout.addWidget(scope_group)
+
+        date_group = QGroupBox("2. Zeitraum")
+        date_layout = QGridLayout(date_group)
+        self.cb_time = QComboBox()
+        self.cb_time.addItems(["Alles", "Dieses Jahr", "Letztes Jahr", "Benutzerdefiniert"])
+        self.cb_time.currentIndexChanged.connect(self.toggle_dates)
+        self.de_from = QDateEdit(QDate.currentDate().addYears(-1))
+        self.de_from.setCalendarPopup(True)
+        self.de_to = QDateEdit(QDate.currentDate())
+        self.de_to.setCalendarPopup(True)
+        self.de_from.setEnabled(False)
+        self.de_to.setEnabled(False)
+        date_layout.addWidget(QLabel("Preset:"), 0, 0)
+        date_layout.addWidget(self.cb_time, 0, 1)
+        date_layout.addWidget(QLabel("Von:"), 1, 0)
+        date_layout.addWidget(self.de_from, 1, 1)
+        date_layout.addWidget(QLabel("Bis:"), 2, 0)
+        date_layout.addWidget(self.de_to, 2, 1)
+        layout.addWidget(date_group)
+
+        criteria_group = QGroupBox("3. Kriterien")
+        criteria_layout = QGridLayout(criteria_group)
+        self.inp_from = QLineEdit()
+        self.inp_from.setPlaceholderText("z.B. amazon.de, amazon.com")
+        self.inp_subject = QLineEdit()
+        self.inp_subject.setPlaceholderText("z.B. Rechnung, Invoice")
+        self.chk_attachment = QCheckBox("Muss Anhänge haben (has:attachment)")
+        self.chk_attachment.setChecked(True)
+        criteria_layout.addWidget(QLabel("Absender:"), 0, 0)
+        criteria_layout.addWidget(self.inp_from, 0, 1)
+        criteria_layout.addWidget(QLabel("Betreff:"), 1, 0)
+        criteria_layout.addWidget(self.inp_subject, 1, 1)
+        criteria_layout.addWidget(self.chk_attachment, 2, 0, 1, 2)
+        layout.addWidget(criteria_group)
+
+        self.result_query = QLineEdit(current_query)
+        self.result_query.setPlaceholderText("Erzeugte Query …")
+        btn_generate = QPushButton("Query generieren")
+        btn_generate.clicked.connect(self.generate)
+        layout.addWidget(btn_generate)
+        layout.addWidget(self.result_query)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def toggle_dates(self) -> None:
+        is_custom = self.cb_time.currentText() == "Benutzerdefiniert"
+        self.de_from.setEnabled(is_custom)
+        self.de_to.setEnabled(is_custom)
+
+    def generate(self) -> None:
+        parts = []
+        if self.rb_inbox.isChecked():
+            parts.append("in:inbox")
+        elif self.rb_sent.isChecked():
+            parts.append("in:sent")
+        elif self.rb_trash.isChecked():
+            parts.append("in:trash")
+        else:
+            parts.append("-in:trash")
+
+        today = date.today()
+        timeframe = self.cb_time.currentText()
+        d_from = None
+        d_to = None
+        if timeframe == "Dieses Jahr":
+            d_from = date(today.year, 1, 1)
+        elif timeframe == "Letztes Jahr":
+            d_from = date(today.year - 1, 1, 1)
+            d_to = date(today.year - 1, 12, 31)
+        elif timeframe == "Benutzerdefiniert":
+            d_from = self.de_from.date().toPython()
+            d_to = self.de_to.date().toPython()
+
+        if d_from:
+            parts.append(f"after:{d_from.strftime('%Y/%m/%d')}")
+        if d_to:
+            parts.append(f"before:{d_to.strftime('%Y/%m/%d')}")
+
+        senders = [term.strip() for term in self.inp_from.text().split(",") if term.strip()]
+        if senders:
+            if len(senders) == 1:
+                parts.append(f"from:{senders[0]}")
+            else:
+                sender_expr = " OR ".join([f"from:{sender}" for sender in senders])
+                parts.append(f"({sender_expr})")
+
+        subjects = [term.strip() for term in self.inp_subject.text().split(",") if term.strip()]
+        if subjects:
+            if len(subjects) == 1:
+                parts.append(f'subject:"{subjects[0]}"')
+            else:
+                subject_expr = " OR ".join([f'subject:"{subject}"' for subject in subjects])
+                parts.append(f"({subject_expr})")
+
+        if self.chk_attachment.isChecked():
+            parts.append("has:attachment")
+
+        self.result_query.setText(" ".join(parts))
+
+    def get_query(self) -> str:
+        return self.result_query.text().strip()
+
+
 class ProfileDialog(QDialog):
     """Dialog for creating or editing an invoice search profile."""
-    
+
     def __init__(self, accounts: List[MailAccount], profile: InvoiceProfile = None, parent=None):
         super().__init__(parent)
         self.accounts = accounts
         self.profile = profile
         self.setup_ui()
-    
+
     def setup_ui(self):
         self.setWindowTitle("Suchprofil" if not self.profile else "Profil bearbeiten")
-        self.resize(500, 350)
-        
+        self.resize(560, 460)
+
         layout = QVBoxLayout(self)
-        
+
         form = QFormLayout()
-        
+
         # Name
         self.inp_name = QLineEdit()
         self.inp_name.setPlaceholderText("z.B. 'Amazon Rechnungen'")
         form.addRow("Name:", self.inp_name)
-        
+
         # Account Auswahl
         self.cb_account = QComboBox()
         for acc in self.accounts:
             self.cb_account.addItem(acc.name, acc.id)
         form.addRow("E-Mail Konto:", self.cb_account)
-        
+
         # Schnellauswahl Shop
         self.cb_shop = QComboBox()
         self.cb_shop.addItem("-- Manuell konfigurieren --")
@@ -2533,57 +2701,71 @@ class ProfileDialog(QDialog):
             self.cb_shop.addItem(shop['name'])
         self.cb_shop.currentTextChanged.connect(self.on_shop_changed)
         form.addRow("Shop-Vorlage:", self.cb_shop)
-        
+
         # Separator
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         form.addRow(line)
-        
+
         # Filter
         self.inp_sender = QLineEdit()
         self.inp_sender.setPlaceholderText("z.B. amazon.de, amazon.com")
-        self.inp_sender.setToolTip("Komma-getrennt = ODER-Verknuepfung\nBeispiel: amazon.de, amazon.com\n→ Mail von amazon.de ODER amazon.com")
-        form.addRow("Absender enthaelt:", self.inp_sender)
-        
+        self.inp_sender.setToolTip("Komma-getrennt = ODER-Verknüpfung\nBeispiel: amazon.de, amazon.com\n→ Mail von amazon.de ODER amazon.com")
+        form.addRow("Absender enthält:", self.inp_sender)
+
         self.inp_subject = QLineEdit()
         self.inp_subject.setPlaceholderText("z.B. Rechnung, Invoice, Bestellung")
-        self.inp_subject.setToolTip("Komma-getrennt = ODER-Verknuepfung\nBeispiel: Rechnung, Invoice\n→ Betreff enthaelt 'Rechnung' ODER 'Invoice'")
-        form.addRow("Betreff enthaelt:", self.inp_subject)
-        
+        self.inp_subject.setToolTip("Komma-getrennt = ODER-Verknüpfung\nBeispiel: Rechnung, Invoice\n→ Betreff enthält 'Rechnung' ODER 'Invoice'")
+        form.addRow("Betreff enthält:", self.inp_subject)
+
+        self.inp_gmail_query = QLineEdit()
+        self.inp_gmail_query.setPlaceholderText("Optional: z.B. label:finance has:attachment")
+        self.inp_gmail_query.setToolTip(
+            "Optionaler Gmail-Raw-Query-Kanal.\n"
+            "Greift bei Gmail API immer und bei IMAP nur auf Servern mit X-GM-RAW."
+        )
+        btn_query_builder = QPushButton("Builder …")
+        btn_query_builder.setToolTip("Hilft beim Erstellen einer Gmail-Query")
+        btn_query_builder.clicked.connect(self.open_query_builder)
+        gmail_query_row = QHBoxLayout()
+        gmail_query_row.addWidget(self.inp_gmail_query)
+        gmail_query_row.addWidget(btn_query_builder)
+        form.addRow("Gmail-Query:", gmail_query_row)
+
         # Blacklist
         self.inp_blacklist = QLineEdit()
         self.inp_blacklist.setPlaceholderText("z.B. Storno, Mahnung, Werbung")
-        self.inp_blacklist.setToolTip("Komma-getrennt = ODER-Verknuepfung\nMails werden uebersprungen wenn Betreff/Body\neines dieser Worte enthaelt")
+        self.inp_blacklist.setToolTip("Komma-getrennt = ODER-Verknüpfung\nMails werden übersprungen wenn Betreff/Body\neines dieser Worte enthält")
         form.addRow("Darf NICHT enthalten:", self.inp_blacklist)
-        
+
         # Separator fuer Body-Filter
         line2 = QFrame()
         line2.setFrameShape(QFrame.Shape.HLine)
         form.addRow(line2)
-        
+
         # Body-Filter
         self.inp_body_must = QLineEdit()
         self.inp_body_must.setPlaceholderText("Optional: z.B. Rechnung, Invoice, Bestellung")
-        self.inp_body_must.setToolTip("Mail-Body MUSS mindestens eines dieser Worte enthalten\nKomma-getrennt = ODER-Verknuepfung\nLeer = kein Filter")
+        self.inp_body_must.setToolTip("Mail-Body MUSS mindestens eines dieser Worte enthalten\nKomma-getrennt = ODER-Verknüpfung\nLeer = kein Filter")
         form.addRow("Body muss enthalten:", self.inp_body_must)
-        
+
         self.inp_body_must_not = QLineEdit()
         self.inp_body_must_not.setPlaceholderText("Optional: z.B. Werbung, Newsletter")
-        self.inp_body_must_not.setToolTip("Mail-Body darf KEINES dieser Worte enthalten\nKomma-getrennt = ODER-Verknuepfung\nLeer = kein Filter")
+        self.inp_body_must_not.setToolTip("Mail-Body darf KEINES dieser Worte enthalten\nKomma-getrennt = ODER-Verknüpfung\nLeer = kein Filter")
         form.addRow("Body darf nicht enthalten:", self.inp_body_must_not)
-        
+
         # Zielordner
         self.inp_folder = QLineEdit()
-        self.inp_folder.setPlaceholderText("Optional: Unterordner fuer diese Rechnungen")
+        self.inp_folder.setPlaceholderText("Optional: Unterordner für diese Rechnungen")
         form.addRow("Unterordner:", self.inp_folder)
-        
+
         # Aktiv
         self.ck_enabled = QCheckBox("Profil aktiviert")
         self.ck_enabled.setChecked(True)
         form.addRow("", self.ck_enabled)
-        
+
         layout.addLayout(form)
-        
+
         # Buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -2591,24 +2773,31 @@ class ProfileDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
-        
+
         # Daten laden
         if self.profile:
             self.inp_name.setText(self.profile.name)
             self.inp_sender.setText(self.profile.sender_filter)
             self.inp_subject.setText(self.profile.subject_filter)
+            self.inp_gmail_query.setText(getattr(self.profile, 'gmail_query', ''))
             self.inp_blacklist.setText(getattr(self.profile, 'blacklist', ''))
             self.inp_body_must.setText(getattr(self.profile, 'body_must_contain', ''))
             self.inp_body_must_not.setText(getattr(self.profile, 'body_must_not_contain', ''))
             self.inp_folder.setText(self.profile.target_subfolder)
             self.ck_enabled.setChecked(self.profile.enabled)
-            
+
             # Account finden
             for i in range(self.cb_account.count()):
                 if self.cb_account.itemData(i) == self.profile.account_id:
                     self.cb_account.setCurrentIndex(i)
                     break
-    
+
+    def open_query_builder(self) -> None:
+        """Opens the Gmail query builder and transfers the result back into the form."""
+        dialog = QueryBuilderDialog(self.inp_gmail_query.text(), self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.inp_gmail_query.setText(dialog.get_query())
+
     def on_shop_changed(self, shop_name: str):
         """Füllt Filter basierend auf Shop-Vorlage"""
         for shop in DEFAULT_SHOP_PROFILES:
@@ -2618,7 +2807,7 @@ class ProfileDialog(QDialog):
                 self.inp_subject.setText(shop['subject'])
                 self.inp_folder.setText(shop['name'])
                 break
-    
+
     def get_profile(self) -> InvoiceProfile:
         """Gibt das konfigurierte Profil zurueck"""
         return InvoiceProfile(
@@ -2627,6 +2816,7 @@ class ProfileDialog(QDialog):
             account_id=self.cb_account.currentData(),
             sender_filter=self.inp_sender.text().strip(),
             subject_filter=self.inp_subject.text().strip(),
+            gmail_query=self.inp_gmail_query.text().strip(),
             blacklist=self.inp_blacklist.text().strip(),
             body_must_contain=self.inp_body_must.text().strip(),
             body_must_not_contain=self.inp_body_must_not.text().strip(),
@@ -2690,10 +2880,10 @@ class DATEVSettingsDialog(QDialog):
 
 class MainWindow(QMainWindow):
     """Main application window for UniversalInvoiceMail."""
-    
+
     def __init__(self):
         super().__init__()
-        
+
         # Daten laden
         self.accounts: List[MailAccount] = []
         self.profiles: List[InvoiceProfile] = []
@@ -2704,7 +2894,7 @@ class MainWindow(QMainWindow):
 
         self.load_config()
         self.setup_ui()
-    
+
     def load_config(self):
         """Lädt Konfiguration"""
         if CONFIG_FILE.exists():
@@ -2725,14 +2915,14 @@ class MainWindow(QMainWindow):
                         )
             except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
                 print(f"Config load error: {e}")
-        
+
         if INVOICES_DB.exists():
             try:
                 data = json.loads(INVOICES_DB.read_text(encoding='utf-8'))
                 self.invoices = [Invoice.from_dict(i) for i in data]
             except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
                 print(f"Invoice DB error: {e}")
-    
+
     def save_config(self):
         """Speichert Konfiguration"""
         try:
@@ -2755,12 +2945,12 @@ class MainWindow(QMainWindow):
             )
         except (OSError, TypeError, ValueError) as e:
             print(f"Save error: {e}")
-    
+
     def setup_ui(self):
         """Erstellt die Benutzeroberfläche"""
         self.setWindowTitle(f"{APP_NAME} v{VERSION}")
         self.resize(1200, 750)
-        
+
         # Dark Theme
         self.setStyleSheet("""
             QMainWindow, QWidget { background-color: #2d2d2d; color: #ffffff; }
@@ -2784,24 +2974,24 @@ class MainWindow(QMainWindow):
             QProgressBar { background-color: #3d3d3d; border-radius: 3px; text-align: center; }
             QProgressBar::chunk { background-color: #0078d4; border-radius: 3px; }
         """)
-        
+
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QHBoxLayout(central)
-        
+
         # === LINKE SEITE: Steuerung ===
         left_panel = QWidget()
         left_panel.setMaximumWidth(350)
         left_layout = QVBoxLayout(left_panel)
-        
+
         # Start Button
         self.btn_start = QPushButton("🚀  RECHNUNGEN ABRUFEN")
         self.btn_start.setMinimumHeight(50)
         self.btn_start.setStyleSheet("""
-            QPushButton { 
-                background-color: #27ae60; 
-                font-size: 14pt; 
-                font-weight: bold; 
+            QPushButton {
+                background-color: #27ae60;
+                font-size: 14pt;
+                font-weight: bold;
                 border-radius: 8px;
             }
             QPushButton:hover { background-color: #2ecc71; }
@@ -2809,38 +2999,38 @@ class MainWindow(QMainWindow):
         """)
         self.btn_start.clicked.connect(self.start_grabbing)
         left_layout.addWidget(self.btn_start)
-        
+
         # Progress
         self.progress = QProgressBar()
         self.progress.setVisible(False)
         left_layout.addWidget(self.progress)
-        
+
         # Zeit-Filter mit Von/Bis Datum
         filter_group = QGroupBox("Zeitraum")
         filter_layout = QVBoxLayout(filter_group)
-        
+
         # Schnellauswahl
         quick_layout = QHBoxLayout()
         self.cb_timeframe = QComboBox()
         self.cb_timeframe.addItems([
             "Benutzerdefiniert",
             "Letzte 12 Monate",
-            "Letzte 6 Monate", 
+            "Letzte 6 Monate",
             "Letzte 3 Monate",
             "Dieses Jahr (01.01.-heute)",
             "Letztes Jahr (01.01.-31.12.)",
             "Alles"
         ])
         self.cb_timeframe.currentTextChanged.connect(self._on_timeframe_changed)
-        self.cb_timeframe.setToolTip("Schnellauswahl oder 'Benutzerdefiniert' fuer eigene Daten")
+        self.cb_timeframe.setToolTip("Schnellauswahl oder 'Benutzerdefiniert' für eigene Daten")
         quick_layout.addWidget(QLabel("Schnellauswahl:"))
         quick_layout.addWidget(self.cb_timeframe)
         filter_layout.addLayout(quick_layout)
-        
+
         # Von/Bis Datum
         from PySide6.QtWidgets import QDateEdit
         from PySide6.QtCore import QDate
-        
+
         date_layout = QHBoxLayout()
         date_layout.addWidget(QLabel("Von:"))
         self.date_from = QDateEdit()
@@ -2856,7 +3046,7 @@ class MainWindow(QMainWindow):
         else:
             self.date_from.setDate(QDate.currentDate().addMonths(-12))
         date_layout.addWidget(self.date_from)
-        
+
         date_layout.addWidget(QLabel("Bis:"))
         self.date_to = QDateEdit()
         self.date_to.setCalendarPopup(True)
@@ -2872,60 +3062,66 @@ class MainWindow(QMainWindow):
             self.date_to.setDate(QDate.currentDate())
         date_layout.addWidget(self.date_to)
         filter_layout.addLayout(date_layout)
-        
+
         left_layout.addWidget(filter_group)
-        
+
         # Profile Liste
         profile_group = QGroupBox("Suchprofile")
         profile_layout = QVBoxLayout(profile_group)
-        
+
         self.profile_list = QListWidget()
         self.profile_list.itemDoubleClicked.connect(self.edit_profile)
         profile_layout.addWidget(self.profile_list)
-        
+
         btn_row = QHBoxLayout()
         btn_add = QPushButton("➕ Profil")
         btn_add.clicked.connect(self.add_profile)
         btn_del = QPushButton("❌")
+        btn_del.setObjectName("delete_profile_button")
+        btn_del.setAccessibleName("Ausgewähltes Suchprofil löschen")
+        btn_del.setToolTip("Ausgewähltes Suchprofil löschen")
         btn_del.setMaximumWidth(40)
         btn_del.clicked.connect(self.delete_profile)
         btn_row.addWidget(btn_add)
         btn_row.addWidget(btn_del)
         profile_layout.addLayout(btn_row)
-        
+
         left_layout.addWidget(profile_group)
-        
+
         # Accounts
         account_group = QGroupBox("E-Mail Konten")
         account_layout = QVBoxLayout(account_group)
-        
+
         self.account_list = QListWidget()
         self.account_list.setMaximumHeight(100)
         self.account_list.itemDoubleClicked.connect(self.edit_account)
         account_layout.addWidget(self.account_list)
-        
+
         btn_row2 = QHBoxLayout()
         btn_add_acc = QPushButton("➕ Konto")
         btn_add_acc.clicked.connect(self.add_account)
         btn_del_acc = QPushButton("❌")
+        btn_del_acc.setObjectName("delete_account_button")
+        btn_del_acc.setAccessibleName("Ausgewähltes E-Mail-Konto löschen")
+        btn_del_acc.setToolTip("Ausgewähltes E-Mail-Konto löschen")
         btn_del_acc.setMaximumWidth(40)
         btn_del_acc.clicked.connect(self.delete_account)
         btn_row2.addWidget(btn_add_acc)
         btn_row2.addWidget(btn_del_acc)
         account_layout.addLayout(btn_row2)
-        
+
         left_layout.addWidget(account_group)
         left_layout.addStretch()
-        
+
         main_layout.addWidget(left_panel)
-        
+
         # === RECHTE SEITE: Tabs ===
         tabs = QTabWidget()
-        
+
         # Tab: Rechnungen
         invoice_tab = QWidget()
         invoice_layout = QVBoxLayout(invoice_tab)
-        
+
         self.invoice_table = QTableWidget(0, 8)
         self.invoice_table.setHorizontalHeaderLabels(
             ["✓", "Typ", "Datum", "Shop", "Absender", "Betrag (€)", "Datei", "Pfad"])
@@ -2937,21 +3133,23 @@ class MainWindow(QMainWindow):
         self.invoice_table.cellDoubleClicked.connect(self.open_invoice)
         self.invoice_table.itemChanged.connect(self._on_invoice_amount_changed)
         invoice_layout.addWidget(self.invoice_table)
-        
+
         inv_btn_row = QHBoxLayout()
         btn_select_all = QPushButton("Alle")
         btn_select_all.clicked.connect(self.select_all_invoices)
-        btn_select_all.setToolTip("Alle Eintraege auswaehlen")
+        btn_select_all.setToolTip("Alle Einträge auswählen")
         btn_select_all.setMaximumWidth(50)
         btn_select_none = QPushButton("Keine")
         btn_select_none.clicked.connect(self.select_no_invoices)
         btn_select_none.setToolTip("Auswahl aufheben")
         btn_select_none.setMaximumWidth(50)
         btn_delete_selected = QPushButton("❌")
+        btn_delete_selected.setObjectName("delete_selected_invoices_button")
+        btn_delete_selected.setAccessibleName("Ausgewählte Rechnungen und Dateien löschen")
         btn_delete_selected.clicked.connect(self.delete_selected_invoices)
-        btn_delete_selected.setToolTip("Ausgewaehlte Eintraege und Dateien loeschen")
+        btn_delete_selected.setToolTip("Ausgewählte Einträge und Dateien löschen")
         btn_delete_selected.setMaximumWidth(35)
-        btn_open_folder = QPushButton("Ordner oeffnen")
+        btn_open_folder = QPushButton("Ordner öffnen")
         btn_open_folder.clicked.connect(self.open_download_folder)
         btn_refresh = QPushButton("Aktualisieren")
         btn_refresh.clicked.connect(self.refresh_invoice_table)
@@ -2973,46 +3171,49 @@ class MainWindow(QMainWindow):
         inv_btn_row.addWidget(btn_datev)
         inv_btn_row.addStretch()
         invoice_layout.addLayout(inv_btn_row)
-        
+
         tabs.addTab(invoice_tab, "📄 Rechnungen")
-        
+
         # Tab: Einstellungen
         settings_tab = QWidget()
         settings_layout = QVBoxLayout(settings_tab)
-        
+
         settings_form = QFormLayout()
-        
+
         # Download-Pfad
         path_row = QHBoxLayout()
         self.inp_path = QLineEdit(self.settings.download_path)
         btn_browse = QPushButton("...")
+        btn_browse.setObjectName("browse_download_path_button")
+        btn_browse.setAccessibleName("Speicherordner auswählen")
+        btn_browse.setToolTip("Speicherordner auswählen")
         btn_browse.setMaximumWidth(40)
         btn_browse.clicked.connect(self.browse_folder)
         path_row.addWidget(self.inp_path)
         path_row.addWidget(btn_browse)
         settings_form.addRow("Speicherort:", path_row)
-        
+
         # Optionen
-        self.ck_attachments = QCheckBox("PDF-Anhaenge herunterladen")
+        self.ck_attachments = QCheckBox("PDF-Anhänge herunterladen")
         self.ck_attachments.setChecked(self.settings.download_attachments)
         settings_form.addRow("", self.ck_attachments)
-        
-        self.ck_body_pdf = QCheckBox("Mail-Body als PDF speichern (wenn keine Anhaenge)")
+
+        self.ck_body_pdf = QCheckBox("Mail-Body als PDF speichern (wenn keine Anhänge)")
         self.ck_body_pdf.setChecked(self.settings.convert_body_to_pdf)
         settings_form.addRow("", self.ck_body_pdf)
-        
-        self.ck_merge_body = QCheckBox("Dem PDF den Mail-Body anhaengen")
+
+        self.ck_merge_body = QCheckBox("Dem PDF den Mail-Body anhängen")
         self.ck_merge_body.setChecked(self.settings.merge_body_with_attachments)
-        self.ck_merge_body.setToolTip("Wenn aktiv: Mail-Header und Body werden\nan PDF-Anhaenge angehaengt")
+        self.ck_merge_body.setToolTip("Wenn aktiv: Mail-Header und Body werden\nan PDF-Anhänge angehängt")
         settings_form.addRow("", self.ck_merge_body)
-        
+
         self.ck_hash = QCheckBox("Duplikat-Erkennung (Hash-Check)")
         self.ck_hash.setChecked(self.settings.enable_hash_check)
         settings_form.addRow("", self.ck_hash)
-        
+
         self.ck_trash = QCheckBox("Papierkorb durchsuchen")
         self.ck_trash.setChecked(self.settings.include_trash)
-        self.ck_trash.setToolTip("Auch geloeschte Mails nach Rechnungen durchsuchen")
+        self.ck_trash.setToolTip("Auch gelöschte Mails nach Rechnungen durchsuchen")
         settings_form.addRow("", self.ck_trash)
 
         # PDF-Modus Auswahl
@@ -3020,7 +3221,7 @@ class MainWindow(QMainWindow):
 
         self.cmb_pdf_mode = QComboBox()
         self.cmb_pdf_mode.addItem("Schnell (nur Text)", "fast")
-        self.cmb_pdf_mode.addItem("Vollstaendig (mit Bildern)", "full")
+        self.cmb_pdf_mode.addItem("Vollständig (mit Bildern)", "full")
         # Browser-Modus nur anzeigen wenn Selenium verfuegbar
         if SELENIUM_AVAILABLE:
             self.cmb_pdf_mode.addItem("Browser (Edge/Chrome) - Empfohlen", "browser")
@@ -3030,76 +3231,76 @@ class MainWindow(QMainWindow):
             self.cmb_pdf_mode.setCurrentIndex(idx)
         self.cmb_pdf_mode.setToolTip(
             "Schnell: Nur Text, keine Bilder (stabil, schnell)\n"
-            "Vollstaendig: Mit Bildern via xhtml2pdf\n"
-            "Browser: Nutzt Edge/Chrome fuer natives Rendering (beste Qualitaet)"
+            "Vollständig: Mit Bildern via xhtml2pdf\n"
+            "Browser: Nutzt Edge/Chrome für natives Rendering (beste Qualität)"
         )
         settings_form.addRow("PDF-Modus:", self.cmb_pdf_mode)
 
-        self.ck_ocr = QCheckBox("OCR fuer bildbasierte PDFs")
+        self.ck_ocr = QCheckBox("OCR für bildbasierte PDFs")
         self.ck_ocr.setChecked(self.settings.ocr_enabled)
         self.ck_ocr.setToolTip(
-            "Tesseract OCR ausfuehren wenn PDF nur Bilder enthaelt.\n"
-            "Benoetigt: pytesseract, pdf2image, Poppler"
+            "Tesseract OCR ausführen wenn PDF nur Bilder enthält.\n"
+            "Benötigt: pytesseract, pdf2image, Poppler"
         )
         self.ck_ocr.setEnabled(OCR_AVAILABLE)
         if not OCR_AVAILABLE:
-            self.ck_ocr.setText("OCR fuer bildbasierte PDFs (nicht installiert)")
+            self.ck_ocr.setText("OCR für bildbasierte PDFs (nicht installiert)")
         settings_form.addRow("", self.ck_ocr)
 
         self.inp_max_mails = QSpinBox()
         self.inp_max_mails.setRange(10, 1000)
         self.inp_max_mails.setValue(self.settings.max_emails_per_run)
         settings_form.addRow("Max. Mails pro Durchlauf:", self.inp_max_mails)
-        
+
         settings_layout.addLayout(settings_form)
-        
+
         # Hinweise-Box
         hints_group = QGroupBox("Hinweise")
         hints_layout = QVBoxLayout(hints_group)
         hints_text = QLabel("""
-<p><b>Loeschen von Rechnungen:</b><br>
-Das Loeschen von Eintraegen im Rechnungen-Tab entfernt auch die 
-zugehoerigen PDF-Dateien im Ordner. Bei erneutem Scan mit passender 
+<p><b>Löschen von Rechnungen:</b><br>
+Das Löschen von Einträgen im Rechnungen-Tab entfernt auch die
+zugehörigen PDF-Dateien im Ordner. Bei erneutem Scan mit passender
 Profileinstellung werden dieselben Mails erneut heruntergeladen.</p>
 
 <p><b>Duplikat-Erkennung:</b><br>
-Bereits heruntergeladene Dateien werden anhand ihres Hash-Werts erkannt 
+Bereits heruntergeladene Dateien werden anhand ihres Hash-Werts erkannt
 und nicht erneut gespeichert (sofern aktiviert).</p>
 
 <p><b>Manueller Import:</b><br>
-PDFs die manuell in Profilordner gelegt werden, erscheinen nach 
+PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 "Aktualisieren" automatisch in der Liste.</p>
         """)
         hints_text.setWordWrap(True)
         hints_text.setStyleSheet("color: #666; font-size: 9pt;")
         hints_layout.addWidget(hints_text)
         settings_layout.addWidget(hints_group)
-        
+
         btn_save = QPushButton("💾 Einstellungen speichern")
         btn_save.clicked.connect(self.save_settings)
         settings_layout.addWidget(btn_save)
         settings_layout.addStretch()
-        
+
         tabs.addTab(settings_tab, "⚙️ Einstellungen")
-        
+
         # Tab: Log
         log_tab = QWidget()
         log_layout = QVBoxLayout(log_tab)
-        
+
         self.log_output = QPlainTextEdit()
         self.log_output.setReadOnly(True)
         log_layout.addWidget(self.log_output)
-        
+
         tabs.addTab(log_tab, "📝 Log")
-        
+
         # Tab: Info
         info_tab = QWidget()
         info_layout = QVBoxLayout(info_tab)
-        
+
         info_text = f"""
         <h2>{APP_NAME} v{VERSION}</h2>
         <p>Vereinfachte App zum Extrahieren von Rechnungen aus E-Mails.</p>
-        
+
         <h3>Features:</h3>
         <ul>
             <li>IMAP für alle Mail-Anbieter (Gmail, Outlook, GMX, etc.)</li>
@@ -3107,7 +3308,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             <li>Vorkonfigurierte Shop-Profile</li>
             <li>Automatische Duplikat-Erkennung</li>
         </ul>
-        
+
         <h3>Gmail API Setup:</h3>
         <ol>
             <li>Google Cloud Console öffnen</li>
@@ -3116,26 +3317,26 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             <li>OAuth Credentials erstellen</li>
             <li>credentials.json in {BASE_DIR} speichern</li>
         </ol>
-        
+
         <h3>IMAP bei Gmail:</h3>
         <p>Erstelle ein App-Passwort in deinem Google Konto unter Sicherheit → 2FA → App-Passwörter</p>
-        
+
         <p><b>Config-Ordner:</b> {BASE_DIR}</p>
         """
-        
+
         info_label = QLabel(info_text)
         info_label.setWordWrap(True)
         info_label.setOpenExternalLinks(True)
         info_layout.addWidget(info_label)
         info_layout.addStretch()
-        
+
         tabs.addTab(info_tab, "ℹ️ Info")
-        
+
         main_layout.addWidget(tabs, stretch=1)
-        
+
         # UI aktualisieren
         self.refresh_ui()
-    
+
     def refresh_ui(self):
         """Aktualisiert alle Listen"""
         # Accounts
@@ -3145,7 +3346,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             item = QListWidgetItem(f"{icon} {acc.name}")
             item.setData(Qt.ItemDataRole.UserRole, acc)
             self.account_list.addItem(item)
-        
+
         # Profile
         self.profile_list.clear()
         for prof in self.profiles:
@@ -3153,58 +3354,58 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             item = QListWidgetItem(f"{status} {prof.name}")
             item.setData(Qt.ItemDataRole.UserRole, prof)
             self.profile_list.addItem(item)
-        
+
         # Rechnungen
         self.refresh_invoice_table()
-    
+
     def refresh_invoice_table(self):
         """Aktualisiert die Rechnungstabelle und synchronisiert mit Dateisystem"""
         # Erst pruefen welche Dateien noch existieren
         valid_invoices = []
         removed_count = 0
-        
+
         for inv in self.invoices:
             if Path(inv.path).exists():
                 valid_invoices.append(inv)
             else:
                 removed_count += 1
-        
+
         # Liste aktualisieren wenn Dateien geloescht wurden
         if removed_count > 0:
             self.invoices = valid_invoices
             if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText(f"[SYNC] {removed_count} geloeschte Eintraege entfernt")
-        
+                self.log_output.appendPlainText(f"[SYNC] {removed_count} gelöschte Einträge entfernt")
+
         # PHASE 2: Neue PDFs finden
         new_count = self.scan_folders_for_new_files()
         if new_count > 0 and hasattr(self, 'log_output'):
             self.log_output.appendPlainText(f"[SCAN] {new_count} neue Dateien importiert")
-        
+
         # Speichern wenn Aenderungen
         if removed_count > 0 or new_count > 0:
             self.save_invoices_db()
-        
+
         # Tabelle neu aufbauen
         self.invoice_table.setRowCount(0)
-        
+
         for inv in reversed(self.invoices[-500:]):  # Letzte 500
             row = self.invoice_table.rowCount()
             self.invoice_table.insertRow(row)
-            
+
             # Checkbox in Spalte 0
             chk_item = QTableWidgetItem()
             chk_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             chk_item.setCheckState(Qt.CheckState.Unchecked)
             chk_item.setData(Qt.ItemDataRole.UserRole, inv.path)  # Pfad speichern
             self.invoice_table.setItem(row, 0, chk_item)
-            
+
             # Typ-Symbol: 📎 = Anhang, 📄 = Body-PDF
             typ_symbol = "📎" if getattr(inv, 'is_attachment', False) else "📄"
             typ_item = QTableWidgetItem(typ_symbol)
             typ_item.setToolTip("PDF-Anhang" if typ_symbol == "📎" else "Mail-Body als PDF")
             typ_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.invoice_table.setItem(row, 1, typ_item)
-            
+
             self.invoice_table.setItem(row, 2, QTableWidgetItem(inv.date))
             self.invoice_table.setItem(row, 3, QTableWidgetItem(inv.profile_name))
             self.invoice_table.setItem(row, 4, QTableWidgetItem(inv.sender[:40]))
@@ -3215,7 +3416,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             self.invoice_table.setItem(row, 5, amount_item)
             self.invoice_table.setItem(row, 6, QTableWidgetItem(inv.filename))
             self.invoice_table.setItem(row, 7, QTableWidgetItem(inv.path))
-    
+
     def save_invoices_db(self):
         """Speichert die Rechnungsdatenbank"""
         try:
@@ -3223,7 +3424,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             INVOICES_DB.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
         except (OSError, TypeError, ValueError) as e:
             print(f"Invoice DB save error: {e}")
-    
+
     def _convert_eml_to_pdf(self, eml_path: Path) -> Optional[Path]:
         """
         Konvertiert eine .eml-Datei zu PDF.
@@ -3271,7 +3472,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 return pdf_path
             else:
                 if hasattr(self, 'log_output'):
-                    self.log_output.appendPlainText(f"[EML] xhtml2pdf nicht verfuegbar, kann {eml_path.name} nicht konvertieren")
+                    self.log_output.appendPlainText(f"[EML] xhtml2pdf nicht verfügbar, kann {eml_path.name} nicht konvertieren")
                 return None
 
         except Exception as e:
@@ -3445,16 +3646,16 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         if dlg.exec():
             account, password = dlg.get_account()
             self.accounts.append(account)
-            
+
             if password and KEYRING_AVAILABLE:
                 try:
                     keyring.set_password(APP_NAME, account.id, password)
                 except Exception as e:
                     QMessageBox.warning(self, "Warnung", f"Passwort konnte nicht gespeichert werden: {e}")
-            
+
             self.save_config()
             self.refresh_ui()
-    
+
     def edit_account(self, item: QListWidgetItem):
         """Bearbeitet E-Mail Konto per Doppelklick"""
         account = item.data(Qt.ItemDataRole.UserRole)
@@ -3463,60 +3664,60 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             new_account, password = dlg.get_account()
             # ID beibehalten
             new_account.id = account.id
-            
+
             # Account in Liste ersetzen
             idx = self.accounts.index(account)
             self.accounts[idx] = new_account
-            
+
             # Passwort nur aktualisieren wenn neues eingegeben wurde
             if password and password.strip() and KEYRING_AVAILABLE:
                 try:
                     keyring.set_password(APP_NAME, new_account.id, password)
                 except Exception as e:
                     QMessageBox.warning(self, "Warnung", f"Passwort konnte nicht gespeichert werden: {e}")
-            
+
             self.save_config()
             self.refresh_ui()
-    
+
     def delete_account(self):
         """Löscht ausgewählten Account"""
         item = self.account_list.currentItem()
         if not item:
             return
-        
+
         acc = item.data(Qt.ItemDataRole.UserRole)
         reply = QMessageBox.question(
-            self, "Löschen", 
+            self, "Löschen",
             f"Account '{acc.name}' wirklich löschen?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             self.accounts.remove(acc)
-            
+
             # Passwort löschen
             if KEYRING_AVAILABLE:
                 try:
                     keyring.delete_password(APP_NAME, acc.id)
                 except (OSError, RuntimeError):
                     pass
-            
+
             self.save_config()
             self.refresh_ui()
-    
+
     def add_profile(self):
         """Fügt neues Profil hinzu"""
         if not self.accounts:
             QMessageBox.warning(self, "Fehler", "Bitte zuerst ein E-Mail Konto hinzufügen!")
             return
-        
+
         dlg = ProfileDialog(self.accounts, parent=self)
         if dlg.exec():
             profile = dlg.get_profile()
             self.profiles.append(profile)
             self.save_config()
             self.refresh_ui()
-    
+
     def edit_profile(self, item: QListWidgetItem):
         """Bearbeitet Profil"""
         profile = item.data(Qt.ItemDataRole.UserRole)
@@ -3526,36 +3727,36 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             self.profiles[idx] = dlg.get_profile()
             self.save_config()
             self.refresh_ui()
-    
+
     def delete_profile(self):
         """Löscht ausgewähltes Profil"""
         item = self.profile_list.currentItem()
         if not item:
             return
-        
+
         profile = item.data(Qt.ItemDataRole.UserRole)
         reply = QMessageBox.question(
             self, "Löschen",
             f"Profil '{profile.name}' wirklich löschen?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             self.profiles.remove(profile)
             self.save_config()
             self.refresh_ui()
-    
+
     def browse_folder(self):
         """Ordner auswaehlen"""
-        folder = QFileDialog.getExistingDirectory(self, "Speicherort waehlen", self.settings.download_path)
+        folder = QFileDialog.getExistingDirectory(self, "Speicherort wählen", self.settings.download_path)
         if folder:
             self.inp_path.setText(folder)
-    
+
     def _on_timeframe_changed(self, text: str):
         """Aktualisiert Von/Bis Datum basierend auf Schnellauswahl"""
         from PySide6.QtCore import QDate
         today = QDate.currentDate()
-        
+
         if "12 Monate" in text:
             self.date_from.setDate(today.addMonths(-12))
             self.date_to.setDate(today)
@@ -3575,7 +3776,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             self.date_from.setDate(QDate(2000, 1, 1))
             self.date_to.setDate(today)
         # "Benutzerdefiniert" -> keine Aenderung
-    
+
     def _apply_settings(self):
         """Wendet Einstellungen an (ohne MessageBox)"""
         self.settings.download_path = self.inp_path.text()
@@ -3598,28 +3799,28 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self.settings.date_filter_months = 0
 
         self.save_config()
-    
+
     def save_settings(self):
         """Speichert Einstellungen (mit Benutzer-Feedback)"""
         self._apply_settings()
         QMessageBox.information(self, "OK", "Einstellungen gespeichert!")
-    
+
     def start_grabbing(self):
         """Startet den Abruf"""
         if self.worker and self.worker.isRunning():
             self.worker.stop()
             self.btn_start.setText("🚀  RECHNUNGEN ABRUFEN")
             return
-        
+
         if not self.accounts:
             QMessageBox.warning(self, "Fehler", "Bitte zuerst ein E-Mail Konto hinzufügen!")
             return
-        
+
         enabled_profiles = [p for p in self.profiles if p.enabled]
         if not enabled_profiles:
             QMessageBox.warning(self, "Fehler", "Keine aktiven Suchprofile vorhanden!")
             return
-        
+
         # Einstellungen anwenden (ohne MessageBox)
         self._apply_settings()
 
@@ -3650,7 +3851,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self.btn_start.setStyleSheet("""
             QPushButton { background-color: #e74c3c; font-size: 14pt; font-weight: bold; border-radius: 8px; }
         """)
-        
+
         self.worker = InvoiceWorker(
             self.accounts, enabled_profiles, self.settings, existing_hashes
         )
@@ -3659,12 +3860,12 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self.worker.invoice_found.connect(self.on_invoice_found)
         self.worker.finished_signal.connect(self.on_finished)
         self.worker.start()
-    
+
     def on_invoice_found(self, invoice: Invoice):
         """Callback wenn Rechnung gefunden wurde"""
         self.invoices.append(invoice)
         self.save_config()
-    
+
     def on_finished(self, count: int):
         """Callback wenn Worker fertig"""
         self.btn_start.setText("🚀  RECHNUNGEN ABRUFEN")
@@ -3672,16 +3873,16 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             QPushButton { background-color: #27ae60; font-size: 14pt; font-weight: bold; border-radius: 8px; }
         """)
         self.progress.setVisible(False)
-        
+
         self.log_output.appendPlainText(f"\n{'='*50}")
         self.log_output.appendPlainText(f"✅ Fertig! {count} neue Rechnungen gefunden.")
         self.log_output.appendPlainText(f"{'='*50}")
-        
+
         self.refresh_invoice_table()
-        
+
         if count > 0:
             QMessageBox.information(self, "Fertig", f"{count} neue Rechnungen heruntergeladen!")
-    
+
     def open_invoice(self, row: int, col: int):
         """Öffnet Rechnung"""
         path = self.invoice_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
@@ -3689,21 +3890,21 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             QDesktopServices.openUrl(QUrl.fromLocalFile(path))
         else:
             QMessageBox.warning(self, "Fehler", "Datei nicht gefunden!")
-    
+
     def select_all_invoices(self):
         """Waehlt alle Eintraege aus"""
         for row in range(self.invoice_table.rowCount()):
             item = self.invoice_table.item(row, 0)
             if item:
                 item.setCheckState(Qt.CheckState.Checked)
-    
+
     def select_no_invoices(self):
         """Hebt Auswahl auf"""
         for row in range(self.invoice_table.rowCount()):
             item = self.invoice_table.item(row, 0)
             if item:
                 item.setCheckState(Qt.CheckState.Unchecked)
-    
+
     def delete_selected_invoices(self):
         """Loescht ausgewaehlte Eintraege UND deren Dateien"""
         # Ausgewaehlte sammeln
@@ -3714,14 +3915,14 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 path = item.data(Qt.ItemDataRole.UserRole)
                 if path:
                     selected_paths.append(path)
-        
+
         if not selected_paths:
             return
-        
+
         # Dateien und Eintraege loeschen (ohne Bestaetigung - Scan holt sie wieder)
         deleted_files = 0
         deleted_entries = 0
-        
+
         for path in selected_paths:
             # Datei loeschen
             file_path = Path(path)
@@ -3731,26 +3932,26 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                     deleted_files += 1
                 except Exception as e:
                     self.log_output.appendPlainText(f"[DELETE] Fehler: {path} - {e}")
-            
+
             # Aus invoices-Liste entfernen
             self.invoices = [inv for inv in self.invoices if inv.path != path]
             deleted_entries += 1
-        
+
         # Speichern und UI aktualisieren
         self.save_invoices_db()
         self.refresh_invoice_table()
-        
+
         self.log_output.appendPlainText(
-            f"[DELETE] {deleted_entries} Eintraege entfernt, {deleted_files} Dateien geloescht"
+            f"[DELETE] {deleted_entries} Einträge entfernt, {deleted_files} Dateien gelöscht"
         )
-    
+
     def open_download_folder(self):
         """Oeffnet Download-Ordner"""
         path = Path(self.settings.download_path)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
-    
+
     def _on_invoice_amount_changed(self, item: QTableWidgetItem) -> None:
         """Schreibt einen manuell eingetragenen Betrag in das Invoice-Objekt zurück."""
         if item.column() != 5:
@@ -3852,18 +4053,18 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         if not self.invoices:
             QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
             return
-        
+
         # Speicherort waehlen
         default_name = f"Rechnungen_{datetime.now().strftime('%Y-%m-%d')}.csv"
         filepath, _ = QFileDialog.getSaveFileName(
-            self, "CSV speichern", 
+            self, "CSV speichern",
             str(Path(self.settings.download_path) / default_name),
             "CSV Dateien (*.csv)"
         )
-        
+
         if not filepath:
             return
-        
+
         try:
             import csv
             with open(filepath, 'w', newline='', encoding='utf-8-sig') as f:
@@ -3880,11 +4081,11 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                         inv.filename,
                         inv.path
                     ])
-            
+
             QMessageBox.information(self, "Erfolg", f"CSV exportiert:\n{filepath}")
         except Exception as e:
             QMessageBox.warning(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
-    
+
     def closeEvent(self, event):
         """Cleanup beim Schließen"""
         if self.worker and self.worker.isRunning():
@@ -3914,15 +4115,15 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
-    
+
     # Icon setzen (falls vorhanden)
     icon_path = Path(__file__).parent / "icon.ico"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
-    
+
     window = MainWindow()
     window.show()
-    
+
     sys.exit(app.exec())
 
 

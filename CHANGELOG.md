@@ -2,6 +2,20 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [Unreleased]
+### Added
+- Gmail Query Builder im Profil-Dialog ergänzt; optionale Raw Queries können jetzt ohne manuelle Syntaxpflege vorbereitet werden
+- GitHub-Actions-Testworkflow für Python 3.10, 3.11 und 3.12 ergänzt
+- `llms.txt` als maschinenlesbarer Projektkontext ergänzt
+
+### Changed
+- Gmail-Suchen kombinieren gespeicherte Raw Queries jetzt mit Sender-, Betreff- und Datumsfiltern
+- IMAP nutzt bei Gmail-kompatiblen Servern `X-GM-RAW` und fällt sonst sauber auf normale IMAP-Kriterien zurück
+
+### Verified
+- DATEV-Export als bereits vorhandene Migration gegen Code, Dialog, Doku und Regressionstests nachgezogen; `AUFGABEN.txt` entsprechend korrigiert
+- Lokaler Teststand auf 53 grüne Tests aktualisiert
+
 ## [2.3.0] - 2026-05-02
 ### Added
 - DATEV-Export: Rechnungen als DATEV-Buchungsstapel (CSV, cp1252) exportieren

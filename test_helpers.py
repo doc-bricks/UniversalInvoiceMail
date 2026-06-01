@@ -64,6 +64,9 @@ class TestSanitizeFilename(unittest.TestCase):
         self.assertNotIn(":", result)
         self.assertTrue(result.endswith(".pdf"))
 
+    def test_only_invalid_chars_falls_back_to_unnamed(self):
+        self.assertEqual(sanitize_filename('<>:"/\\|?*'), "unnamed")
+
     def test_spaces(self):
         result = sanitize_filename("my   file   name.pdf")
         self.assertNotIn("  ", result)

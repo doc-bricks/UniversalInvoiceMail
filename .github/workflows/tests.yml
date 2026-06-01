@@ -1,0 +1,39 @@
+name: UniversalInvoiceMail tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    env:
+      PYTHONIOENCODING: utf-8
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+
+      - name: Compile Python sources
+        run: python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py
+
+      - name: Run tests
+        run: python -m pytest -q

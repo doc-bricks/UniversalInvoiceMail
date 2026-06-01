@@ -99,13 +99,23 @@ Rechnungen gesucht werden.
    |------------------------|------------------------------------------------------|-------------------------------|
    | Absender-Filter        | Kommagetrennte E-Mail-Adressen oder Domains          | `@amazon.de, @amazon.com`     |
    | Betreff-Filter         | Kommagetrennte Suchbegriffe (ODER-Verknüpfung)       | `Bestellung, Rechnung`        |
+   | Gmail-Query            | Optionaler Raw-Query für Gmail API oder Gmail-IMAP   | `label:finance has:attachment` |
    | Blacklist              | Mails die diese Begriffe enthalten werden ignoriert  | `Newsletter, Werbung`         |
    | Body muss enthalten    | Body muss mindestens einen dieser Begriffe enthalten | `Rechnungsnummer`             |
-   | Body darf nicht halten | Body darf keinen dieser Begriffe enthalten           | `abonnement`                  |
+   | Body darf nicht enthalten | Body darf keinen dieser Begriffe enthalten         | `abonnement`                  |
    | Zielordner             | Wohin die PDFs gespeichert werden                   | `C:\Dokumente\Rechnungen\Amazon` |
    | Zeitraum Von/Bis       | Mails außerhalb des Zeitraums werden ignoriert       | 01.01.2026 – 31.12.2026       |
 
 4. **"Speichern"**
+
+### Optional: Gmail Query Builder
+
+Für Gmail-Konten kann pro Profil zusätzlich eine **Gmail-Query** hinterlegt werden.
+Über **"Builder …"** lässt sich daraus eine Raw-Query mit Zeitraum, Bereich,
+Absender, Betreff und `has:attachment` zusammensetzen.
+
+- Bei **Gmail API** wird diese Query direkt verwendet und mit den normalen Filtern kombiniert.
+- Bei **IMAP** greift sie nur auf Servern mit `X-GM-RAW` (z. B. Gmail-IMAP); sonst nutzt die App automatisch den normalen IMAP-Fallback.
 
 ### Vorkonfigurierte Profile
 

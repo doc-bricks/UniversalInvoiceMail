@@ -172,6 +172,62 @@ class TestGmailAuth(unittest.TestCase):
 
         self.assertTrue(any("nicht verfügbar" in m or "nicht verf" in m
                             for m in log_messages))
+    def test_invoice_profile_defaults_gmail_query_for_old_configs(self):
+        """Older profile configs load with an empty gmail_query field."""
+        profile = uim.InvoiceProfile.from_dict({
+            "id": "p-old",
+            "name": "Amazon",
+            "account_id": "acc-old",
+            "subject_filter": "Rechnung",
+        })
+        self.assertTrue(hasattr(profile, "gmail_query"))
+        self.assertEqual(profile.gmail_query, "")
+
+    def test_search_gmail_includes_saved_gmail_query_and_filters(self):
+        """Saved Gmail raw queries are combined with the regular Gmail API filters."""
+        account = uim.MailAccount(
+            id="acc4", name="Gmail3", provider="Gmail API", use_gmail_api=True
+        )
+        profile = uim.InvoiceProfile(
+            id="p4",
+            name="Amazon",
+            account_id="acc4",
+            sender_filter="billing@example.com, invoices@example.com",
+            subject_filter="Rechnung,Invoice",
+            gmail_query="label:finance has:attachment",
+            enabled=True,
+        )
+        settings = uim.AppSettings(date_from="2026-05-01", date_to="2026-05-31")
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+        seen = {}
+
+        class _ListCall:
+            def execute(self):
+                return {"messages": []}
+
+        class _Messages:
+            def list(self, **kwargs):
+                seen["query"] = kwargs["q"]
+                seen["maxResults"] = kwargs["maxResults"]
+                return _ListCall()
+
+        class _Users:
+            def messages(self):
+                return _Messages()
+
+        class _Service:
+            def users(self):
+                return _Users()
+
+        worker._search_gmail(_Service(), profile)
+
+        self.assertIn("label:finance has:attachment", seen["query"])
+        self.assertIn("from:billing@example.com", seen["query"])
+        self.assertIn('subject:"Rechnung"', seen["query"])
+        self.assertIn("after:2026/05/01", seen["query"])
+        self.assertIn("before:2026/05/31", seen["query"])
 
 
 class TestDownloadAttachment(unittest.TestCase):
@@ -269,6 +325,28 @@ class TestDownloadAttachment(unittest.TestCase):
             self.assertTrue(target.exists())
             self.assertIn("Rechnungen2024", str(target))
 
+    def test_build_attachment_output_path_sanitizes_profile_name(self):
+        """Output filenames must stay inside the target dir even if the profile name contains separators."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            account = uim.MailAccount(id="a", name="A", provider="IMAP")
+            profile = uim.InvoiceProfile(
+                id="p", name="Bad/Name", account_id="a", enabled=True
+            )
+            settings = uim.AppSettings()
+            settings.download_path = tmp
+            worker = uim.InvoiceWorker([account], [profile], settings, set())
+
+            target = worker._compute_target_dir(profile)
+            output_path, safe_name = worker._build_attachment_output_path(
+                target, profile, "2026-05-20", "Subject", "seed"
+            )
+
+            self.assertEqual(output_path.parent, target)
+            self.assertTrue(safe_name.startswith("Bad_Name_"))
+            self.assertNotIn("/", safe_name)
+            self.assertNotIn("\\", safe_name)
+
     def test_imap_png_attachment_is_converted_and_emitted(self):
         """IMAP processing accepts supported non-PDF attachments via the shared converter."""
         import tempfile
@@ -313,6 +391,49 @@ class TestDownloadAttachment(unittest.TestCase):
             worker.invoice_found.emit.assert_called_once()
             invoice = worker.invoice_found.emit.call_args.args[0]
             self.assertTrue(invoice.filename.endswith(".pdf"))
+            self.assertTrue(Path(invoice.path).exists())
+
+    def test_imap_body_pdf_sanitizes_profile_name(self):
+        """Body-only exports must not turn profile names into nested paths."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            account = uim.MailAccount(id="a", name="A", provider="IMAP")
+            profile = uim.InvoiceProfile(
+                id="p", name="Bad/Name", account_id="a",
+                enabled=True,
+            )
+            settings = uim.AppSettings()
+            settings.download_path = tmp
+            settings.download_attachments = False
+            settings.convert_body_to_pdf = True
+            settings.merge_body_with_attachments = False
+            worker = uim.InvoiceWorker([account], [profile], settings, set())
+            worker.log = MagicMock()
+            worker.log.emit = MagicMock()
+            worker.invoice_found = MagicMock()
+            worker.invoice_found.emit = MagicMock()
+
+            message = EmailMessage()
+            message["From"] = "shop@example.com"
+            message["Subject"] = "Ihre Rechnung"
+            message["Date"] = "Mon, 01 Apr 2026 10:00:00 +0000"
+            message.set_content(
+                "<html><body>" + ("Rechnung " * 30) + "</body></html>",
+                subtype="html",
+            )
+
+            def fake_html_to_pdf(html_content, output_path, mail_meta, mode="fast"):
+                self.assertIn("Rechnung", html_content)
+                output_path.write_bytes(b"%PDF-1.4 fake body")
+                return True
+
+            with patch("UniversalInvoiceMail.html_to_pdf", side_effect=fake_html_to_pdf):
+                worker._process_imap_message(message, profile)
+
+            worker.invoice_found.emit.assert_called_once()
+            invoice = worker.invoice_found.emit.call_args.args[0]
+            self.assertEqual(Path(invoice.path).parent, Path(tmp) / "Bad_Name")
             self.assertTrue(Path(invoice.path).exists())
 
     def test_gmail_png_attachment_is_converted_and_emitted(self):
@@ -367,6 +488,91 @@ class TestDownloadAttachment(unittest.TestCase):
             invoice = worker.invoice_found.emit.call_args.args[0]
             self.assertTrue(invoice.filename.endswith(".pdf"))
             self.assertTrue(Path(invoice.path).exists())
+
+    def test_search_imap_uses_gmail_raw_when_supported(self):
+        """Profiles with gmail_query should use X-GM-RAW on Gmail-capable IMAP servers."""
+        account = uim.MailAccount(id="a", name="A", provider="IMAP")
+        profile = uim.InvoiceProfile(
+            id="p", name="TestShop", account_id="a",
+            sender_filter="shop@example.com",
+            gmail_query="label:finance has:attachment",
+            enabled=True,
+        )
+        settings = uim.AppSettings(date_from="2026-05-20")
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+        worker._process_imap_message = MagicMock()
+
+        class FakeMail:
+            capabilities = ("IMAP4REV1", "X-GM-EXT-1")
+
+            def __init__(self):
+                self.search_args = None
+
+            def search(self, *args):
+                self.search_args = args
+                return "OK", [b"1"]
+
+            def fetch(self, _msg_id, _spec):
+                msg = EmailMessage()
+                msg["From"] = "shop@example.com"
+                msg["Subject"] = "Ihre Rechnung"
+                msg["Date"] = "Tue, 20 May 2026 10:00:00 +0000"
+                msg.set_content("Test")
+                return "OK", [(None, msg.as_bytes())]
+
+        mail = FakeMail()
+        worker._search_imap(mail, profile)
+
+        self.assertEqual(mail.search_args[0:2], (None, "X-GM-RAW"))
+        self.assertIn("label:finance has:attachment", mail.search_args[2])
+        self.assertIn("from:shop@example.com", mail.search_args[2])
+        self.assertIn("after:2026/05/20", mail.search_args[2])
+        worker._process_imap_message.assert_called_once()
+
+    def test_search_imap_falls_back_without_gmail_extension(self):
+        """Servers without X-GM-RAW must fall back to normal IMAP search criteria."""
+        account = uim.MailAccount(id="a", name="A", provider="IMAP")
+        profile = uim.InvoiceProfile(
+            id="p", name="TestShop", account_id="a",
+            sender_filter="shop@example.com",
+            subject_filter="Invoice",
+            gmail_query="label:finance",
+            enabled=True,
+        )
+        settings = uim.AppSettings(date_from="2026-05-20")
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+        worker._process_imap_message = MagicMock()
+
+        class FakeMail:
+            capabilities = ("IMAP4REV1",)
+
+            def __init__(self):
+                self.search_args = None
+
+            def search(self, *args):
+                self.search_args = args
+                return "OK", [b"1"]
+
+            def fetch(self, _msg_id, _spec):
+                msg = EmailMessage()
+                msg["From"] = "shop@example.com"
+                msg["Subject"] = "Invoice"
+                msg["Date"] = "Tue, 20 May 2026 10:00:00 +0000"
+                msg.set_content("Test")
+                return "OK", [(None, msg.as_bytes())]
+
+        mail = FakeMail()
+        worker._search_imap(mail, profile)
+
+        self.assertEqual(
+            mail.search_args,
+            (None, "SINCE", "20-May-2026", "FROM", '"shop@example.com"', "SUBJECT", '"Invoice"')
+        )
+        worker._process_imap_message.assert_called_once()
 
 
 if __name__ == "__main__":
