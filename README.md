@@ -82,9 +82,12 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 
 ```bash
 PYTHONIOENCODING=utf-8 python -m pytest -q
+QT_QPA_PLATFORM=offscreen python tests/linux_platform_smoke.py
 ```
 
 The repository currently has 53 mocked tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior and compact UI control accessibility.
+
+For Linux, an additional headless smoke covers the desktop start path, missing-keyring handling, LibreOffice fallback detection and CSV export without requiring a visible session.
 
 ## Privacy
 

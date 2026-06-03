@@ -3,6 +3,13 @@
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
+
+### Added
+- Linux platform smoke `tests/linux_platform_smoke.py` for offscreen PySide6 start, missing-keyring fallback, LibreOffice fallback path detection and CSV export.
+- Separate GitHub Actions job `linux-platform-smoke` on `ubuntu-latest`.
+
+### Changed
+- Porting status now tracks Linux desktop smoke coverage separately from the still-open macOS smoke task.
 ### Added
 - Gmail Query Builder im Profil-Dialog ergänzt; optionale Raw Queries können jetzt ohne manuelle Syntaxpflege vorbereitet werden
 - GitHub-Actions-Testworkflow für Python 3.10, 3.11 und 3.12 ergänzt
