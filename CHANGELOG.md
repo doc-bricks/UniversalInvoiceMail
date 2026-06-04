@@ -4,6 +4,9 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Changed
+- README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
+
 ### Added
 - Linux platform smoke `tests/linux_platform_smoke.py` for offscreen PySide6 start, missing-keyring fallback, LibreOffice fallback path detection and CSV export.
 - Separate GitHub Actions job `linux-platform-smoke` on `ubuntu-latest`.

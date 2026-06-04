@@ -2,11 +2,21 @@
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
 
-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails.
+Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
 
 > **English documentation:** [README.md](README.md)
 
 ![UniversalInvoiceMail Vorschau](README/screenshots/main.png)
+
+## Einstieg
+
+| Bedarf | Einstieg |
+|--------|----------|
+| Rechnungen aus Mailkonten sammeln | IMAP- oder Gmail-API-Konto in der App einrichten |
+| Belege von Shops oder Dienstleistern finden | Profilfilter für Absender, Betreff, Body-Text, Zeitraum und Gmail-Raw-Queries |
+| Lokales Rechnungsarchiv pflegen | Zielordner im Windows-Benutzerprofil oder in einem lokalen Sync-Ordner |
+| Buchhaltungsübergabe vorbereiten | Editierbare EUR-Beträge und DATEV-naher `cp1252`-CSV-Export |
+| Portables Datenformat verstehen | [EXPORTFORMAT.md](EXPORTFORMAT.md) für das geplante redigierte Austausch-Bundle |
 
 ## Überblick
 
@@ -82,6 +92,10 @@ Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht
 - `DATEV exportieren` erzeugt einen DATEV-Buchungsstapel aus ausgewählten Rechnungen.
 - `berater_nr` und `mandant_nr` bleiben im Exportdialog konfigurierbar.
 - Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und danach ausgewiesen.
+
+## Suchkontext
+
+UniversalInvoiceMail passt zu Suchanfragen wie `lokales Rechnungsarchiv aus E-Mails`, `Gmail Rechnungen herunterladen`, `IMAP Belege extrahieren`, `DATEV CSV Export aus E-Mails`, `PySide6 Rechnungsmanager`, `OCR Rechnungsanhänge archivieren` und `privacy-first Buchhaltungsworkflow`. Das Projekt ist keine gehostete Rechnungsplattform, keine Mail-Marketing-Automation und keine Cloud-Buchhaltung; Zugangsdaten, Tokens, Archive und erzeugte CSV-Dateien bleiben standardmäßig lokal im Windows-Profil.
 
 ## Tests
 

@@ -2,11 +2,21 @@
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
 
-Desktop tool for downloading, converting, and archiving invoices and receipts from email accounts.
+Local-first Windows desktop tool for collecting invoices and receipts from email accounts, converting attachments to PDF, keeping a private archive, and preparing DATEV-style CSV exports.
 
 > **Deutsche Dokumentation:** [README-DE.md](README-DE.md)
 
 ![UniversalInvoiceMail Preview](README/screenshots/main.png)
+
+## Start Here
+
+| Need | Start with |
+|------|------------|
+| Collect invoices from mailboxes | IMAP or Gmail API account setup in the app |
+| Find receipts from shops or providers | Profile filters for sender, subject, body text, dates, and Gmail raw queries |
+| Keep a local invoice archive | Target folders under your Windows user profile or a local sync folder |
+| Prepare accounting handoff | Editable EUR amounts and DATEV-style cp1252 CSV export |
+| Understand portable data | [EXPORTFORMAT.md](EXPORTFORMAT.md) for the planned redacted exchange bundle |
 
 ## Features
 
@@ -77,6 +87,10 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 - `DATEV exportieren` creates DATEV booking batches from the selected invoices.
 - `berater_nr` and `mandant_nr` are configurable in the export dialog.
 - Invoices without an entered amount are skipped deliberately and called out after export.
+
+## Search Context
+
+UniversalInvoiceMail is intended for searches such as `local invoice email archive`, `Gmail invoice downloader`, `IMAP receipt extractor`, `DATEV CSV export from email`, `PySide6 invoice manager`, `OCR invoice attachment archive`, and `privacy-first accounting document workflow`. It is unrelated to hosted invoice platforms, mailbox marketing automation, or cloud bookkeeping suites; the default workflow keeps credentials, tokens, archives, and generated CSV files local to the Windows profile.
 
 ## Tests
 
