@@ -86,6 +86,13 @@ def test_datev_export_slash_dates_drive_header_range():
     assert header[15] == "20260220"
 
 
+def test_datev_row_column_count_matches_header():
+    """to_row() muss exakt so viele Felder liefern wie HEADER_COLS Spalten hat."""
+    from datev_exporter import DATEVBuchung, DATEVExporter
+    buchung = DATEVBuchung(umsatz=10.0, belegdatum="1501", belegfeld1="RE-001")
+    assert len(buchung.to_row()) == len(DATEVExporter.HEADER_COLS)
+
+
 def test_invoice_amount_field():
     from UniversalInvoiceMail import Invoice
     inv = Invoice(id="1", profile_name="Test", filename="f.pdf", date="2026-01-01", path="/tmp/f.pdf")

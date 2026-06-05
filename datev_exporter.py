@@ -69,9 +69,8 @@ class DATEVBuchung:
     buchungstext: str = ""
 
     def to_row(self) -> List[str]:
-        """Konvertiert zu DATEV-CSV-Zeile (89 Felder)."""
-        # DATEV Buchungsstapel hat 89 Felder
-        row = [""] * 89
+        """Konvertiert zu DATEV-CSV-Zeile (93 Felder, entspricht DATEVExporter.HEADER_COLS)."""
+        row = [""] * 93
 
         # Pflichtfelder
         row[0] = f"{self.umsatz:.2f}".replace(".", ",")  # Umsatz (deutsches Format)
