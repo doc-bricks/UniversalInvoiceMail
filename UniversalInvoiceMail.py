@@ -1077,10 +1077,10 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
         from PyPDF2 import PdfMerger, PdfReader
     except ImportError:
         # Fallback: Nur Original kopieren
-        import shutil
         shutil.copy2(pdf_path, output_path)
         return True
 
+    tmp_body_path = None
     try:
         # Body zu temporaerem PDF
         import tempfile
@@ -1090,7 +1090,6 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
         if not html_to_pdf(body_html, tmp_body_path, mail_meta, mode="fast"):
             # Body-PDF fehlgeschlagen - nur Original kopieren
             # Hinweis: Merge immer mit "fast" da nur Body-Kontext benoetigt
-            import shutil
             shutil.copy2(pdf_path, output_path)
             return True
 
@@ -1103,14 +1102,14 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
             merger.write(f)
         merger.close()
 
-        # Temp-Datei loeschen
-        tmp_body_path.unlink(missing_ok=True)
-
         return output_path.exists()
     except Exception as e:
         # Bei Fehler: Original kopieren
         shutil.copy2(pdf_path, output_path)
         return True
+    finally:
+        if tmp_body_path is not None:
+            tmp_body_path.unlink(missing_ok=True)
 
 
 def get_attachment_conversion_type(filename: str) -> Optional[str]:

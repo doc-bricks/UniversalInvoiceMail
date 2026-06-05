@@ -685,6 +685,64 @@ class TestImapMergeBodyEscaping(unittest.TestCase):
         self.assertNotIn("< 50", body, "Raw < must not appear in IMAP merge body_html")
 
 
+class TestMergePdfTempCleanup(unittest.TestCase):
+    """merge_pdf_with_body() muss temp-Datei auch in Fehlerpfaden loeschen."""
+
+    def test_temp_file_deleted_when_html_to_pdf_fails(self):
+        from UniversalInvoiceMail import merge_pdf_with_body
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            output_path = Path(tmpdir) / "out.pdf"
+
+            created_paths = []
+
+            original_ntf = tempfile.NamedTemporaryFile
+
+            def capturing_ntf(**kwargs):
+                result = original_ntf(**kwargs)
+                created_paths.append(Path(result.name))
+                return result
+
+            with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.dict("sys.modules", {"PyPDF2": MagicMock()}), \
+                 patch("UniversalInvoiceMail.html_to_pdf", return_value=False), \
+                 patch("tempfile.NamedTemporaryFile", side_effect=capturing_ntf):
+                merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
+
+        for p in created_paths:
+            self.assertFalse(p.exists(), f"Temp-Datei nicht geloescht: {p}")
+
+    def test_temp_file_deleted_on_merge_exception(self):
+        from UniversalInvoiceMail import merge_pdf_with_body
+
+        created_paths = []
+        original_ntf = tempfile.NamedTemporaryFile
+
+        def capturing_ntf(**kwargs):
+            result = original_ntf(**kwargs)
+            created_paths.append(Path(result.name))
+            return result
+
+        mock_pypdfs = MagicMock()
+        mock_pypdfs.PdfMerger.return_value.append.side_effect = RuntimeError("merge crash")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            output_path = Path(tmpdir) / "out.pdf"
+
+            with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.dict("sys.modules", {"PyPDF2": mock_pypdfs}), \
+                 patch("UniversalInvoiceMail.html_to_pdf", return_value=True), \
+                 patch("tempfile.NamedTemporaryFile", side_effect=capturing_ntf):
+                merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
+
+        for p in created_paths:
+            self.assertFalse(p.exists(), f"Temp-Datei nicht geloescht: {p}")
+
+
 class TestMsgConvertClosesMessage(unittest.TestCase):
     """_convert_msg_to_pdf() muss extract_msg.Message auch im Fehlerfall schliessen."""
 
