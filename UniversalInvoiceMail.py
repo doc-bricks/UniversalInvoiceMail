@@ -1837,13 +1837,13 @@ class InvoiceWorker(QThread):
                     # OCR: Immer ausfuehren wenn aktiviert (scannt Bilder nach Text)
                     if self.settings.ocr_enabled and OCR_AVAILABLE:
                         ocr = OCRProcessor()
-                        success, msg = ocr.enhance_with_ocr(output_path)
+                        success, ocr_msg = ocr.enhance_with_ocr(output_path)
                         if success:
-                            self.log.emit(f"   🔍 OCR: {msg}")
+                            self.log.emit(f"   🔍 OCR: {ocr_msg}")
                         else:
                             # Kein Fehler loggen wenn einfach kein Text erkannt wurde
-                            if "Kein Text" not in msg:
-                                self.log.emit(f"   ⚠️ OCR: {msg}")
+                            if "Kein Text" not in ocr_msg:
+                                self.log.emit(f"   ⚠️ OCR: {ocr_msg}")
 
                     inv = Invoice(
                         id=str(uuid.uuid4()),
@@ -2410,13 +2410,13 @@ class InvoiceWorker(QThread):
                     # OCR: Immer ausfuehren wenn aktiviert (scannt Bilder nach Text)
                     if self.settings.ocr_enabled and OCR_AVAILABLE:
                         ocr = OCRProcessor()
-                        success, msg = ocr.enhance_with_ocr(output_path)
+                        success, ocr_msg = ocr.enhance_with_ocr(output_path)
                         if success:
-                            self.log.emit(f"   🔍 OCR: {msg}")
+                            self.log.emit(f"   🔍 OCR: {ocr_msg}")
                         else:
                             # Kein Fehler loggen wenn einfach kein Text erkannt wurde
-                            if "Kein Text" not in msg:
-                                self.log.emit(f"   ⚠️ OCR: {msg}")
+                            if "Kein Text" not in ocr_msg:
+                                self.log.emit(f"   ⚠️ OCR: {ocr_msg}")
 
                     inv = Invoice(
                         id=str(uuid.uuid4()),

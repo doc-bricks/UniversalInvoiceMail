@@ -974,6 +974,35 @@ class TestMergePdfMergerClosed(unittest.TestCase):
         mock_merger.close.assert_called_once()
 
 
+class TestOcrMsgVarShadowing(unittest.TestCase):
+    """OCR-Rückgabewert darf den msg-Parameter nicht überschreiben."""
+
+    def _check_no_msg_tuple_assign(self, method):
+        import ast, inspect, textwrap
+        src = textwrap.dedent(inspect.getsource(method))
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Tuple):
+                        names = [
+                            elt.id for elt in target.elts
+                            if isinstance(elt, ast.Name)
+                        ]
+                        self.assertNotIn(
+                            "msg", names,
+                            f"OCR-Rückgabe darf 'msg'-Parameter nicht überschreiben in {method.__name__}"
+                        )
+
+    def test_gmail_ocr_result_uses_separate_variable(self):
+        from UniversalInvoiceMail import InvoiceWorker
+        self._check_no_msg_tuple_assign(InvoiceWorker._process_gmail_message)
+
+    def test_imap_ocr_result_uses_separate_variable(self):
+        from UniversalInvoiceMail import InvoiceWorker
+        self._check_no_msg_tuple_assign(InvoiceWorker._process_imap_message)
+
+
 class TestAddTextLayerTempCleanup(unittest.TestCase):
     """add_text_layer() muss die Temp-Datei auch bei Exceptions bereinigen."""
 
