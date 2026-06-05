@@ -801,6 +801,60 @@ class TestMsgConvertClosesMessage(unittest.TestCase):
         self.assertIsNotNone(result)
 
 
+class TestBrowserRendererCloseOnAppExit(unittest.TestCase):
+    """closeEvent() muss _browser_renderer schliessen wenn er initialisiert ist."""
+
+    def test_browser_renderer_closed_on_close_event(self):
+        import UniversalInvoiceMail as uim
+        from UniversalInvoiceMail import MainWindow
+
+        mock_renderer = MagicMock()
+        original_renderer = uim._browser_renderer
+
+        win = MainWindow.__new__(MainWindow)
+        win.worker = None
+        win.profiles = []
+        win.accounts = []
+        win.invoices = []
+        win.settings = MagicMock()
+
+        try:
+            uim._browser_renderer = mock_renderer
+            mock_event = MagicMock()
+
+            with patch.object(win, 'save_config'):
+                win.closeEvent(mock_event)
+
+            mock_renderer.close.assert_called_once()
+            self.assertIsNone(uim._browser_renderer)
+        finally:
+            uim._browser_renderer = original_renderer
+
+    def test_close_event_safe_without_renderer(self):
+        import UniversalInvoiceMail as uim
+        from UniversalInvoiceMail import MainWindow
+
+        original_renderer = uim._browser_renderer
+
+        win = MainWindow.__new__(MainWindow)
+        win.worker = None
+        win.profiles = []
+        win.accounts = []
+        win.invoices = []
+        win.settings = MagicMock()
+
+        try:
+            uim._browser_renderer = None
+            mock_event = MagicMock()
+
+            with patch.object(win, 'save_config'):
+                win.closeEvent(mock_event)  # darf nicht werfen
+
+            mock_event.accept.assert_called_once()
+        finally:
+            uim._browser_renderer = original_renderer
+
+
 class TestImapConnectionShutdown(unittest.TestCase):
     """_process_imap() muss IMAP-Verbindung auch bei Exceptions schliessen."""
 

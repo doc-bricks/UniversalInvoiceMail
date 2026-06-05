@@ -4108,6 +4108,11 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             self.worker.stop()
             self.worker.wait(2000)
         self.save_config()
+        # Browser-Renderer schliessen (verhindert verwaiste WebDriver-Prozesse)
+        global _browser_renderer
+        if _browser_renderer is not None:
+            _browser_renderer.close()
+            _browser_renderer = None
         event.accept()
 
 
