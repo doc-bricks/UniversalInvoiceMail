@@ -700,7 +700,7 @@ pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5;
 </head>
 <body>
 <h2>OCR-Erkannter Text aus Bildern</h2>
-<pre>{ocr_content}</pre>
+<pre>{escape(ocr_content)}</pre>
 </body></html>"""
 
             # OCR-Seite als PDF erstellen
@@ -854,15 +854,15 @@ class BrowserPDFRenderer:
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 5px;"><strong>Datum:</strong></td>
-                            <td style="padding: 5px;">{mail_meta.get('date', '')}</td>
+                            <td style="padding: 5px;">{escape(mail_meta.get('date', ''))}</td>
                         </tr>
                         <tr>
                             <td style="padding: 5px;"><strong>Von:</strong></td>
-                            <td style="padding: 5px;">{mail_meta.get('sender', '')[:60]}</td>
+                            <td style="padding: 5px;">{escape(mail_meta.get('sender', '')[:60])}</td>
                         </tr>
                         <tr>
                             <td style="padding: 5px;"><strong>Betreff:</strong></td>
-                            <td style="padding: 5px;">{mail_meta.get('subject', '')[:80]}</td>
+                            <td style="padding: 5px;">{escape(mail_meta.get('subject', '')[:80])}</td>
                         </tr>
                     </table>
                 </div>
@@ -991,13 +991,13 @@ def html_to_pdf(html_content: str, output_path: Path,
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #4a5568; margin-bottom: 20px;">
 <tr><td style="padding: 15px; color: white; font-family: Arial, sans-serif;">
     <div style="font-size: 9pt; color: #cbd5e0; margin-bottom: 5px;">
-        {mail_meta.get('date', '')}
+        {escape(mail_meta.get('date', ''))}
     </div>
     <div style="font-size: 13pt; font-weight: bold; color: white; margin-bottom: 8px;">
-        {mail_meta.get('subject', 'Kein Betreff')}
+        {escape(mail_meta.get('subject', 'Kein Betreff'))}
     </div>
     <div style="font-size: 10pt; color: #e2e8f0;">
-        Von: {mail_meta.get('sender', 'Unbekannt')}
+        Von: {escape(mail_meta.get('sender', 'Unbekannt'))}
     </div>
 </td></tr>
 </table>
@@ -3456,7 +3456,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                     if part.get_content_type() == "text/plain":
                         charset = part.get_content_charset() or "utf-8"
                         text = part.get_payload(decode=True).decode(charset, errors="replace")
-                        html_body = f"<html><body><pre>{text}</pre></body></html>"
+                        html_body = f"<html><body><pre>{escape(text)}</pre></body></html>"
                         break
 
             if not html_body:
@@ -3499,7 +3499,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             msg = extract_msg.Message(str(msg_path))
             html_body = msg.htmlBody
             if not html_body and msg.body:
-                html_body = f"<html><body><pre>{msg.body}</pre></body></html>"
+                html_body = f"<html><body><pre>{escape(msg.body)}</pre></body></html>"
             elif html_body and isinstance(html_body, bytes):
                 html_body = html_body.decode("utf-8", errors="replace")
 

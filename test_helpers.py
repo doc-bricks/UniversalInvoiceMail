@@ -323,5 +323,221 @@ class TestAttachmentConversion(unittest.TestCase):
         self.assertIn("konnte nicht konvertiert werden", message)
 
 
+class TestOcrContentEscaping(unittest.TestCase):
+    """Regression-Test: OCR-Text in enhance_with_ocr muss HTML-escaped werden.
+
+    Bug: pytesseract kann Text mit '<', '>', '&' zurueckgeben (z.B. 'Preis < 10 EUR').
+    Dieser wurde direkt in ein <pre>-Tag eingefuegt, was das HTML-Dokument brach.
+    Fix: escape() aus html-Modul wird auf ocr_content angewendet.
+    """
+
+    def test_ocr_text_with_special_chars_is_escaped_in_html(self):
+        from unittest.mock import patch, MagicMock
+        from UniversalInvoiceMail import OCRProcessor
+
+        ocr_text_with_special = "Preis < 10 EUR & VAT > 0 fuer AT&T"
+        captured = {}
+
+        fake_img = MagicMock()
+
+        def fake_image_to_string(img, lang=None):
+            return ocr_text_with_special
+
+        def fake_create_pdf(html_src, dest, encoding='utf-8'):
+            captured['html'] = html_src
+            dest.write(b"%PDF-1.4 fake-ocr")
+            return MagicMock()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "test.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 original")
+            ocr_page_path = pdf_path.with_suffix(".ocr_page.pdf")
+
+            processor = OCRProcessor()
+
+            with patch("UniversalInvoiceMail.OCR_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.object(processor, "_pdf_to_images", return_value=[fake_img]), \
+                 patch("UniversalInvoiceMail.pytesseract") as mock_tess, \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa, \
+                 patch("UniversalInvoiceMail.PdfReader") as mock_reader, \
+                 patch("UniversalInvoiceMail.PdfWriter") as mock_writer:
+
+                mock_tess.image_to_string.side_effect = fake_image_to_string
+                mock_pisa.CreatePDF.side_effect = fake_create_pdf
+
+                # PdfReader/PdfWriter stubs
+                fake_reader_inst = MagicMock()
+                fake_reader_inst.pages = []
+                mock_reader.return_value = fake_reader_inst
+                fake_writer_inst = MagicMock()
+                mock_writer.return_value = fake_writer_inst
+
+                # ocr_page.pdf muss existieren damit der Check besteht
+                ocr_page_path.write_bytes(b"%PDF-1.4 fake-ocr-page")
+
+                processor.enhance_with_ocr(pdf_path)
+
+        html_src = captured.get('html', '')
+        self.assertIn('&lt;', html_src,
+                      "< in OCR text must be HTML-escaped to &lt;")
+        self.assertIn('&gt;', html_src,
+                      "> in OCR text must be HTML-escaped to &gt;")
+        self.assertIn('&amp;', html_src,
+                      "& in OCR text must be HTML-escaped to &amp;")
+        self.assertNotIn('<10', html_src,
+                         "Raw < must not appear as part of text in HTML")
+
+
+class TestHtmlToPdfMailMetaEscaping(unittest.TestCase):
+    """Regression-Tests: mail_meta-Werte muessen HTML-escaped werden.
+
+    Bug: Sender wie 'Amazon <noreply@amazon.de>' enthielten rohe spitze Klammern,
+    die das HTML-Dokument brachen und die E-Mail-Adresse im PDF unsichtbar machten.
+    Fix: escape() aus html-Modul wird auf alle mail_meta-Werte angewendet.
+    """
+
+    def _call_html_to_pdf_capture_src(self, mail_meta):
+        from unittest.mock import patch, MagicMock
+        from UniversalInvoiceMail import html_to_pdf
+
+        captured = {}
+
+        def fake_create_pdf(src, dest, link_callback=None, encoding='utf-8'):
+            captured['src'] = src
+            dest.write(b"%PDF-1.4 fake")
+            mock_result = MagicMock()
+            mock_result.err = 0
+            return mock_result
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "out.pdf"
+            with patch("UniversalInvoiceMail.pisa") as mock_pisa:
+                mock_pisa.CreatePDF.side_effect = fake_create_pdf
+                # XHTML2PDF_AVAILABLE auf True setzen
+                with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True):
+                    html_to_pdf("<p>Inhalt</p>", out, mail_meta, mode="fast")
+        return captured.get('src', '')
+
+    def test_sender_with_angle_brackets_is_escaped(self):
+        """Absender 'Amazon <noreply@amazon.de>' muss als &lt;...&gt; erscheinen."""
+        mail_meta = {
+            'sender': 'Amazon <noreply@amazon.de>',
+            'subject': 'Ihre Bestellung',
+            'date': '2026-01-15',
+        }
+        src = self._call_html_to_pdf_capture_src(mail_meta)
+        self.assertIn('&lt;noreply@amazon.de&gt;', src,
+                      "Angle brackets in sender must be HTML-escaped")
+        self.assertNotIn('<noreply@amazon.de>', src,
+                         "Raw angle brackets in sender must not appear in HTML")
+
+    def test_subject_with_ampersand_is_escaped(self):
+        """Betreff mit '&' muss als '&amp;' erscheinen."""
+        mail_meta = {
+            'sender': 'shop@example.com',
+            'subject': 'Rechnung fuer Artikel A & B',
+            'date': '2026-01-15',
+        }
+        src = self._call_html_to_pdf_capture_src(mail_meta)
+        self.assertIn('&amp;', src,
+                      "Ampersand in subject must be HTML-escaped")
+
+    def test_subject_with_angle_brackets_is_escaped(self):
+        """Betreff mit '<' und '>' muss escaped werden."""
+        mail_meta = {
+            'sender': 'no-reply@shop.de',
+            'subject': 'Preis < 10 EUR > Aktionsware',
+            'date': '2026-01-15',
+        }
+        src = self._call_html_to_pdf_capture_src(mail_meta)
+        self.assertIn('&lt;', src,
+                      "< in subject must be HTML-escaped")
+        self.assertIn('&gt;', src,
+                      "> in subject must be HTML-escaped")
+
+
+class TestEmlMsgPlainTextEscaping(unittest.TestCase):
+    """Regression-Tests: Unkodierter Plain-Text in EML/MSG-Fallback-Pfad muss escaped werden.
+
+    Bug: _convert_eml_to_pdf und _convert_msg_to_pdf fügten Plain-Text mit
+    '<', '>', '&' unescaped in <pre>-Tags ein, was xhtml2pdf-HTML korrumpierte.
+    Fix: escape() wird auf den Plain-Text-Inhalt angewendet.
+    """
+
+    def _make_eml_bytes(self, body_text: str) -> bytes:
+        import email.mime.text
+        msg = email.mime.text.MIMEText(body_text, "plain", "utf-8")
+        msg["Subject"] = "Test"
+        msg["From"] = "sender@example.com"
+        return msg.as_bytes()
+
+    def test_eml_plain_text_special_chars_are_escaped(self):
+        """EML-Plain-Text mit '<', '>' und '&' muss HTML-escaped an pisa uebergeben werden."""
+        from UniversalInvoiceMail import MainWindow
+
+        body_with_specials = "Preis < 10 EUR > Aktionsware & mehr"
+        captured = {}
+
+        def fake_create_pdf(src, dest, **kwargs):
+            captured["html"] = src
+            dest.write(b"%PDF-1.4 fake")
+            return MagicMock()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            eml_path = Path(tmpdir) / "test.eml"
+            eml_path.write_bytes(self._make_eml_bytes(body_with_specials))
+
+            win = MainWindow.__new__(MainWindow)
+
+            with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa:
+                mock_pisa.CreatePDF.side_effect = fake_create_pdf
+                win._convert_eml_to_pdf(eml_path)
+
+        html = captured.get("html", "")
+        self.assertIn("&lt;", html, "< in EML plain text must be HTML-escaped")
+        self.assertIn("&gt;", html, "> in EML plain text must be HTML-escaped")
+        self.assertIn("&amp;", html, "& in EML plain text must be HTML-escaped")
+        self.assertNotIn("< 10", html, "Raw < must not appear in EML HTML")
+
+    def test_msg_plain_text_special_chars_are_escaped(self):
+        """MSG-Plain-Text-Fallback mit '<', '>', '&' muss HTML-escaped an pisa uebergeben werden."""
+        from UniversalInvoiceMail import MainWindow
+
+        body_with_specials = "Betrag < 100 EUR & Steuer > 0"
+        captured = {}
+
+        def fake_create_pdf(src, dest, **kwargs):
+            captured["html"] = src
+            dest.write(b"%PDF-1.4 fake")
+            return MagicMock()
+
+        mock_msg = MagicMock()
+        mock_msg.htmlBody = None
+        mock_msg.body = body_with_specials
+
+        mock_extract_msg = MagicMock()
+        mock_extract_msg.Message.return_value = mock_msg
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            msg_path = Path(tmpdir) / "test.msg"
+            msg_path.write_bytes(b"dummy msg content")
+
+            win = MainWindow.__new__(MainWindow)
+
+            with patch.dict("sys.modules", {"extract_msg": mock_extract_msg}), \
+                 patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa:
+                mock_pisa.CreatePDF.side_effect = fake_create_pdf
+                win._convert_msg_to_pdf(msg_path)
+
+        html = captured.get("html", "")
+        self.assertIn("&lt;", html, "< in MSG plain text must be HTML-escaped")
+        self.assertIn("&gt;", html, "> in MSG plain text must be HTML-escaped")
+        self.assertIn("&amp;", html, "& in MSG plain text must be HTML-escaped")
+        self.assertNotIn("< 100", html, "Raw < must not appear in MSG HTML")
+
+
 if __name__ == "__main__":
     unittest.main()

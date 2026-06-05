@@ -11,8 +11,14 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Linux platform smoke `tests/linux_platform_smoke.py` for offscreen PySide6 start, missing-keyring fallback, LibreOffice fallback path detection and CSV export.
 - Separate GitHub Actions job `linux-platform-smoke` on `ubuntu-latest`.
 
+### Fixed
+- HTML-Injection in PDF-Covern: Mail-Metadaten (Datum, Betreff, Absender) werden nun mit `html.escape()` gesichert, bevor sie in xhtml2pdf/Selenium-HTML eingebettet werden.
+- HTML-Injection bei OCR-Ergebnissen: OCR-Text in `<pre>`-Tags wird mit `html.escape()` gesichert.
+- HTML-Injection in EML/MSG-Fallback: Plain-Text-Körper aus EML- und MSG-Dateien werden vor dem Einbetten in `<pre>`-Tags escaped.
+
 ### Changed
 - Porting status now tracks Linux desktop smoke coverage separately from the still-open macOS smoke task.
+- DATEV-Header nutzt jetzt dieselbe Datumslogik wie die Buchungszeilen, damit auch `TT/MM/JJJJ` das korrekte Exportintervall setzt.
 ### Added
 - Gmail Query Builder im Profil-Dialog ergänzt; optionale Raw Queries können jetzt ohne manuelle Syntaxpflege vorbereitet werden
 - GitHub-Actions-Testworkflow für Python 3.10, 3.11 und 3.12 ergänzt

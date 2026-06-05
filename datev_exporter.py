@@ -189,18 +189,23 @@ class DATEVExporter:
 
     def _parse_invoice_date(self, date_str: str) -> str:
         """Konvertiert Datum zu TTMM Format."""
-        if not date_str:
+        parsed = self._parse_invoice_datetime(date_str)
+        if parsed is None:
             return datetime.now().strftime("%d%m")
+        return parsed.strftime("%d%m")
 
-        # Versuche verschiedene Formate
+    def _parse_invoice_datetime(self, date_str: str) -> Optional[datetime]:
+        """Parst unterstützte Rechnungsdatumsformate konsistent für Header und Buchung."""
+        if not date_str:
+            return None
+
         for fmt in ["%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"]:
             try:
-                dt = datetime.strptime(date_str, fmt)
-                return dt.strftime("%d%m")
+                return datetime.strptime(date_str, fmt)
             except ValueError:
                 continue
 
-        return datetime.now().strftime("%d%m")
+        return None
 
     def export(self, invoices: List[dict], output_path: Optional[Path] = None) -> str:
         """
@@ -226,17 +231,9 @@ class DATEVExporter:
         dates = []
         for inv in invoices:
             date_str = inv.get("date", "")
-            if date_str:
-                try:
-                    for fmt in ["%Y-%m-%d", "%d.%m.%Y"]:
-                        try:
-                            dates.append(datetime.strptime(date_str, fmt))
-                            break
-                        except ValueError:
-                            continue
-                except Exception as e:
-                    import logging as _logging
-                    _logging.getLogger(__name__).debug(f"DATEV date parse failed for '{date_str}': {e}")
+            parsed = self._parse_invoice_datetime(date_str)
+            if parsed is not None:
+                dates.append(parsed)
 
         if dates:
             datum_von = min(dates).strftime("%Y%m%d")

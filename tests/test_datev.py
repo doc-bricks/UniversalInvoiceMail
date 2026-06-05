@@ -1,4 +1,5 @@
 """Tests für DATEV-Export."""
+import csv
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -55,6 +56,34 @@ def test_datev_export_one_invoice(tmp_path):
     assert out.exists()
     content = out.read_text(encoding="cp1252")
     assert "119" in content or "119,00" in content
+
+
+def test_datev_export_slash_dates_drive_header_range():
+    from datev_exporter import DATEVConfig, DATEVExporter
+    cfg = DATEVConfig()
+    exp = DATEVExporter(cfg)
+    invoices = [
+        {
+            "provider": "Amazon",
+            "filename": "rechnung-1.pdf",
+            "date": "15/01/2026",
+            "path": "/tmp/rechnung-1.pdf",
+            "amount": 19.99,
+            "category": "Amazon",
+        },
+        {
+            "provider": "Vodafone",
+            "filename": "rechnung-2.pdf",
+            "date": "20/02/2026",
+            "path": "/tmp/rechnung-2.pdf",
+            "amount": 29.99,
+            "category": "Vodafone",
+        },
+    ]
+
+    header = next(csv.reader([exp.export(invoices).splitlines()[0]], delimiter=";"))
+    assert header[14] == "20260115"
+    assert header[15] == "20260220"
 
 
 def test_invoice_amount_field():
