@@ -50,6 +50,7 @@ from UniversalInvoiceMail import (
     InvoiceProfile,
     Invoice,
     InvoiceWorker,
+    OCRProcessor,
 )
 
 
@@ -971,6 +972,51 @@ class TestMergePdfMergerClosed(unittest.TestCase):
                 result = merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
 
         mock_merger.close.assert_called_once()
+
+
+class TestAddTextLayerTempCleanup(unittest.TestCase):
+    """add_text_layer() muss die Temp-Datei auch bei Exceptions bereinigen."""
+
+    def test_temp_file_cleaned_on_move_exception(self):
+        proc = OCRProcessor.__new__(OCRProcessor)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            temp_path = pdf_path.with_suffix(".ocr_temp.pdf")
+
+            sys.modules['pytesseract'].image_to_pdf_or_hocr = MagicMock(
+                return_value=b"%PDF-1.4 fake"
+            )
+
+            with patch("UniversalInvoiceMail.OCR_AVAILABLE", True), \
+                 patch.object(proc, "_pdf_to_images", return_value=[MagicMock()]), \
+                 patch("UniversalInvoiceMail.shutil") as mock_shutil:
+
+                mock_shutil.move.side_effect = RuntimeError("move failed")
+                success, msg = proc.add_text_layer(pdf_path)
+
+        self.assertFalse(success)
+        self.assertFalse(
+            temp_path.exists(),
+            "Temp-Datei muss nach Exception bereinigt werden"
+        )
+
+    def test_no_temp_file_on_early_return(self):
+        proc = OCRProcessor.__new__(OCRProcessor)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            temp_path = pdf_path.with_suffix(".ocr_temp.pdf")
+
+            with patch("UniversalInvoiceMail.OCR_AVAILABLE", True), \
+                 patch.object(proc, "_pdf_to_images", return_value=[]):
+
+                success, msg = proc.add_text_layer(pdf_path)
+
+        self.assertFalse(success)
+        self.assertFalse(temp_path.exists())
 
 
 if __name__ == "__main__":

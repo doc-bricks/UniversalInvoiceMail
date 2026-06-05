@@ -619,9 +619,8 @@ class OCRProcessor:
         if not OCR_AVAILABLE:
             return False, "OCR nicht verfügbar (pytesseract/pypdfium2 fehlt)"
 
+        temp_path = pdf_path.with_suffix(".ocr_temp.pdf")
         try:
-            temp_path = pdf_path.with_suffix(".ocr_temp.pdf")
-
             # PDF zu Bildern konvertieren (OHNE Poppler!)
             images = self._pdf_to_images(pdf_path)
 
@@ -642,11 +641,11 @@ class OCRProcessor:
                 writer.write(f)
 
             # Ersetze Original
-            import shutil
             shutil.move(str(temp_path), str(pdf_path))
 
             return True, "OCR erfolgreich"
         except Exception as e:
+            temp_path.unlink(missing_ok=True)
             return False, str(e)
 
     def enhance_with_ocr(self, pdf_path: Path) -> Tuple[bool, str]:
@@ -739,7 +738,6 @@ pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5;
             # Aufraeumen und ersetzen
             ocr_pdf_path.unlink(missing_ok=True)
 
-            import shutil
             shutil.move(str(temp_path), str(pdf_path))
 
             return True, f"OCR hinzugefuegt ({len(all_ocr_text)} Seiten gescannt)"
