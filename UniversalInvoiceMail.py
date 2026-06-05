@@ -870,11 +870,13 @@ class BrowserPDFRenderer:
                 """
                 # Header einfuegen nach <body> falls vorhanden
                 if '<body' in html_content.lower():
+                    _hdr = header_html
                     html_content = re.sub(
                         r'(<body[^>]*>)',
-                        r'\1' + header_html,
+                        lambda m: m.group(1) + _hdr,
                         html_content,
-                        flags=re.IGNORECASE
+                        count=1,
+                        flags=re.IGNORECASE,
                     )
                 else:
                     html_content = f"<html><body>{header_html}{html_content}</body></html>"

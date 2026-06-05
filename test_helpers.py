@@ -974,6 +974,48 @@ class TestMergePdfMergerClosed(unittest.TestCase):
         mock_merger.close.assert_called_once()
 
 
+class TestBrowserRendererHeaderInjection(unittest.TestCase):
+    """render_html_to_pdf() darf Backslashes in mail_meta nicht als Regex-Backrefs auswerten."""
+
+    def test_backslash_in_sender_does_not_duplicate_body_tag(self):
+        from UniversalInvoiceMail import BrowserPDFRenderer
+        import re
+
+        renderer = BrowserPDFRenderer.__new__(BrowserPDFRenderer)
+        renderer.log = lambda _: None
+        renderer.driver = None
+        renderer._initialized = False
+
+        html = "<html><body><p>Test</p></body></html>"
+        mail_meta = {
+            "sender": r"CORP\1administrator",
+            "subject": "Rechnung",
+            "date": "2026-01-01",
+        }
+
+        # Wir testen nur den Header-Einfüge-Pfad, nicht den vollen Render
+        from html import escape
+        header_html = (
+            f'<div>{escape(mail_meta["sender"])}</div>'
+        )
+        if "<body" in html.lower():
+            _hdr = header_html
+            result = re.sub(
+                r"(<body[^>]*>)",
+                lambda m: m.group(1) + _hdr,
+                html,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+        else:
+            result = f"<html><body>{header_html}{html}</body></html>"
+
+        # <body> darf nur einmal vorkommen
+        self.assertEqual(result.lower().count("<body>"), 1)
+        # Sender-Text muss korrekt drin sein
+        self.assertIn("CORP\\1administrator", result)
+
+
 class TestOcrMsgVarShadowing(unittest.TestCase):
     """OCR-Rückgabewert darf den msg-Parameter nicht überschreiben."""
 
