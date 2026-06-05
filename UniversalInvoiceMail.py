@@ -3500,6 +3500,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 )
             return None
 
+        msg = None
         try:
             msg = extract_msg.Message(str(msg_path))
             html_body = msg.htmlBody
@@ -3509,7 +3510,6 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 html_body = html_body.decode("utf-8", errors="replace")
 
             if not html_body:
-                msg.close()
                 return None
 
             pdf_path = msg_path.with_suffix(".pdf")
@@ -3518,16 +3518,19 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                     pisa.CreatePDF(html_body, dest=f)
                 if hasattr(self, 'log_output'):
                     self.log_output.appendPlainText(f"[MSG] Konvertiert: {msg_path.name} -> {pdf_path.name}")
-                msg.close()
                 return pdf_path
-            else:
-                msg.close()
-                return None
+            return None
 
         except Exception as e:
             if hasattr(self, 'log_output'):
                 self.log_output.appendPlainText(f"[MSG] Fehler bei {msg_path.name}: {e}")
             return None
+        finally:
+            if msg is not None:
+                try:
+                    msg.close()
+                except Exception:
+                    pass
 
     def scan_folders_for_new_files(self) -> int:
         """

@@ -685,5 +685,63 @@ class TestImapMergeBodyEscaping(unittest.TestCase):
         self.assertNotIn("< 50", body, "Raw < must not appear in IMAP merge body_html")
 
 
+class TestMsgConvertClosesMessage(unittest.TestCase):
+    """_convert_msg_to_pdf() muss extract_msg.Message auch im Fehlerfall schliessen."""
+
+    def _make_mock_msg(self, plain_body: str = "Test"):
+        mock_msg = MagicMock()
+        mock_msg.htmlBody = None
+        mock_msg.body = plain_body
+        return mock_msg
+
+    def test_msg_closed_on_pisa_exception(self):
+        from UniversalInvoiceMail import MainWindow
+
+        mock_msg = self._make_mock_msg()
+        mock_extract_msg = MagicMock()
+        mock_extract_msg.Message.return_value = mock_msg
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            msg_path = Path(tmpdir) / "test.msg"
+            msg_path.write_bytes(b"dummy")
+
+            win = MainWindow.__new__(MainWindow)
+
+            with patch.dict("sys.modules", {"extract_msg": mock_extract_msg}), \
+                 patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa:
+                mock_pisa.CreatePDF.side_effect = RuntimeError("pisa crash")
+                result = win._convert_msg_to_pdf(msg_path)
+
+        self.assertIsNone(result)
+        mock_msg.close.assert_called_once()
+
+    def test_msg_closed_on_success(self):
+        from UniversalInvoiceMail import MainWindow
+
+        mock_msg = self._make_mock_msg()
+        mock_extract_msg = MagicMock()
+        mock_extract_msg.Message.return_value = mock_msg
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            msg_path = Path(tmpdir) / "test.msg"
+            msg_path.write_bytes(b"dummy")
+
+            win = MainWindow.__new__(MainWindow)
+
+            def fake_create_pdf(html, dest, **kwargs):
+                dest.write(b"%PDF-1.4 fake")
+                return MagicMock(err=0)
+
+            with patch.dict("sys.modules", {"extract_msg": mock_extract_msg}), \
+                 patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa:
+                mock_pisa.CreatePDF.side_effect = fake_create_pdf
+                result = win._convert_msg_to_pdf(msg_path)
+
+        mock_msg.close.assert_called_once()
+        self.assertIsNotNone(result)
+
+
 if __name__ == "__main__":
     unittest.main()
