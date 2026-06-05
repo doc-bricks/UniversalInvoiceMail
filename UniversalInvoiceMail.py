@@ -2204,6 +2204,7 @@ class InvoiceWorker(QThread):
             self.log.emit(f"❌ Kein Passwort für {account.name} gespeichert")
             return
 
+        mail = None
         try:
             self.log.emit(f"Verbinde mit {account.host}:{account.port}...")
 
@@ -2238,6 +2239,12 @@ class InvoiceWorker(QThread):
             self.log.emit("💡 Bei Gmail: App-Passwort in Google Konto erstellen")
         except Exception as e:
             self.log.emit(f"❌ Verbindungsfehler: {e}")
+        finally:
+            if mail is not None:
+                try:
+                    mail.shutdown()
+                except Exception:
+                    pass
 
     def _search_imap(self, mail, profile: InvoiceProfile):
         """Searches the currently selected IMAP folder using profile filters.

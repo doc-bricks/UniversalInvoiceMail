@@ -801,6 +801,78 @@ class TestMsgConvertClosesMessage(unittest.TestCase):
         self.assertIsNotNone(result)
 
 
+class TestImapConnectionShutdown(unittest.TestCase):
+    """_process_imap() muss IMAP-Verbindung auch bei Exceptions schliessen."""
+
+    def test_shutdown_called_on_login_error(self):
+        from UniversalInvoiceMail import InvoiceWorker, MailAccount, AppSettings
+
+        mock_mail = MagicMock()
+        mock_mail.login.side_effect = Exception("login failed")
+
+        account = MailAccount(
+            id="test", name="Test", provider="IMAP",
+            host="imap.test.com", port=993,
+            username="user@test.com", use_gmail_api=False
+        )
+        settings = AppSettings()
+
+        worker = InvoiceWorker.__new__(InvoiceWorker)
+        worker.accounts = [account]
+        worker.profiles = []
+        worker.settings = settings
+        worker.should_stop = False
+        worker.found_count = 0
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+
+        with patch("UniversalInvoiceMail.imaplib") as mock_imaplib, \
+             patch("UniversalInvoiceMail.KEYRING_AVAILABLE", True), \
+             patch("UniversalInvoiceMail.keyring") as mock_keyring:
+            mock_keyring.get_password.return_value = "password"
+            mock_imaplib.IMAP4_SSL.return_value = mock_mail
+            mock_imaplib.IMAP4.error = Exception
+            worker._process_imap(account, [])
+
+        mock_mail.shutdown.assert_called_once()
+
+    def test_shutdown_called_on_success(self):
+        from UniversalInvoiceMail import InvoiceWorker, MailAccount, AppSettings
+
+        mock_mail = MagicMock()
+        mock_mail.login.return_value = ("OK", [])
+        mock_mail.list.return_value = ("OK", [b'(\\HasNoChildren) "/" "INBOX"'])
+        mock_mail.select.return_value = ("OK", [b"1"])
+        mock_mail.search.return_value = ("OK", [b""])
+        mock_mail.logout.return_value = ("BYE", [])
+
+        account = MailAccount(
+            id="test2", name="Test2", provider="IMAP",
+            host="imap.test.com", port=993,
+            username="user@test.com", use_gmail_api=False
+        )
+        settings = AppSettings()
+
+        worker = InvoiceWorker.__new__(InvoiceWorker)
+        worker.accounts = [account]
+        worker.profiles = []
+        worker.settings = settings
+        worker.should_stop = False
+        worker.found_count = 0
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+
+        with patch("UniversalInvoiceMail.imaplib") as mock_imaplib, \
+             patch("UniversalInvoiceMail.KEYRING_AVAILABLE", True), \
+             patch("UniversalInvoiceMail.keyring") as mock_keyring:
+            mock_keyring.get_password.return_value = "password"
+            mock_imaplib.IMAP4_SSL.return_value = mock_mail
+            mock_imaplib.IMAP4.error = Exception
+            worker._process_imap(account, [])
+
+        mock_mail.shutdown.assert_called_once()
+
+
 class TestMergePdfMergerClosed(unittest.TestCase):
     """merge_pdf_with_body() muss PdfMerger auch bei Exceptions schliessen."""
 
