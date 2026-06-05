@@ -801,5 +801,51 @@ class TestMsgConvertClosesMessage(unittest.TestCase):
         self.assertIsNotNone(result)
 
 
+class TestMergePdfMergerClosed(unittest.TestCase):
+    """merge_pdf_with_body() muss PdfMerger auch bei Exceptions schliessen."""
+
+    def test_merger_closed_on_append_exception(self):
+        from UniversalInvoiceMail import merge_pdf_with_body
+
+        mock_merger = MagicMock()
+        mock_merger.append.side_effect = RuntimeError("append crash")
+        mock_pypdfs = MagicMock()
+        mock_pypdfs.PdfMerger.return_value = mock_merger
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            output_path = Path(tmpdir) / "out.pdf"
+
+            with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.dict("sys.modules", {"PyPDF2": mock_pypdfs}), \
+                 patch("UniversalInvoiceMail.html_to_pdf", return_value=True):
+                result = merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
+
+        mock_merger.close.assert_called_once()
+        # Fallback-Kopie sollte trotzdem stattgefunden haben
+        self.assertTrue(result)
+
+    def test_merger_closed_on_success(self):
+        from UniversalInvoiceMail import merge_pdf_with_body
+
+        mock_merger = MagicMock()
+        mock_pypdfs = MagicMock()
+        mock_pypdfs.PdfMerger.return_value = mock_merger
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            output_path = Path(tmpdir) / "out.pdf"
+            output_path.write_bytes(b"%PDF-1.4 merged")
+
+            with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.dict("sys.modules", {"PyPDF2": mock_pypdfs}), \
+                 patch("UniversalInvoiceMail.html_to_pdf", return_value=True):
+                result = merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
+
+        mock_merger.close.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

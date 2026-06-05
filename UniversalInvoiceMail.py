@@ -1095,12 +1095,14 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
 
         # PDFs mergen: Original + Body
         merger = PdfMerger()
-        merger.append(str(pdf_path))
-        merger.append(str(tmp_body_path))
+        try:
+            merger.append(str(pdf_path))
+            merger.append(str(tmp_body_path))
 
-        with open(output_path, 'wb') as f:
-            merger.write(f)
-        merger.close()
+            with open(output_path, 'wb') as f:
+                merger.write(f)
+        finally:
+            merger.close()
 
         return output_path.exists()
     except Exception as e:
