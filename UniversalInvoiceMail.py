@@ -573,6 +573,7 @@ class OCRProcessor:
     def _pdf_to_images(self, pdf_path: Path) -> List["Image.Image"]:
         """Converts PDF pages to PIL images using pypdfium2 (no Poppler needed)."""
         images = []
+        pdf = None
         try:
             pdf = pdfium.PdfDocument(str(pdf_path))
             for i in range(len(pdf)):
@@ -580,9 +581,11 @@ class OCRProcessor:
                 # Scale 3 entspricht etwa 216 DPI (72 * 3), gut fuer OCR
                 bitmap = page.render(scale=3)
                 images.append(bitmap.to_pil())
-            pdf.close()
         except Exception as e:
             logger.debug(f"Fehler bei PDF->Bild Konvertierung: {e}")
+        finally:
+            if pdf is not None:
+                pdf.close()
         return images
 
     def has_text(self, pdf_path: Path) -> bool:
@@ -1885,7 +1888,7 @@ class InvoiceWorker(QThread):
         # Fallback auf plain text
         for mime_type, data in all_parts:
             if 'plain' in mime_type:
-                return f"<pre>{data}</pre>"
+                return f"<pre>{escape(data)}</pre>"
 
         return ""
 
@@ -2334,6 +2337,8 @@ class InvoiceWorker(QThread):
         found_any = False
         safe_profile_name = sanitize_filename(profile.name)
         body_html = self._get_imap_message_body(msg) if self.settings.merge_body_with_attachments else ""
+        if body_html and not body_html.lstrip().startswith("<"):
+            body_html = f"<pre>{escape(body_html)}</pre>"
 
         # Anhänge verarbeiten
         if self.settings.download_attachments:

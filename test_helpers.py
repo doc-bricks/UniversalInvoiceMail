@@ -49,6 +49,7 @@ from UniversalInvoiceMail import (
     MailAccount,
     InvoiceProfile,
     Invoice,
+    InvoiceWorker,
 )
 
 
@@ -537,6 +538,151 @@ class TestEmlMsgPlainTextEscaping(unittest.TestCase):
         self.assertIn("&gt;", html, "> in MSG plain text must be HTML-escaped")
         self.assertIn("&amp;", html, "& in MSG plain text must be HTML-escaped")
         self.assertNotIn("< 100", html, "Raw < must not appear in MSG HTML")
+
+
+class TestGetMessageBodyEscaping(unittest.TestCase):
+    """_get_message_body() muss plain-text mit html.escape() schuetzen."""
+
+    def _make_payload(self, plain_text: str) -> dict:
+        import base64
+        data = base64.urlsafe_b64encode(plain_text.encode("utf-8")).decode()
+        return {
+            "mimeType": "multipart/alternative",
+            "parts": [
+                {
+                    "mimeType": "text/plain",
+                    "body": {"data": data},
+                }
+            ],
+        }
+
+    def test_plain_text_special_chars_are_escaped(self):
+        class WorkerStub:
+            _get_all_body_parts = InvoiceWorker._get_all_body_parts
+            _get_message_body = InvoiceWorker._get_message_body
+
+        stub = WorkerStub()
+        payload = self._make_payload("Preis < 10 EUR & Steuer > 0")
+        result = stub._get_message_body(payload)
+        self.assertIn("&lt;", result)
+        self.assertIn("&gt;", result)
+        self.assertIn("&amp;", result)
+        self.assertNotIn("< 10", result)
+
+    def test_html_body_is_returned_unescaped(self):
+        """HTML-Bodie sollen unverändert zurückgegeben werden."""
+        import base64
+
+        class WorkerStub:
+            _get_all_body_parts = InvoiceWorker._get_all_body_parts
+            _get_message_body = InvoiceWorker._get_message_body
+
+        html_body = "<p>Hello <b>World</b></p>"
+        data = base64.urlsafe_b64encode(html_body.encode("utf-8")).decode()
+        payload = {
+            "mimeType": "text/html",
+            "body": {"data": data},
+        }
+        stub = WorkerStub()
+        result = stub._get_message_body(payload)
+        self.assertEqual(result, html_body)
+
+
+class TestPdfToImagesClosesDocument(unittest.TestCase):
+    """_pdf_to_images() muss PdfDocument auch im Fehlerfall schliessen."""
+
+    def test_pdf_document_closed_on_render_error(self):
+        from UniversalInvoiceMail import OCRProcessor
+
+        mock_pdf = MagicMock()
+        mock_pdf.__len__ = MagicMock(return_value=2)
+        mock_page = MagicMock()
+        mock_page.render.side_effect = RuntimeError("render crash")
+        mock_pdf.__getitem__ = MagicMock(return_value=mock_page)
+
+        with patch("UniversalInvoiceMail.pdfium") as mock_pdfium, \
+             patch("UniversalInvoiceMail.OCR_AVAILABLE", True):
+            mock_pdfium.PdfDocument.return_value = mock_pdf
+            proc = OCRProcessor()
+            result = proc._pdf_to_images(Path("dummy.pdf"))
+
+        mock_pdf.close.assert_called_once()
+        self.assertEqual(result, [])
+
+    def test_pdf_document_closed_on_success(self):
+        from UniversalInvoiceMail import OCRProcessor
+
+        mock_bitmap = MagicMock()
+        mock_bitmap.to_pil.return_value = MagicMock()
+        mock_page = MagicMock()
+        mock_page.render.return_value = mock_bitmap
+
+        mock_pdf = MagicMock()
+        mock_pdf.__len__ = MagicMock(return_value=1)
+        mock_pdf.__getitem__ = MagicMock(return_value=mock_page)
+
+        with patch("UniversalInvoiceMail.pdfium") as mock_pdfium, \
+             patch("UniversalInvoiceMail.OCR_AVAILABLE", True):
+            mock_pdfium.PdfDocument.return_value = mock_pdf
+            proc = OCRProcessor()
+            result = proc._pdf_to_images(Path("dummy.pdf"))
+
+        mock_pdf.close.assert_called_once()
+        self.assertEqual(len(result), 1)
+
+
+class TestImapMergeBodyEscaping(unittest.TestCase):
+    """_process_imap_message() muss plain-text Body vor dem Merge-Pfad escapen."""
+
+    def _make_multipart_imap_msg(self, plain_text: str) -> object:
+        import email.mime.multipart
+        import email.mime.text
+        import email.mime.application
+        msg = email.mime.multipart.MIMEMultipart("mixed")
+        msg["Subject"] = "Test Rechnung"
+        msg["From"] = "sender@example.com"
+        msg["Date"] = "Thu, 1 Jan 2026 12:00:00 +0000"
+        msg.attach(email.mime.text.MIMEText(plain_text, "plain", "utf-8"))
+        att = email.mime.application.MIMEApplication(b"%PDF-1.4 fake", _subtype="pdf")
+        att.add_header("Content-Disposition", "attachment", filename="rechnung.pdf")
+        msg.attach(att)
+        return msg
+
+    def test_plain_text_body_is_escaped_for_merge(self):
+        from UniversalInvoiceMail import InvoiceWorker, AppSettings
+
+        plain_text = "Betrag < 50 EUR & mehr > 0"
+        msg = self._make_multipart_imap_msg(plain_text)
+
+        settings = AppSettings()
+        settings.merge_body_with_attachments = True
+        settings.download_attachments = True
+        settings.convert_body_to_pdf = False
+        settings.enable_hash_check = False
+
+        captured = {}
+
+        class WorkerStub:
+            _get_imap_message_body = InvoiceWorker._get_imap_message_body
+            _check_message_filters = staticmethod(lambda _profile, _subject, _body: True)
+            _compute_target_dir = staticmethod(lambda _profile: Path("/tmp"))
+
+            def _save_attachment_invoice(self, **kwargs):
+                captured.update(kwargs)
+                return False
+
+            log = MagicMock()
+
+        stub = WorkerStub()
+        stub.settings = settings
+
+        profile = InvoiceProfile(id="prof1", name="Test", account_id="acc1")
+        InvoiceWorker._process_imap_message(stub, msg, profile)
+
+        body = captured.get("body_html", "")
+        self.assertIn("&lt;", body, "< in IMAP plain body must be escaped for merge")
+        self.assertIn("&amp;", body, "& in IMAP plain body must be escaped for merge")
+        self.assertNotIn("< 50", body, "Raw < must not appear in IMAP merge body_html")
 
 
 if __name__ == "__main__":
