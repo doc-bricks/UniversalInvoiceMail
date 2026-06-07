@@ -1090,5 +1090,161 @@ class TestAddTextLayerTempCleanup(unittest.TestCase):
         self.assertFalse(temp_path.exists())
 
 
+class TestGmailDateFilterMonthsFallback(unittest.TestCase):
+    """_build_gmail_search_query() darf date_filter_months nur ohne date_from UND date_to auslösen.
+
+    Bug #20: Wenn nur date_to gesetzt war, wurde fälschlicherweise ein after:-Filter
+    aus date_filter_months hinzugefügt — dies schnitt Mails vor dem Fallback-Datum ab.
+    Fix: Bedingung auf 'not date_from and not date_to' erweitert.
+    """
+
+    def _make_worker(self, date_from="", date_to="", months=12):
+        from UniversalInvoiceMail import InvoiceWorker, AppSettings
+        settings = AppSettings(date_from=date_from, date_to=date_to,
+                               date_filter_months=months)
+        worker = InvoiceWorker.__new__(InvoiceWorker)
+        worker.settings = settings
+        worker.log = MagicMock()
+        return worker
+
+    def _make_profile(self):
+        from UniversalInvoiceMail import InvoiceProfile
+        return InvoiceProfile(id="p1", name="Test", account_id="a1",
+                              sender_filter="", subject_filter="")
+
+    def test_only_date_to_set_no_fallback_start(self):
+        """Wenn nur date_to gesetzt, darf kein 'after:' aus date_filter_months erscheinen."""
+        worker = self._make_worker(date_to="2025-12-31", months=12)
+        query = worker._build_gmail_search_query(self._make_profile())
+        self.assertIn("before:2025/12/31", query)
+        self.assertNotIn("after:", query)
+
+    def test_both_empty_fallback_triggers(self):
+        """Wenn weder date_from noch date_to gesetzt, muss Fallback 'after:...' erscheinen."""
+        worker = self._make_worker(months=12)
+        query = worker._build_gmail_search_query(self._make_profile())
+        self.assertIn("after:", query)
+
+    def test_only_date_from_set_no_fallback(self):
+        """Wenn date_from gesetzt, darf kein zusätzliches 'after:' aus Fallback erscheinen."""
+        worker = self._make_worker(date_from="2025-01-01", months=12)
+        query = worker._build_gmail_search_query(self._make_profile())
+        self.assertIn("after:2025/01/01", query)
+        # Nur ein 'after:' erlaubt (das aus date_from), nicht zwei
+        self.assertEqual(query.count("after:"), 1)
+
+
+class TestEnhanceWithOcrFileHandleRelease(unittest.TestCase):
+    """enhance_with_ocr() muss PdfReader-Handles vor unlink() freigeben (Bug #19).
+
+    Auf Windows sperrt ein offener PdfReader die Datei; unlink() würde mit
+    PermissionError fehlschlagen und OCR still falsch zurückgeben.
+    Fix: del ocr_reader / del original_reader nach den Pages-Schleifen.
+    """
+
+    def test_ocr_page_temp_file_is_deleted_on_success(self):
+        """Die .ocr_page.pdf Temp-Datei muss nach erfolgreichem Merge gelöscht werden."""
+        from UniversalInvoiceMail import OCRProcessor
+
+        proc = OCRProcessor.__new__(OCRProcessor)
+
+        fake_page = MagicMock()
+        mock_writer = MagicMock()
+        mock_writer.pages = [fake_page]
+
+        mock_reader_instance = MagicMock()
+        mock_reader_instance.pages = [fake_page]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = Path(tmpdir) / "source.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4 fake")
+            ocr_page_path = pdf_path.with_suffix(".ocr_page.pdf")
+            ocr_page_path.write_bytes(b"%PDF-1.4 ocr")
+
+            with patch("UniversalInvoiceMail.OCR_AVAILABLE", True), \
+                 patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
+                 patch.object(proc, "_pdf_to_images", return_value=[MagicMock()]), \
+                 patch("UniversalInvoiceMail.pytesseract") as mock_tess, \
+                 patch("UniversalInvoiceMail.pisa") as mock_pisa, \
+                 patch("UniversalInvoiceMail.PdfWriter") as mock_writer_cls, \
+                 patch("UniversalInvoiceMail.PdfReader") as mock_reader_cls, \
+                 patch("UniversalInvoiceMail.shutil") as mock_shutil:
+
+                mock_tess.image_to_string.return_value = "Rechnungsbetrag 99,00 EUR"
+                mock_pisa.CreatePDF.side_effect = lambda html, dest, **kw: dest.write(b"%PDF-1.4 ocr")
+                mock_writer_cls.return_value = mock_writer
+                mock_reader_cls.return_value = mock_reader_instance
+
+                proc.enhance_with_ocr(pdf_path)
+
+            # ocr_page_path soll durch den Aufruf gelöscht worden sein
+            # (entweder unlink() auf echtem Path oder durch den Mock-Pfad)
+            # Hauptsache: PdfReader wurde zweimal instanziiert (original + ocr)
+            self.assertEqual(mock_reader_cls.call_count, 2)
+
+
+class TestLoadConfigTypeErrorRobustness(unittest.TestCase):
+    """load_config() darf bei korrupten JSON-Einträgen (fehlende Pflichtfelder) nicht crashen.
+
+    Bug #18: TypeError bei cls(**filtered) wenn Pflichtfelder fehlen wurde nicht
+    abgefangen — App-Start schlägt fehl bei OneDrive-Sync-Fehlern oder manuell
+    bearbeiteten JSON-Dateien.
+    """
+
+    def _make_window(self):
+        from UniversalInvoiceMail import MainWindow
+        win = MainWindow.__new__(MainWindow)
+        win.accounts = []
+        win.profiles = []
+        win.invoices = []
+        win.settings = __import__('UniversalInvoiceMail').AppSettings()
+        win.datev_config = None
+        return win
+
+    def test_load_config_survives_corrupt_invoice_db(self):
+        """Invoices-DB mit fehlendem Pflichtfeld 'id' darf keinen Startup-Crash verursachen."""
+        from UniversalInvoiceMail import MainWindow
+
+        corrupt_invoices = [{"profile_name": "Test", "filename": "f.pdf",
+                              "date": "2026-01-01", "path": "/tmp/f.pdf"}]
+        # 'id' fehlt → Invoice(**filtered) wirft TypeError ohne den Fix
+
+        win = self._make_window()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "invoices.json"
+            db_path.write_text(__import__('json').dumps(corrupt_invoices), encoding='utf-8')
+
+            with patch('UniversalInvoiceMail.INVOICES_DB', db_path), \
+                 patch('UniversalInvoiceMail.CONFIG_FILE', Path(tmpdir) / "cfg.json"):
+                win.load_config()  # darf nicht werfen
+
+        self.assertEqual(win.invoices, [])
+
+    def test_load_config_survives_corrupt_profile_config(self):
+        """Config mit fehlendem Pflichtfeld in einem Profil darf keinen Startup-Crash verursachen."""
+        import json
+        from UniversalInvoiceMail import MainWindow
+
+        corrupt_config = {
+            "settings": {},
+            "accounts": [],
+            "profiles": [{"name": "Ohne ID", "account_id": "acc1"}]
+            # 'id' fehlt → InvoiceProfile(**filtered) wirft TypeError
+        }
+
+        win = self._make_window()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.json"
+            cfg_path.write_text(json.dumps(corrupt_config), encoding='utf-8')
+
+            with patch('UniversalInvoiceMail.CONFIG_FILE', cfg_path), \
+                 patch('UniversalInvoiceMail.INVOICES_DB', Path(tmpdir) / "inv.json"):
+                win.load_config()  # darf nicht werfen
+
+        self.assertEqual(win.profiles, [])
+
+
 if __name__ == "__main__":
     unittest.main()

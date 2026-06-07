@@ -720,15 +720,17 @@ pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5;
             # Original-PDF und OCR-Seite zusammenfuegen
             writer = PdfWriter()
 
-            # Original-Seiten hinzufuegen
+            # Original-Seiten hinzufuegen (Handle danach schliessen)
             original_reader = PdfReader(pdf_path)
             for page in original_reader.pages:
                 writer.add_page(page)
+            del original_reader  # Datei-Handle freigeben
 
-            # OCR-Seite(n) hinzufuegen
+            # OCR-Seite(n) hinzufuegen (Handle danach schliessen, vor unlink)
             ocr_reader = PdfReader(ocr_pdf_path)
             for page in ocr_reader.pages:
                 writer.add_page(page)
+            del ocr_reader  # Datei-Handle freigeben vor unlink (Windows-Lock)
 
             # Neues PDF schreiben
             temp_path = pdf_path.with_suffix(".enhanced.pdf")
@@ -1551,7 +1553,7 @@ class InvoiceWorker(QThread):
         except Exception as e:
             self.log.emit(f"❌ Gmail API Fehler: {e}")
 
-    def _get_gmail_credentials(self) -> Optional[Credentials]:
+    def _get_gmail_credentials(self) -> "Optional[Credentials]":
         """Retrieves or refreshes Gmail API credentials, running OAuth flow if needed."""
         creds = None
 
@@ -1649,7 +1651,7 @@ class InvoiceWorker(QThread):
         if self.settings.date_to:
             query_parts.append(f"before:{self.settings.date_to.replace('-', '/')}")
 
-        if not self.settings.date_from and self.settings.date_filter_months > 0:
+        if not self.settings.date_from and not self.settings.date_to and self.settings.date_filter_months > 0:
             since = datetime.now() - timedelta(days=self.settings.date_filter_months * 30)
             query_parts.append(f"after:{since.strftime('%Y/%m/%d')}")
 
@@ -2926,14 +2928,14 @@ class MainWindow(QMainWindow):
                             mandant_nr=dc.get('mandant_nr', '67890'),
                             konten_mapping={k: tuple(v) for k, v in km.items()} if km else None,
                         )
-            except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
+            except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
                 print(f"Config load error: {e}")
 
         if INVOICES_DB.exists():
             try:
                 data = json.loads(INVOICES_DB.read_text(encoding='utf-8'))
                 self.invoices = [Invoice.from_dict(i) for i in data]
-            except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
+            except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
                 print(f"Invoice DB error: {e}")
 
     def save_config(self):
