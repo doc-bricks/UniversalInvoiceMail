@@ -1,9 +1,11 @@
-"""Headless Linux platform smoke for UniversalInvoiceMail.
+"""Headless macOS/Linux platform smoke for UniversalInvoiceMail.
 
-This smoke covers the planned Linux desktop path:
+Runs on macOS and Linux (QT_QPA_PLATFORM=offscreen).
+Covers the non-Windows desktop path:
 - PySide6 main window starts offscreen.
 - IMAP login path handles missing keyring data without crashing.
-- LibreOffice executable discovery honors Linux env-path overrides.
+- LibreOffice executable discovery honors SOFFICE_PATH env-override
+  (simulates both Linux /usr/bin/soffice and macOS .app bundle path).
 - CSV export works with a minimal local invoice set.
 """
 
@@ -85,16 +87,16 @@ def _write_test_config(config_path: Path, download_path: Path) -> None:
 
 def _exercise_keyring_fallback() -> None:
     account = uim.MailAccount(
-        id="linux-imap",
-        name="Linux IMAP",
+        id="platform-imap",
+        name="Platform IMAP",
         provider="IMAP",
         host="imap.example.com",
         port=993,
         username="linux@example.com",
     )
     profile = uim.InvoiceProfile(
-        id="linux-profile",
-        name="Linux Shop",
+        id="platform-profile",
+        name="Platform Shop",
         account_id=account.id,
         sender_filter="shop@example.com",
         enabled=True,
@@ -111,7 +113,8 @@ def _exercise_keyring_fallback() -> None:
     assert any("Kein Passwort" in message for message in messages), messages
 
 
-def _exercise_libreoffice_linux_path(temp_dir: Path) -> None:
+def _exercise_libreoffice_path(temp_dir: Path) -> None:
+    """Tests SOFFICE_PATH env-override (Linux /usr/bin/soffice or macOS .app bundle)."""
     fake_soffice = temp_dir / "soffice"
     fake_soffice.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     fake_soffice.chmod(0o755)
@@ -125,7 +128,7 @@ def _exercise_libreoffice_linux_path(temp_dir: Path) -> None:
         output_path = temp_dir / "legacy.pdf"
 
         def _fake_libreoffice(_source_path: Path, target_path: Path) -> str:
-            target_path.write_bytes(b"%PDF-1.4\nlinux smoke\n")
+            target_path.write_bytes(b"%PDF-1.4\nplatform smoke\n")
             return "LibreOffice"
 
         with patch.object(uim, "convert_legacy_office_via_libreoffice", side_effect=_fake_libreoffice):
@@ -171,8 +174,8 @@ def _exercise_offscreen_window_and_csv_export(temp_dir: Path) -> None:
 
                             window.invoices = [
                                 uim.Invoice(
-                                    id="linux-1",
-                                    profile_name="Linux Shop",
+                                    id="platform-1",
+                                    profile_name="Platform Shop",
                                     filename=sample_pdf.name,
                                     date="2026-06-03",
                                     path=str(sample_pdf),
@@ -185,7 +188,7 @@ def _exercise_offscreen_window_and_csv_export(temp_dir: Path) -> None:
 
                             assert window.invoice_table.rowCount() == 1, window.invoice_table.rowCount()
 
-                            csv_path = temp_dir / "linux-smoke.csv"
+                            csv_path = temp_dir / "platform-smoke.csv"
                             with patch.object(
                                 uim.QFileDialog,
                                 "getSaveFileName",
@@ -195,7 +198,7 @@ def _exercise_offscreen_window_and_csv_export(temp_dir: Path) -> None:
 
                             assert csv_path.exists(), csv_path
                             content = csv_path.read_text(encoding="utf-8-sig")
-                            assert "Linux Shop" in content, content
+                            assert "Platform Shop" in content, content
                             assert sample_pdf.name in content, content
                         finally:
                             window.close()
@@ -203,12 +206,12 @@ def _exercise_offscreen_window_and_csv_export(temp_dir: Path) -> None:
 
 
 def main() -> None:
-    with tempfile.TemporaryDirectory(prefix="uim-linux-smoke-") as temp_dir_name:
+    with tempfile.TemporaryDirectory(prefix="uim-platform-smoke-") as temp_dir_name:
         temp_dir = Path(temp_dir_name)
         _exercise_keyring_fallback()
-        _exercise_libreoffice_linux_path(temp_dir)
+        _exercise_libreoffice_path(temp_dir)
         _exercise_offscreen_window_and_csv_export(temp_dir)
-    print("linux platform smoke passed")
+    print("source platform smoke passed")
 
 
 if __name__ == "__main__":

@@ -8,8 +8,8 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
 
 ### Added
-- Linux platform smoke `tests/linux_platform_smoke.py` for offscreen PySide6 start, missing-keyring fallback, LibreOffice fallback path detection and CSV export.
-- Separate GitHub Actions job `linux-platform-smoke` on `ubuntu-latest`.
+- macOS/Linux platform smoke `tests/source_platform_smoke.py` (renamed from `tests/linux_platform_smoke.py` via `git mv`, history preserved) for offscreen PySide6 start, missing-keyring fallback, LibreOffice SOFFICE_PATH env-override detection and CSV export.
+- GitHub Actions workflow `.github/workflows/source-platform-smoke.yml` on `ubuntu-latest` + `macos-latest`; installs PySide6 only (avoids pywin32/google-auth build failures on non-Windows).
 
 ### Fixed
 - HTML-Injection in PDF-Covern: Mail-Metadaten (Datum, Betreff, Absender) werden nun mit `html.escape()` gesichert, bevor sie in xhtml2pdf/Selenium-HTML eingebettet werden.
@@ -19,9 +19,16 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - HTML-Injection in IMAP-Merge-Pfad: `_process_imap_message()` escaped den Body beim Zusammenführen mit PDF-Anhängen.
 - Ressourcen-Leak in `_pdf_to_images()`: `pdfium.PdfDocument.close()` wird jetzt per `try/finally` auch bei Rendering-Exceptions aufgerufen.
 - Ressourcen-Leak in `_convert_msg_to_pdf()`: `extract_msg.Message.close()` wird jetzt per `try/finally` auch bei pisa-Exceptions aufgerufen.
+- Temp-Datei in `add_text_layer()` wird bei Fehlern bereinigt: `temp_path` wird jetzt vor dem `try`-Block deklariert, damit der `except`-Handler sie per `unlink(missing_ok=True)` löschen kann.
+- Variablen-Shadowing in `_process_gmail_message()` und `_process_imap_message()`: `success, msg = ocr.enhance_with_ocr(...)` überschrieb den `msg`-Parameter (E-Mail-Objekt); umbenannt zu `ocr_msg`.
+- Regex-Backreference-Bug in `BrowserPDFRenderer.render_html_to_pdf()`: Ein Absendername mit `\1` (z. B. `CORP\1user`) wurde von `re.sub()` als Backreferenz interpretiert und duplizierte den `<body>`-Tag; Ersatz durch Lambda-Funktion behoben.
+- Import-Crash ohne Gmail-Pakete: Die Rückgabe-Annotation `-> Optional[Credentials]` in `_get_gmail_credentials()` wurde eager ausgewertet; wenn Gmail-Pakete fehlen, ist `Credentials` undefiniert und das gesamte Modul schlägt beim Import fehl. Annotation auf `-> "Optional[Credentials]"` (String, lazy) umgestellt.
+- Gmail-Datumsfilter-Inkonsistenz in `_build_gmail_search_query()`: Der `date_filter_months`-Fallback wurde ausgelöst wenn nur `date_to` gesetzt war (ohne `date_from`), sodass fälschlicherweise eine `after:`-Schranke eingefügt wurde; IMAP-Pendant prüft korrekt `if not search_args`. Bedingung auf `not date_from and not date_to` korrigiert.
+- Windows-File-Lock in `enhance_with_ocr()`: `PdfReader(ocr_pdf_path)` hielt die `ocr_page.pdf`-Datei nach der Pages-Schleife offen; `unlink()` schlug auf Windows mit `PermissionError` fehl, OCR gab `False` zurück und hinterließ Temp-Dateien. `del ocr_reader` (und `del original_reader`) nach den jeweiligen Pages-Schleifen hinzugefügt, damit CPythons Refcounting die File-Handles sofort freigibt.
+- Startup-Crash bei korrupter Konfiguration: `load_config()` fing `TypeError` nicht ab; fehlende Pflichtfelder in `Invoice` oder `InvoiceProfile` (z. B. nach Sync-Fehler oder manueller Bearbeitung der JSON-Dateien) ließen `cls(**filtered)` mit `TypeError` fehlschlagen, der aus dem Konstruktor propagierte. `TypeError` zu beiden `except`-Klauseln in `load_config()` hinzugefügt.
 
 ### Changed
-- Porting status now tracks Linux desktop smoke coverage separately from the still-open macOS smoke task.
+- Porting status: macOS and Linux source smoke unified under `source_platform_smoke.py`; both platforms covered by CI.
 - DATEV-Header nutzt jetzt dieselbe Datumslogik wie die Buchungszeilen, damit auch `TT/MM/JJJJ` das korrekte Exportintervall setzt.
 ### Added
 - Gmail Query Builder im Profil-Dialog ergänzt; optionale Raw Queries können jetzt ohne manuelle Syntaxpflege vorbereitet werden
