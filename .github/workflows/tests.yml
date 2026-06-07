@@ -38,7 +38,7 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-  linux-platform-smoke:
+  source-platform-smoke:
     runs-on: ubuntu-latest
 
     env:
@@ -64,8 +64,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt pytest
 
-      - name: Compile Linux smoke
-        run: python -m py_compile UniversalInvoiceMail.py datev_exporter.py tests/linux_platform_smoke.py
+      - name: Compile source platform smoke
+        run: python -m py_compile UniversalInvoiceMail.py datev_exporter.py tests/source_platform_smoke.py
 
-      - name: Run Linux platform smoke
-        run: python tests/linux_platform_smoke.py
+      - name: Run source platform smoke
+        run: python tests/source_platform_smoke.py
