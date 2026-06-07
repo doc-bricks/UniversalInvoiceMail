@@ -96,7 +96,7 @@ UniversalInvoiceMail is intended for searches such as `local invoice email archi
 
 ```bash
 PYTHONIOENCODING=utf-8 python -m pytest -q
-QT_QPA_PLATFORM=offscreen python tests/linux_platform_smoke.py
+QT_QPA_PLATFORM=offscreen python tests/source_platform_smoke.py
 ```
 
 The repository currently has 53 mocked tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior and compact UI control accessibility.
