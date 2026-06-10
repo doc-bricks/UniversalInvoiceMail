@@ -35,9 +35,9 @@ import tempfile
 import time
 from html import escape
 from pathlib import Path
-from dataclasses import dataclass, asdict, field, fields
+from dataclasses import dataclass, asdict, fields
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple
 import uuid
 
 # GUI
@@ -47,10 +47,10 @@ from PySide6.QtWidgets import (
     QMessageBox, QDialog, QFormLayout, QComboBox, QGroupBox, QCheckBox,
     QTabWidget, QDialogButtonBox, QLineEdit, QFileDialog, QPlainTextEdit,
     QListWidget, QListWidgetItem, QSpinBox, QProgressBar, QFrame,
-    QSplitter, QStyle, QDateEdit, QGridLayout, QRadioButton
+    QDateEdit, QGridLayout, QRadioButton
 )
-from PySide6.QtCore import Qt, QThread, Signal, QUrl, QSize, QDate
-from PySide6.QtGui import QColor, QPalette, QDesktopServices, QFont, QIcon
+from PySide6.QtCore import Qt, QThread, Signal, QUrl, QDate
+from PySide6.QtGui import QDesktopServices, QIcon
 
 # PDF Konvertierung
 try:
@@ -154,7 +154,7 @@ except ImportError:
 
 # DATEV-Export (optional, gleicher Ordner wie UniversalInvoiceMail.py)
 try:
-    from datev_exporter import DATEVConfig, DATEVExporter, export_invoices_datev
+    from datev_exporter import DATEVConfig, DATEVExporter
     DATEV_AVAILABLE = True
 except ImportError:
     DATEV_AVAILABLE = False
@@ -1034,7 +1034,7 @@ a {{ word-wrap: break-word; overflow-wrap: anywhere; word-break: break-all; }}
 </body></html>"""
 
         with open(output_path, "wb") as f:
-            pisa_status = pisa.CreatePDF(
+            _ = pisa.CreatePDF(
                 src=full_html,
                 dest=f,
                 link_callback=link_callback,
@@ -1076,7 +1076,7 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
         return False
 
     try:
-        from PyPDF2 import PdfMerger, PdfReader
+        from PyPDF2 import PdfMerger
     except ImportError:
         # Fallback: Nur Original kopieren
         shutil.copy2(pdf_path, output_path)
@@ -1107,7 +1107,7 @@ def merge_pdf_with_body(pdf_path: Path, body_html: str, mail_meta: dict,
             merger.close()
 
         return output_path.exists()
-    except Exception as e:
+    except Exception:
         # Bei Fehler: Original kopieren
         shutil.copy2(pdf_path, output_path)
         return True
@@ -1685,9 +1685,18 @@ class InvoiceWorker(QThread):
 
         if profile.sender_filter:
             senders = [s.strip() for s in profile.sender_filter.split(",") if s.strip()]
-            if senders:
+            if len(senders) == 1:
                 safe_sender = senders[0].replace('"', '')
                 search_args.extend(["FROM", self._quote_imap_string(safe_sender)])
+            elif len(senders) > 1:
+                # IMAP OR: OR FROM "a" FROM "b" for 2; OR FROM "a" OR FROM "b" FROM "c" for 3+
+                or_args: List[str] = []
+                for i, sender in enumerate(senders):
+                    safe = sender.replace('"', '')
+                    if i < len(senders) - 1:
+                        or_args.append("OR")
+                    or_args.extend(["FROM", self._quote_imap_string(safe)])
+                search_args.extend(or_args)
 
         subjects = [s.strip() for s in profile.subject_filter.split(",") if s.strip()]
         if len(subjects) == 1:
@@ -3453,9 +3462,9 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             # Absender und Betreff extrahieren
             subject = email.header.decode_header(msg.get("Subject", ""))[0]
             if isinstance(subject[0], bytes):
-                subject_str = subject[0].decode(subject[1] or "utf-8", errors="replace")
+                _ = subject[0].decode(subject[1] or "utf-8", errors="replace")
             else:
-                subject_str = str(subject[0])
+                _ = str(subject[0])
 
             # HTML-Body extrahieren
             html_body = ""
@@ -3506,7 +3515,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         except ImportError:
             if hasattr(self, 'log_output'):
                 self.log_output.appendPlainText(
-                    f"[MSG] extract-msg nicht installiert. Bitte: pip install extract-msg"
+                    "[MSG] extract-msg nicht installiert. Bitte: pip install extract-msg"
                 )
             return None
 
@@ -3862,7 +3871,6 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self.log_output.appendPlainText("")
 
         # Worker starten
-        self.log_output.clear()
         self.progress.setVisible(True)
         self.progress.setValue(0)
         self.btn_start.setText("⏹️  STOPPEN")
@@ -3882,7 +3890,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
     def on_invoice_found(self, invoice: Invoice):
         """Callback wenn Rechnung gefunden wurde"""
         self.invoices.append(invoice)
-        self.save_config()
+        self.save_invoices_db()
 
     def on_finished(self, count: int):
         """Callback wenn Worker fertig"""

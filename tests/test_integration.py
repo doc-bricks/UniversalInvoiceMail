@@ -575,5 +575,78 @@ class TestDownloadAttachment(unittest.TestCase):
         worker._process_imap_message.assert_called_once()
 
 
+class TestImapSearchArgsBugs(unittest.TestCase):
+    """Regression tests for bugs fixed in bugsweep 2026-06-11."""
+
+    def _make_worker(self, sender_filter="", subject_filter="", date_from="", date_to=""):
+        account = uim.MailAccount(id="a", name="A", provider="IMAP")
+        profile = uim.InvoiceProfile(
+            id="p", name="Shop", account_id="a",
+            sender_filter=sender_filter,
+            subject_filter=subject_filter,
+            enabled=True,
+        )
+        settings = uim.AppSettings(date_from=date_from, date_to=date_to)
+        # Disable legacy date filter so search_args contains only sender/subject tokens —
+        # otherwise date_filter_months=12 prepends a dynamic SINCE that breaks exact asserts.
+        settings.date_filter_months = 0
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+        worker.log = MagicMock()
+        worker.log.emit = MagicMock()
+        return worker, profile
+
+    def test_build_imap_search_args_single_sender(self):
+        """Single sender produces exactly [FROM, <quoted>] — no OR."""
+        worker, profile = self._make_worker(sender_filter="amazon.de")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(args, ["FROM", '"amazon.de"'], f"Unexpected args: {args}")
+
+    def test_build_imap_search_args_two_senders_uses_imap_or(self):
+        """Two senders produce exact IMAP OR token sequence: OR FROM a FROM b."""
+        worker, profile = self._make_worker(sender_filter="amazon.de, amazon.com")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(
+            args,
+            ["OR", "FROM", '"amazon.de"', "FROM", '"amazon.com"'],
+            f"Unexpected args: {args}",
+        )
+
+    def test_build_imap_search_args_three_senders_uses_imap_or(self):
+        """Three senders produce exact nested IMAP OR: OR FROM a OR FROM b FROM c."""
+        worker, profile = self._make_worker(sender_filter="a.de, b.de, c.de")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(
+            args,
+            ["OR", "FROM", '"a.de"', "OR", "FROM", '"b.de"', "FROM", '"c.de"'],
+            f"Unexpected args: {args}",
+        )
+
+
+class TestOnInvoiceFoundPersistence(unittest.TestCase):
+    """Regression test: on_invoice_found must call save_invoices_db, not save_config."""
+
+    def test_on_invoice_found_calls_save_invoices_db_not_save_config(self):
+        """Each found invoice must trigger save_invoices_db only, not the heavier save_config."""
+        save_config_calls = []
+        save_db_calls = []
+
+        window = MagicMock()
+        window.invoices = []
+        window.save_config = lambda: save_config_calls.append(1)
+        window.save_invoices_db = lambda: save_db_calls.append(1)
+
+        invoice = uim.Invoice(
+            id="inv1", profile_name="Shop", filename="test.pdf",
+            date="2026-06-11", path="/tmp/test.pdf",
+            sender="shop@example.com", subject="Rechnung", hash="abc123",
+        )
+
+        uim.MainWindow.on_invoice_found(window, invoice)
+
+        self.assertEqual(len(save_db_calls), 1, "save_invoices_db must be called once")
+        self.assertEqual(len(save_config_calls), 0, "save_config must NOT be called")
+        self.assertIn(invoice, window.invoices)
+
+
 if __name__ == "__main__":
     unittest.main()

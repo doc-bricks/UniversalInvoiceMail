@@ -65,6 +65,51 @@ def qapp():
     return qt_app
 
 
+def test_start_grabbing_does_not_wipe_sync_log(tmp_path, monkeypatch, qapp):
+    """Sync messages before the worker must not be cleared by a second log_output.clear()."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        acc = uim.MailAccount(
+            id="a1", name="Test", provider="IMAP",
+            host="imap.example.com", port=993,
+            username="test@example.com",
+        )
+        window.accounts.append(acc)
+        prof = uim.InvoiceProfile(id="p1", name="TestShop", account_id="a1",
+                                  sender_filter="shop@example.com", enabled=True)
+        window.profiles.append(prof)
+
+        clear_calls = []
+        original_clear = window.log_output.clear
+        def tracking_clear():
+            clear_calls.append(1)
+            original_clear()
+        window.log_output.clear = tracking_clear
+
+        class _FakeWorker:
+            log = MagicMock()
+            progress = MagicMock()
+            invoice_found = MagicMock()
+            finished_signal = MagicMock()
+            def start(self): pass
+            def isRunning(self): return False
+            def stop(self): pass
+
+        monkeypatch.setattr(uim, "InvoiceWorker", lambda *a, **kw: _FakeWorker())
+
+        window.start_grabbing()
+
+        assert len(clear_calls) == 1, (
+            f"log_output.clear() called {len(clear_calls)} times — expected exactly 1 "
+            "(sync messages must not be wiped before worker output)"
+        )
+    finally:
+        window.close()
+
+
 def test_symbol_buttons_expose_accessible_context(tmp_path, monkeypatch, qapp):
     """Compact icon buttons keep a screenreader-friendly name and tooltip."""
     monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")

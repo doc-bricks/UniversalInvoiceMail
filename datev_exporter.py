@@ -9,7 +9,6 @@ Erstellt: 2026-01-12
 Version: 1.0.0
 """
 
-import csv
 import io
 from datetime import datetime
 from pathlib import Path
