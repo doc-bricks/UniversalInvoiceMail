@@ -1702,6 +1702,15 @@ class InvoiceWorker(QThread):
         if len(subjects) == 1:
             safe_subject = subjects[0].replace('"', '')
             search_args.extend(["SUBJECT", self._quote_imap_string(safe_subject)])
+        elif len(subjects) > 1:
+            # IMAP OR: OR SUBJECT "a" SUBJECT "b" for 2; nested for 3+
+            or_args: List[str] = []
+            for i, subj in enumerate(subjects):
+                safe = subj.replace('"', '')
+                if i < len(subjects) - 1:
+                    or_args.append("OR")
+                or_args.extend(["SUBJECT", self._quote_imap_string(safe)])
+            search_args.extend(or_args)
 
         return search_args or ["ALL"]
 

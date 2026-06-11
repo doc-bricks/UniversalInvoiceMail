@@ -621,6 +621,58 @@ class TestImapSearchArgsBugs(unittest.TestCase):
             f"Unexpected args: {args}",
         )
 
+    def test_build_imap_search_args_single_subject(self):
+        """Single subject filter produces exactly [SUBJECT, <quoted>]."""
+        worker, profile = self._make_worker(subject_filter="Rechnung")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(args, ["SUBJECT", '"Rechnung"'], f"Unexpected args: {args}")
+
+    def test_build_imap_search_args_two_subjects_uses_imap_or(self):
+        """Two subjects produce exact IMAP OR token sequence: OR SUBJECT a SUBJECT b."""
+        worker, profile = self._make_worker(subject_filter="Rechnung, Invoice")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(
+            args,
+            ["OR", "SUBJECT", '"Rechnung"', "SUBJECT", '"Invoice"'],
+            f"Unexpected args: {args}",
+        )
+
+    def test_build_imap_search_args_multi_subject_no_drop(self):
+        """With 3 subjects the previous silent-drop must not occur: all 3 must appear."""
+        worker, profile = self._make_worker(subject_filter="Rechnung, Invoice, Beleg")
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(args.count("OR"), 2, f"Expected 2 OR tokens, got: {args}")
+        self.assertIn('"Rechnung"', args)
+        self.assertIn('"Invoice"', args)
+        self.assertIn('"Beleg"', args)
+
+    def test_build_imap_search_args_sender_and_subject_combined(self):
+        """Single sender + single subject: exact token order FROM … SUBJECT …"""
+        worker, profile = self._make_worker(
+            sender_filter="shop@example.com", subject_filter="Rechnung"
+        )
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(
+            args,
+            ["FROM", '"shop@example.com"', "SUBJECT", '"Rechnung"'],
+            f"Unexpected args: {args}",
+        )
+
+    def test_build_imap_search_args_multi_sender_and_multi_subject(self):
+        """Multi sender + multi subject: OR-blocks must not interfere with each other."""
+        worker, profile = self._make_worker(
+            sender_filter="a.de, b.de", subject_filter="R, I"
+        )
+        args = worker._build_imap_search_args(profile)
+        self.assertEqual(
+            args,
+            [
+                "OR", "FROM", '"a.de"', "FROM", '"b.de"',
+                "OR", "SUBJECT", '"R"', "SUBJECT", '"I"',
+            ],
+            f"Unexpected args: {args}",
+        )
+
 
 class TestOnInvoiceFoundPersistence(unittest.TestCase):
     """Regression test: on_invoice_found must call save_invoices_db, not save_config."""
