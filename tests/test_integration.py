@@ -43,6 +43,28 @@ for mod in ['xhtml2pdf', 'xhtml2pdf.pisa', 'pytesseract', 'pypdfium2',
 import UniversalInvoiceMail as uim
 
 
+class TestMailAccountFromDict(unittest.TestCase):
+    """Regression tests for MailAccount.from_dict robustness."""
+
+    def test_from_dict_ignores_unknown_keys(self):
+        """from_dict must not raise TypeError on future/unknown config keys."""
+        d = {
+            "id": "a1", "name": "Test", "provider": "IMAP",
+            "host": "imap.example.com", "port": 993, "username": "u@x.de",
+            "use_gmail_api": False,
+            "unknown_future_field": "some_value",
+        }
+        account = uim.MailAccount.from_dict(d)
+        self.assertEqual(account.host, "imap.example.com")
+
+    def test_from_dict_uses_defaults_for_missing_keys(self):
+        """from_dict must use dataclass defaults for keys absent in the saved dict."""
+        d = {"id": "a1", "name": "Test", "provider": "IMAP"}
+        account = uim.MailAccount.from_dict(d)
+        self.assertFalse(account.use_gmail_api)
+        self.assertEqual(account.port, 993)
+
+
 class TestImapConnect(unittest.TestCase):
     """Tests for IMAP connection and authentication flow."""
 
