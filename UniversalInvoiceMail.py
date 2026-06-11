@@ -2542,6 +2542,8 @@ class AccountDialog(QDialog):
                 if preset.get('host') == self.account.host:
                     self.cb_provider.setCurrentText(provider)
                     break
+            # on_provider_changed may have overwritten use_gmail_api — restore
+            self.ck_gmail_api.setChecked(self.account.use_gmail_api)
 
     def on_provider_changed(self, provider: str):
         """Füllt IMAP-Einstellungen basierend auf Provider"""

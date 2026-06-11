@@ -110,6 +110,28 @@ def test_start_grabbing_does_not_wipe_sync_log(tmp_path, monkeypatch, qapp):
         window.close()
 
 
+def test_account_dialog_restores_use_gmail_api_false_on_edit(qapp):
+    """AccountDialog must not force use_gmail_api=True when editing a Gmail account with it off.
+
+    Regression: on_provider_changed("Gmail") sets ck_gmail_api=True, overriding the loaded
+    account value. Fix: ck_gmail_api is re-applied after provider detection.
+    """
+    account = uim.MailAccount(
+        id="a1", name="MyGmail", provider="Gmail",
+        host="imap.gmail.com", port=993,
+        username="test@gmail.com",
+        use_gmail_api=False,
+    )
+    dialog = uim.AccountDialog(account=account)
+    try:
+        assert not dialog.ck_gmail_api.isChecked(), (
+            "AccountDialog must respect use_gmail_api=False when editing a Gmail account; "
+            "on_provider_changed must not override it"
+        )
+    finally:
+        dialog.close()
+
+
 def test_symbol_buttons_expose_accessible_context(tmp_path, monkeypatch, qapp):
     """Compact icon buttons keep a screenreader-friendly name and tooltip."""
     monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
