@@ -103,7 +103,7 @@ UniversalInvoiceMail passt zu Suchanfragen wie `lokales Rechnungsarchiv aus E-Ma
 PYTHONIOENCODING=utf-8 python -m pytest -q
 ```
 
-Vorhanden sind aktuell 53 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
+Vorhanden sind aktuell 101 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
 
 ## Datenschutz
 

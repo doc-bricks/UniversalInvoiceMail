@@ -4,16 +4,28 @@ Canonical repository: https://github.com/doc-bricks/UniversalInvoiceMail
 
 UniversalInvoiceMail is a local-first Windows desktop app for collecting invoices and receipts from email accounts. It supports IMAP, optional Gmail API access, profile-based filters, Gmail raw queries, attachment-to-PDF conversion, OCR hooks, duplicate detection, a private local archive and DATEV-style cp1252 CSV export.
 
-Discovery phrases:
+## Audience
 
-- local invoice email archive
-- Gmail invoice downloader
-- IMAP receipt extractor
-- DATEV CSV export from email
-- PySide6 invoice manager
-- OCR invoice attachment archive
-- privacy-first accounting document workflow
-- Windows local-first bookkeeping handoff
+- **Freelancers and small businesses** in German-speaking markets who collect invoices from Gmail or IMAP accounts and need DATEV-compatible CSV exports for their tax advisor.
+- **Privacy-conscious Windows users** who want a local-first invoice archive without storing data in cloud services.
+- **Bookkeepers and accountants** who fetch and pre-sort client invoices from email before handing off to DATEV or similar systems.
+- **Developers** building or extending PySide6 Windows desktop workflows with IMAP, Gmail API, OCR, and CSV export.
+- **Power users** who want profile-based mail filtering, Gmail raw query support, and duplicate-safe archiving without a subscription.
+
+## Search Phrases
+
+- `local invoice email archive`
+- `Gmail invoice downloader`
+- `IMAP receipt extractor`
+- `DATEV CSV export from email`
+- `PySide6 invoice manager`
+- `OCR invoice attachment archive`
+- `privacy-first accounting document workflow`
+- `Windows local-first bookkeeping handoff`
+- `DATEV Buchungsstapel aus E-Mail`
+- `Rechnungen aus Gmail archivieren`
+
+## Last-checked: 2026-06-11
 
 Important files:
 

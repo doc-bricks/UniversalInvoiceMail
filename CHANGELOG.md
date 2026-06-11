@@ -4,6 +4,14 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Fixed
+- IMAP multi-subject OR: Wenn 2+ Betreff-Filter konfiguriert waren, wurden Betreff-Einträge nach dem ersten stillschweigend verworfen; es wurde kein OR-Ausdruck aufgebaut, sodass nur Nachrichten mit dem ersten Betreff gefunden wurden.
+- AccountDialog: `use_gmail_api` wurde beim Bearbeiten eines Gmail-Kontos (use_gmail_api=False) durch `on_provider_changed()` auf True zurückgesetzt; der gespeicherte Wert wird jetzt nach dem Provider-Lookup wiederhergestellt.
+- MailAccount.from_dict: Unbekannte Schlüssel wurden stillschweigend verworfen; jetzt werden neue Felder toleriert (Vorwärtskompatibilität).
+- IMAP multi-sender OR: Für 2+ Absender-Filter wurde die korrekte verschachtelte OR-FROM-Kette aufgebaut; zuvor wurden Absender mit AND verknüpft, sodass keine Nachricht passte.
+- on_invoice_found nutzt jetzt save_invoices_db statt save_config (kein vollständiges Rewrite der Config bei jeder gefundenen Rechnung).
+- start_grabbing: redundanter log_output.clear()-Aufruf entfernt, der Sync-Status-Meldungen löschte, bevor der Worker-Thread startete.
+
 ### Changed
 - README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
 
@@ -41,7 +49,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ### Verified
 - DATEV-Export als bereits vorhandene Migration gegen Code, Dialog, Doku und Regressionstests nachgezogen; `AUFGABEN.txt` entsprechend korrigiert
-- Lokaler Teststand auf 53 grüne Tests aktualisiert
+- Lokaler Teststand auf 101 grüne Tests aktualisiert
 
 ## [2.3.0] - 2026-05-02
 ### Added
