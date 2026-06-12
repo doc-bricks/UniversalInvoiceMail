@@ -25,7 +25,7 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-06-11
+## Last-checked: 2026-06-12
 
 Important files:
 
