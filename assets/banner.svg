@@ -1,0 +1,281 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="100%" height="100%">
+  <defs>
+    <!-- Fonts import -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&amp;family=Space+Grotesk:wght@500;700&amp;display=swap');
+      .wordmark {
+        font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      }
+      .tagline, .badge-text {
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+      }
+    </style>
+
+    <!-- Gradients -->
+    <radialGradient id="bg-grad" cx="30%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="60%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+
+    <linearGradient id="octo-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff9ebd" />
+      <stop offset="100%" stop-color="#ff527b" />
+    </linearGradient>
+
+    <linearGradient id="text-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff9ebd" />
+      <stop offset="100%" stop-color="#ff527b" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="shadow-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" />
+    </filter>
+    <filter id="glow-blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" />
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="1200" height="340" rx="20" fill="url(#bg-grad)" stroke="#1e293b" stroke-width="1" />
+
+  <!-- Background Glows -->
+  <circle cx="950" cy="170" r="150" fill="#4f46e5" opacity="0.12" filter="url(#glow-blur)" />
+  <circle cx="280" cy="180" r="120" fill="#ff2e93" opacity="0.08" filter="url(#glow-blur)" />
+
+  <!-- Ground Shadow under Octopus -->
+  <ellipse cx="280" cy="245" rx="75" ry="12" fill="#020617" opacity="0.5" filter="url(#shadow-blur)" />
+
+  <!-- Behind Tentacles (Arm 1, 4, 5, 8) -->
+  <!-- Arm 1 (Top-Left) -->
+  <path d="M 235 190 Q 185 140 165 110" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 235 190 Q 185 140 165 110" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 4 (Bottom-Left) -->
+  <path d="M 245 225 Q 205 260 190 265" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 245 225 Q 205 260 190 265" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 5 (Bottom-Right) - Holds Pen -->
+  <path d="M 315 225 Q 375 265 430 235" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 315 225 Q 375 265 430 235" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 8 (Top-Right) - Holds Stamp -->
+  <path d="M 325 190 Q 370 145 390 120" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 325 190 Q 370 145 390 120" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Suction cups for behind tentacles -->
+  <!-- Arm 1 Suction Cups -->
+  <circle cx="210" cy="160" r="7" fill="#8a1c3d" />
+  <circle cx="210" cy="160" r="4.5" fill="#ffd1dc" />
+  <circle cx="185" cy="135" r="7" fill="#8a1c3d" />
+  <circle cx="185" cy="135" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 4 Suction Cups -->
+  <circle cx="225" cy="242" r="7" fill="#8a1c3d" />
+  <circle cx="225" cy="242" r="4.5" fill="#ffd1dc" />
+  <circle cx="205" cy="258" r="7" fill="#8a1c3d" />
+  <circle cx="205" cy="258" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 5 Suction Cups -->
+  <circle cx="348" cy="253" r="7" fill="#8a1c3d" />
+  <circle cx="348" cy="253" r="4.5" fill="#ffd1dc" />
+  <circle cx="388" cy="258" r="7" fill="#8a1c3d" />
+  <circle cx="388" cy="258" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 8 Suction Cups -->
+  <circle cx="345" cy="168" r="7" fill="#8a1c3d" />
+  <circle cx="345" cy="168" r="4.5" fill="#ffd1dc" />
+  <circle cx="368" cy="148" r="7" fill="#8a1c3d" />
+  <circle cx="368" cy="148" r="4.5" fill="#ffd1dc" />
+
+
+  <!-- Octopus Head -->
+  <path d="M 220 180 C 220 125, 235 110, 280 110 C 325 110, 340 125, 340 180 C 340 215, 315 230, 280 230 C 245 230, 220 215, 220 180 Z" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3.5" stroke-linejoin="round" />
+
+  <!-- Face Elements -->
+  <!-- Blush -->
+  <ellipse cx="236" cy="192" rx="10" ry="6" fill="#ff4d6d" opacity="0.4" />
+  <ellipse cx="324" cy="192" rx="10" ry="6" fill="#ff4d6d" opacity="0.4" />
+
+  <!-- Eyes -->
+  <ellipse cx="255" cy="175" rx="14" ry="16" fill="#0f172a" />
+  <ellipse cx="305" cy="175" rx="14" ry="16" fill="#0f172a" />
+  <!-- Sparkles -->
+  <circle cx="251" cy="169" r="6" fill="#ffffff" />
+  <circle cx="301" cy="169" r="6" fill="#ffffff" />
+  <circle cx="260" cy="181" r="3" fill="#ffffff" />
+  <circle cx="310" cy="181" r="3" fill="#ffffff" />
+
+  <!-- Monocle over right eye -->
+  <circle cx="305" cy="175" r="22" fill="#38bdf8" fill-opacity="0.12" stroke="#d97706" stroke-width="2.5" />
+  <!-- Monocle glass reflection -->
+  <path d="M 293 163 Q 308 158 321 170" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+  <!-- Monocle chain -->
+  <path d="M 327 175 Q 345 195 338 215" fill="none" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" />
+
+  <!-- Focused Eyebrows -->
+  <path d="M 238 153 Q 255 147 268 156" fill="none" stroke="#8a1c3d" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 292 156 Q 305 147 322 153" fill="none" stroke="#8a1c3d" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Smile -->
+  <path d="M 273 186 C 275 192, 285 192, 287 186" fill="none" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Gloss Highlight on Head -->
+  <ellipse cx="255" cy="135" rx="16" ry="8" fill="#ffffff" opacity="0.2" transform="rotate(-15, 255, 135)" />
+
+
+  <!-- In Front Tentacles (Arm 2, 3, 6, 7) -->
+  <!-- Arm 2 (Mid-Left-Upper) -->
+  <path d="M 225 205 Q 165 180 135 165" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 225 205 Q 165 180 135 165" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 3 (Mid-Left-Lower) -->
+  <path d="M 230 215 Q 170 215 145 230" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 230 215 Q 170 215 145 230" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 6 (Mid-Right-Lower) - Holds Invoice bottom-left -->
+  <path d="M 330 215 Q 360 225 385 215" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 330 215 Q 360 225 385 215" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Arm 7 (Mid-Right-Upper) - Holds Invoice top-left -->
+  <path d="M 335 205 Q 365 180 380 150" fill="none" stroke="#8a1c3d" stroke-width="24" stroke-linecap="round" />
+  <path d="M 335 205 Q 365 180 380 150" fill="none" stroke="url(#octo-grad)" stroke-width="18" stroke-linecap="round" />
+
+  <!-- Suction cups for in front tentacles -->
+  <!-- Arm 2 Suction Cups -->
+  <circle cx="190" cy="190" r="7" fill="#8a1c3d" />
+  <circle cx="190" cy="190" r="4.5" fill="#ffd1dc" />
+  <circle cx="160" cy="180" r="7" fill="#8a1c3d" />
+  <circle cx="160" cy="180" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 3 Suction Cups -->
+  <circle cx="195" cy="208" r="7" fill="#8a1c3d" />
+  <circle cx="195" cy="208" r="4.5" fill="#ffd1dc" />
+  <circle cx="165" cy="218" r="7" fill="#8a1c3d" />
+  <circle cx="165" cy="218" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 6 Suction Cups -->
+  <circle cx="346" cy="225" r="7" fill="#8a1c3d" />
+  <circle cx="346" cy="225" r="4.5" fill="#ffd1dc" />
+  <circle cx="368" cy="223" r="7" fill="#8a1c3d" />
+  <circle cx="368" cy="223" r="4.5" fill="#ffd1dc" />
+
+  <!-- Arm 7 Suction Cups -->
+  <circle cx="348" cy="195" r="7" fill="#8a1c3d" />
+  <circle cx="348" cy="195" r="4.5" fill="#ffd1dc" />
+  <circle cx="363" cy="177" r="7" fill="#8a1c3d" />
+  <circle cx="363" cy="177" r="4.5" fill="#ffd1dc" />
+
+
+  <!-- Documents / Props -->
+  <!-- Single Invoice Document -->
+  <g transform="translate(410, 180) rotate(-10)">
+    <!-- White paper -->
+    <rect x="-35" y="-48" width="70" height="96" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+    <!-- Header blue logo block -->
+    <rect x="-27" y="-38" width="20" height="8" rx="1.5" fill="#3b82f6" />
+    <line x1="0" y1="-34" x2="27" y2="-34" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
+    <line x1="0" y1="-28" x2="15" y2="-28" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Line items -->
+    <!-- Item 1 -->
+    <line x1="-27" y1="-14" x2="5" y2="-14" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="17" y1="-14" x2="27" y2="-14" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Item 2 -->
+    <line x1="-27" y1="-6" x2="10" y2="-6" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="17" y1="-6" x2="27" y2="-6" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Item 3 -->
+    <line x1="-27" y1="2" x2="0" y2="2" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="17" y1="2" x2="27" y2="2" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Separator -->
+    <line x1="-27" y1="12" x2="27" y2="12" stroke="#94a3b8" stroke-width="1" />
+    <!-- Total -->
+    <line x1="-27" y1="20" x2="-8" y2="20" stroke="#475569" stroke-width="3" stroke-linecap="round" />
+    <line x1="12" y1="20" x2="27" y2="20" stroke="#ff527b" stroke-width="3.5" stroke-linecap="round" />
+    <!-- PAID stamp -->
+    <g transform="translate(10, 32) rotate(-8)">
+      <rect x="-10" y="-6" width="20" height="12" rx="1.5" fill="none" stroke="#22c55e" stroke-width="1.2" stroke-dasharray="2,1.2" />
+      <text x="0" y="3.5" font-family="'Outfit', system-ui, sans-serif" font-size="6.5" font-weight="800" fill="#22c55e" text-anchor="middle" letter-spacing="0.5">PAID</text>
+    </g>
+  </g>
+
+  <!-- Pen Prop (Held in Arm 5) -->
+  <g transform="translate(430, 235) rotate(-40)">
+    <!-- Pen body -->
+    <rect x="-4" y="-22" width="8" height="30" rx="1.5" fill="#1e1b4b" stroke="#8a1c3d" stroke-width="1.2" />
+    <!-- Gold ring -->
+    <rect x="-4.5" y="-12" width="9" height="3" fill="#fbbf24" />
+    <!-- Pen tip -->
+    <path d="M -4 8 L 0 16 L 4 8 Z" fill="#e2e8f0" stroke="#8a1c3d" stroke-width="1.2" />
+    <!-- Gold nib detail -->
+    <line x1="0" y1="8" x2="0" y2="13" stroke="#fbbf24" stroke-width="1" />
+  </g>
+
+  <!-- Stamp Prop (Held in Arm 8) -->
+  <g transform="translate(390, 120) rotate(15)">
+    <!-- Stamp handle -->
+    <path d="M -4 -16 Q -2 -24 0 -24 Q 2 -24 4 -16 C 4 -10 2 -5 3 0 L -3 0 C -2 -5 -4 -10 -4 -16 Z" fill="#b45309" stroke="#8a1c3d" stroke-width="1.2" />
+    <!-- Stamp base -->
+    <rect x="-9" y="0" width="18" height="8" rx="2" fill="#d97706" stroke="#8a1c3d" stroke-width="1.2" />
+    <!-- Rubber pad -->
+    <rect x="-8" y="8" width="16" height="3" fill="#ef4444" />
+  </g>
+
+
+  <!-- Grippers (Tentacle tips wrapping on top of documents/props) -->
+  <circle cx="155" cy="110" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="125" cy="165" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="135" cy="230" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="180" cy="265" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="430" cy="235" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="385" cy="215" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="380" cy="150" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+  <circle cx="390" cy="120" r="8" fill="url(#octo-grad)" stroke="#8a1c3d" stroke-width="3" />
+
+
+  <!-- Bubbles (Extra cute detailing) -->
+  <g opacity="0.75">
+    <!-- Bubble 1 -->
+    <circle cx="340" cy="130" r="7" fill="none" stroke="#38bdf8" stroke-width="1.2" />
+    <circle cx="338" cy="128" r="1.5" fill="#ffffff" />
+    <!-- Bubble 2 -->
+    <circle cx="332" cy="112" r="4.5" fill="none" stroke="#38bdf8" stroke-width="1" />
+    <circle cx="330.5" cy="110.5" r="1" fill="#ffffff" />
+    <!-- Bubble 3 -->
+    <circle cx="212" cy="140" r="6" fill="none" stroke="#38bdf8" stroke-width="1.2" />
+    <circle cx="210" cy="138" r="1.5" fill="#ffffff" />
+    <!-- Bubble 4 -->
+    <circle cx="205" cy="115" r="4" fill="none" stroke="#38bdf8" stroke-width="1" />
+    <circle cx="203.5" cy="113.5" r="0.8" fill="#ffffff" />
+  </g>
+
+
+  <!-- Typography (Wordmark, Tagline, Badges) -->
+  <!-- Wordmark -->
+  <text x="500" y="155" class="wordmark" font-size="52" font-weight="700" fill="#ffffff" letter-spacing="-0.5">
+    Universal<tspan fill="url(#text-grad)">InvoiceMail</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="500" y="202" class="tagline" font-size="20" font-weight="400" fill="#cbd5e1" letter-spacing="-0.2">
+    Automated invoice extraction and DATEV export.
+  </text>
+
+  <!-- Feature Badges -->
+  <!-- Badge 1: Python -->
+  <g transform="translate(500, 232)">
+    <rect width="80" height="28" rx="14" fill="#1e1b4b" stroke="#312e81" stroke-width="1.5" />
+    <text x="40" y="18" class="badge-text" font-size="12" font-weight="600" fill="#a5b4fc" text-anchor="middle">Python</text>
+  </g>
+  <!-- Badge 2: DATEV Export -->
+  <g transform="translate(592, 232)">
+    <rect width="120" height="28" rx="14" fill="#1e1b4b" stroke="#312e81" stroke-width="1.5" />
+    <text x="60" y="18" class="badge-text" font-size="12" font-weight="600" fill="#a5b4fc" text-anchor="middle">DATEV Export</text>
+  </g>
+  <!-- Badge 3: Open Source -->
+  <g transform="translate(724, 232)">
+    <rect width="110" height="28" rx="14" fill="#1e1b4b" stroke="#312e81" stroke-width="1.5" />
+    <text x="55" y="18" class="badge-text" font-size="12" font-weight="600" fill="#a5b4fc" text-anchor="middle">Open Source</text>
+  </g>
+
+</svg>

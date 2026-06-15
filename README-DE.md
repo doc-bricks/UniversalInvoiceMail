@@ -1,3 +1,5 @@
+<img src="assets/banner.svg" width="100%" alt="UniversalInvoiceMail — Rechnungen automatisch erfassen und DATEV-Export">
+
 # UniversalInvoiceMail v2.3.0
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
@@ -16,7 +18,7 @@ Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von R
 | Belege von Shops oder Dienstleistern finden | Profilfilter für Absender, Betreff, Body-Text, Zeitraum und Gmail-Raw-Queries |
 | Lokales Rechnungsarchiv pflegen | Zielordner im Windows-Benutzerprofil oder in einem lokalen Sync-Ordner |
 | Buchhaltungsübergabe vorbereiten | Editierbare EUR-Beträge und DATEV-naher `cp1252`-CSV-Export |
-| Portables Datenformat verstehen | [EXPORTFORMAT.md](EXPORTFORMAT.md) für das geplante redigierte Austausch-Bundle |
+| Portables Datenformat verstehen | [EXPORTFORMAT.md](EXPORTFORMAT.md) für das implementierte redigierte Austausch-Bundle |
 
 ## Überblick
 
@@ -34,6 +36,7 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 - Optionales OCR für bildbasierte PDFs mit Tesseract und `pypdfium2`
 - Editierbare Rechnungsbeträge direkt in der Tabelle für nachgelagerte Buchhaltung
 - Optionaler DATEV-Export mit konfigurierbarer Berater-/Mandantennummer und Konten-Mapping im SKR03-Stil
+- Redigierter Export/Reimport von `universalinvoicemail-invoicebundle-v1.json` für Companion- und Prüf-Workflows
 - Hash-basierte Duplikat-Erkennung über lokale Archivordner
 - Sichere Passwortspeicherung via `keyring`
 
@@ -61,7 +64,7 @@ python UniversalInvoiceMail.py
 3. Optional OCR und PDF-Modus einstellen
 4. Scan auslösen
 5. Für buchungsrelevante Einträge Rechnungsbeträge ergänzen
-6. Ergebnisse im lokalen Rechnungsarchiv prüfen oder als DATEV-CSV exportieren
+6. Ergebnisse im lokalen Rechnungsarchiv prüfen, als DATEV-CSV exportieren oder als redigiertes Bundle übergeben
 
 ## Lokale Daten
 
@@ -92,6 +95,8 @@ Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht
 - `DATEV exportieren` erzeugt einen DATEV-Buchungsstapel aus ausgewählten Rechnungen.
 - `berater_nr` und `mandant_nr` bleiben im Exportdialog konfigurierbar.
 - Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und danach ausgewiesen.
+- `Bundle Export` schreibt ein redigiertes JSON-Bundle mit Profilfiltern, DATEV-Basisdaten, Rechnungs-Hashes und optionalen Dateireferenzen.
+- `Bundle Import` akzeptiert aus einem Companion nur Betrag, Prüfflag und Notiz zurück und prüft vor dem Reimport ID und Datei-Hash.
 
 ## Suchkontext
 
@@ -103,7 +108,7 @@ UniversalInvoiceMail passt zu Suchanfragen wie `lokales Rechnungsarchiv aus E-Ma
 PYTHONIOENCODING=utf-8 python -m pytest -q
 ```
 
-Vorhanden sind aktuell 101 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
+Vorhanden sind aktuell 104 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
 
 ## Datenschutz
 

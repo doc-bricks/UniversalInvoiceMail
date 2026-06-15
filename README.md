@@ -1,3 +1,5 @@
+<img src="assets/banner.svg" width="100%" alt="UniversalInvoiceMail — Automated invoice extraction and DATEV export">
+
 # UniversalInvoiceMail
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
@@ -16,7 +18,7 @@ Local-first Windows desktop tool for collecting invoices and receipts from email
 | Find receipts from shops or providers | Profile filters for sender, subject, body text, dates, and Gmail raw queries |
 | Keep a local invoice archive | Target folders under your Windows user profile or a local sync folder |
 | Prepare accounting handoff | Editable EUR amounts and DATEV-style cp1252 CSV export |
-| Understand portable data | [EXPORTFORMAT.md](EXPORTFORMAT.md) for the planned redacted exchange bundle |
+| Understand portable data | [EXPORTFORMAT.md](EXPORTFORMAT.md) for the implemented redacted exchange bundle |
 
 ## Features
 
@@ -29,6 +31,7 @@ Local-first Windows desktop tool for collecting invoices and receipts from email
 - Optional legacy conversion for `.doc` and `.xls` via Word/Excel-COM or LibreOffice
 - Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
 - Manual invoice amount column plus DATEV export for selected invoices
+- Redacted `universalinvoicemail-invoicebundle-v1.json` export/import for companion review workflows
 - Hash-based duplicate detection across local archive folders
 - Secure credential storage via `keyring`
 
@@ -56,7 +59,7 @@ python UniversalInvoiceMail.py
 3. Optionally enable OCR and PDF mode
 4. Start a scan
 5. Enter invoice amounts for entries that should flow into accounting
-6. Review results in the local invoice archive or export them as DATEV CSV
+6. Review results in the local invoice archive, export them as DATEV CSV, or hand off a redacted bundle
 
 ## Local Data
 
@@ -87,6 +90,8 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 - `DATEV exportieren` creates DATEV booking batches from the selected invoices.
 - `berater_nr` and `mandant_nr` are configurable in the export dialog.
 - Invoices without an entered amount are skipped deliberately and called out after export.
+- `Bundle Export` writes a redacted JSON bundle with profile filters, DATEV base data, invoice hashes, and optional file references.
+- `Bundle Import` accepts only amount, review status, and notes back from a companion, guarded by invoice ID and file hash checks.
 
 ## Search Context
 
@@ -99,7 +104,7 @@ PYTHONIOENCODING=utf-8 python -m pytest -q
 QT_QPA_PLATFORM=offscreen python tests/source_platform_smoke.py
 ```
 
-The repository currently has 101 mocked tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior and compact UI control accessibility.
+The repository currently has 104 mocked tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, and compact UI control accessibility.
 
 For Linux, an additional headless smoke covers the desktop start path, missing-keyring handling, LibreOffice fallback detection and CSV export without requiring a visible session.
 
