@@ -124,6 +124,24 @@
   <!-- Gloss Highlight on Head -->
   <ellipse cx="255" cy="135" rx="16" ry="8" fill="#ffffff" opacity="0.2" transform="rotate(-15, 255, 135)" />
 
+  <!-- Top Hat (Gentleman Zylinder) sitting on the octopus head -->
+  <g transform="translate(0, 7) rotate(-7, 278, 110)">
+    <!-- Brim shadow on head -->
+    <ellipse cx="278" cy="111" rx="62" ry="11" fill="#020617" opacity="0.35" />
+    <!-- Hat brim -->
+    <ellipse cx="278" cy="108" rx="60" ry="10" fill="#1e293b" stroke="#0b1220" stroke-width="2.5" />
+    <ellipse cx="278" cy="106.5" rx="60" ry="10" fill="#0f172a" />
+    <!-- Hat body (cylinder) -->
+    <path d="M 244 107 L 248 70 Q 249 66 253 66 L 303 66 Q 307 66 308 70 L 312 107 Z" fill="#0f172a" stroke="#0b1220" stroke-width="2.5" stroke-linejoin="round" />
+    <!-- Hat top ellipse -->
+    <ellipse cx="278" cy="66" rx="29" ry="6" fill="#1e293b" stroke="#0b1220" stroke-width="2" />
+    <!-- Decorative band -->
+    <path d="M 246 98 L 310 98 L 308.5 88 L 247.5 88 Z" fill="#8a1c3d" />
+    <path d="M 247 93 L 309 93" stroke="#d97706" stroke-width="1.5" opacity="0.8" />
+    <!-- Subtle sheen on the cylinder -->
+    <path d="M 256 102 L 252 72 Q 252.5 69 255 69 L 261 69 L 263 102 Z" fill="#334155" opacity="0.4" />
+  </g>
+
 
   <!-- In Front Tentacles (Arm 2, 3, 6, 7) -->
   <!-- Arm 2 (Mid-Left-Upper) -->
