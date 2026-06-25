@@ -43,6 +43,31 @@ for mod in ['xhtml2pdf', 'xhtml2pdf.pisa', 'pytesseract', 'pypdfium2',
 import UniversalInvoiceMail as uim
 
 
+class TestHtmlPdfSanitizer(unittest.TestCase):
+    """Regression tests for HTML filtering before PDF conversion."""
+
+    def test_basic_sanitizer_removes_script_end_tags_with_spaces(self):
+        html = "<p>OK</p><script>alert(1)</script ><style>.x{}</style><p>Done</p>"
+
+        cleaned = uim.sanitize_html_for_pdf(html)
+
+        self.assertIn("<p>OK</p>", cleaned)
+        self.assertIn("<p>Done</p>", cleaned)
+        self.assertNotIn("alert(1)", cleaned)
+        self.assertNotIn("<script", cleaned.lower())
+        self.assertNotIn("<style", cleaned.lower())
+
+    def test_full_sanitizer_removes_script_end_tags_with_spaces(self):
+        html = "<p>OK</p><script type=\"text/javascript\">alert(1)</script ><img src=\"cid:test\">"
+
+        cleaned = uim.sanitize_html_for_pdf_full(html)
+
+        self.assertIn("<p>OK</p>", cleaned)
+        self.assertIn("cid:test", cleaned)
+        self.assertNotIn("alert(1)", cleaned)
+        self.assertNotIn("<script", cleaned.lower())
+
+
 class TestMailAccountFromDict(unittest.TestCase):
     """Regression tests for MailAccount.from_dict robustness."""
 

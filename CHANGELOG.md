@@ -5,6 +5,8 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 ## [Unreleased]
 
 ### Fixed
+- PDF-HTML-Sanitizer entfernen `script`-/`style`-Blöcke jetzt parserbasiert,
+  sodass auch Varianten wie `</script >` zuverlässig gefiltert werden.
 - IMAP multi-subject OR: Wenn 2+ Betreff-Filter konfiguriert waren, wurden Betreff-Einträge nach dem ersten stillschweigend verworfen; es wurde kein OR-Ausdruck aufgebaut, sodass nur Nachrichten mit dem ersten Betreff gefunden wurden.
 - AccountDialog: `use_gmail_api` wurde beim Bearbeiten eines Gmail-Kontos (use_gmail_api=False) durch `on_provider_changed()` auf True zurückgesetzt; der gespeicherte Wert wird jetzt nach dem Provider-Lookup wiederhergestellt.
 - MailAccount.from_dict: Unbekannte Schlüssel wurden stillschweigend verworfen; jetzt werden neue Felder toleriert (Vorwärtskompatibilität).

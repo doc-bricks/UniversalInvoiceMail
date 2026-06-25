@@ -34,6 +34,7 @@ import subprocess
 import tempfile
 import time
 from html import escape
+from html.parser import HTMLParser
 from pathlib import Path
 from dataclasses import dataclass, asdict, fields
 from datetime import datetime, date, timedelta
@@ -460,6 +461,70 @@ def break_long_urls(html_content: str) -> str:
     return html_content
 
 
+class _BlockedHtmlTagStripper(HTMLParser):
+    """Remove dangerous element blocks while preserving ordinary markup."""
+
+    def __init__(self, blocked_tags: set[str]):
+        super().__init__(convert_charrefs=False)
+        self.blocked_tags = {tag.lower() for tag in blocked_tags}
+        self.output: list[str] = []
+        self.skip_stack: list[str] = []
+
+    @property
+    def is_skipping(self) -> bool:
+        return bool(self.skip_stack)
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        tag_name = tag.lower()
+        if tag_name in self.blocked_tags:
+            self.skip_stack.append(tag_name)
+            return
+        if not self.is_skipping:
+            self.output.append(self.get_starttag_text() or f"<{tag}>")
+
+    def handle_startendtag(self, tag: str, attrs) -> None:
+        tag_name = tag.lower()
+        if tag_name in self.blocked_tags:
+            return
+        if not self.is_skipping:
+            self.output.append(self.get_starttag_text() or f"<{tag} />")
+
+    def handle_endtag(self, tag: str) -> None:
+        tag_name = tag.lower()
+        if self.skip_stack:
+            if tag_name in self.skip_stack:
+                while self.skip_stack:
+                    current = self.skip_stack.pop()
+                    if current == tag_name:
+                        break
+            return
+        self.output.append(f"</{tag}>")
+
+    def handle_data(self, data: str) -> None:
+        if not self.is_skipping:
+            self.output.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        if not self.is_skipping:
+            self.output.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        if not self.is_skipping:
+            self.output.append(f"&#{name};")
+
+    def handle_comment(self, data: str) -> None:
+        if not self.is_skipping:
+            self.output.append(f"<!--{data}-->")
+
+
+def strip_html_tag_blocks(html_content: str, blocked_tags: set[str]) -> str:
+    """Strip complete HTML element blocks such as script/style including content."""
+    stripper = _BlockedHtmlTagStripper(blocked_tags)
+    stripper.feed(html_content)
+    stripper.close()
+    return ''.join(stripper.output)
+
+
 def sanitize_html_for_pdf(html_content: str) -> str:
     """Removes all external resources from HTML for safe PDF conversion.
 
@@ -479,17 +544,14 @@ def sanitize_html_for_pdf(html_content: str) -> str:
     html_content = html_content.replace('\u200d', '')
     html_content = html_content.replace('\ufeff', '')
 
-    # <style> Tags KOMPLETT entfernen (xhtml2pdf kann modernes CSS nicht parsen)
-    html_content = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
+    # <style>/<script> Tags KOMPLETT entfernen (xhtml2pdf kann modernes CSS nicht parsen)
+    html_content = strip_html_tag_blocks(html_content, {"style", "script"})
 
     # <img> Tags entfernen (Hauptursache fuer PermissionError)
     html_content = re.sub(r'<img[^>]*/?>', '', html_content, flags=re.IGNORECASE)
 
     # <link> Tags entfernen (externe CSS)
     html_content = re.sub(r'<link[^>]*/?>', '', html_content, flags=re.IGNORECASE)
-
-    # <script> Tags entfernen
-    html_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
 
     # <meta> Tags mit problematischen Inhalten entfernen
     html_content = re.sub(r'<meta[^>]*/?>', '', html_content, flags=re.IGNORECASE)
@@ -529,7 +591,7 @@ def sanitize_html_for_pdf_full(html_content: str) -> str:
     html_content = html_content.replace('\ufeff', '')
 
     # <script> Tags entfernen (Sicherheit)
-    html_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
+    html_content = strip_html_tag_blocks(html_content, {"script"})
 
     # <link> Tags entfernen (externe CSS - koennen Fehler verursachen)
     html_content = re.sub(r'<link[^>]*/?>', '', html_content, flags=re.IGNORECASE)
