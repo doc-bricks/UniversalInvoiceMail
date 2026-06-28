@@ -160,6 +160,13 @@ try:
 except ImportError:
     DATEV_AVAILABLE = False
 
+from invoice_bundle import (
+    apply_invoice_bundle_changes,
+    build_invoice_bundle,
+    load_invoice_bundle,
+    write_invoice_bundle,
+)
+
 # Logger konfigurieren
 logger = logging.getLogger(__name__)
 
@@ -281,11 +288,18 @@ class Invoice:
     filename: str
     date: str
     path: str
+    profile_id: str = ""
     sender: str = ""
     subject: str = ""
     hash: str = ""
     is_attachment: bool = False  # True = PDF-Anhang, False = Body-Link
     amount: Optional[float] = None  # Rechnungsbetrag (manuell editierbar)
+    currency: str = "EUR"
+    review_status: str = "unchecked"
+    notes: str = ""
+    account_name: str = ""
+    message_id_hash: str = ""
+    mail_folder: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -805,7 +819,7 @@ pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5;
 
             shutil.move(str(temp_path), str(pdf_path))
 
-            return True, f"OCR hinzugefuegt ({len(all_ocr_text)} Seiten gescannt)"
+            return True, f"OCR hinzugefügt ({len(all_ocr_text)} Seiten gescannt)"
 
         except Exception as e:
             # Aufraeumen bei Fehler
@@ -1513,7 +1527,7 @@ def convert_attachment_to_pdf(file_data: bytes, source_name: str, output_path: P
         if attachment_type == "legacy_office":
             return convert_legacy_office_attachment(file_data, source_name, output_path)
 
-        return False, f"Dateityp {extension} wird nicht unterstuetzt"
+        return False, f"Dateityp {extension} wird nicht unterstützt"
     except Exception as exc:
         logger.error(f"Attachment-PDF-Konvertierung fehlgeschlagen ({source_name}): {exc}")
         if output_path.exists():
@@ -2134,6 +2148,7 @@ class InvoiceWorker(QThread):
                 filename=safe_name,
                 date=fmt_date,
                 path=str(output_path),
+                profile_id=profile.id,
                 sender=sender[:80],
                 subject=subject[:100],
                 hash=file_hash,
@@ -2164,8 +2179,14 @@ class InvoiceWorker(QThread):
                 payload = part.get_payload(decode=True)
                 if not payload:
                     continue
-                decoded = payload.decode('utf-8', errors='ignore')
-            except (AttributeError, UnicodeDecodeError, TypeError):
+                # Echten Charset aus dem Content-Type-Header auslesen statt blind
+                # UTF-8 anzunehmen — ISO-8859-1, windows-1252 etc. kommen in der Praxis vor.
+                charset = part.get_content_charset() or 'utf-8'
+                try:
+                    decoded = payload.decode(charset, errors='replace')
+                except (LookupError, UnicodeDecodeError):
+                    decoded = payload.decode('utf-8', errors='replace')
+            except (AttributeError, TypeError):
                 continue
 
             if content_type == "text/html" and html_content is None:
@@ -2356,7 +2377,9 @@ class InvoiceWorker(QThread):
             self.log.emit(f"   IMAP Suche: {' '.join(imap_args)}")
 
         try:
-            _, message_ids = mail.search(*search_args)
+            # UIDs verwenden statt MSN: UIDs bleiben stabil auch wenn andere
+            # Clients gleichzeitig Mails verschieben oder löschen (RFC 3501 §2.3.1.1).
+            _, message_ids = mail.uid('search', *search_args)
             ids = message_ids[0].split()
 
             # Limit
@@ -2370,8 +2393,15 @@ class InvoiceWorker(QThread):
                 self.progress.emit(i + 1, len(ids))
 
                 try:
-                    _, msg_data = mail.fetch(msg_id, "(RFC822)")
+                    _, msg_data = mail.uid('fetch', msg_id, '(RFC822)')
+                    # NIL-Guard: Server kann bei unbekannter UID leere/fehlerhafte Daten zurückgeben
+                    if not msg_data or not isinstance(msg_data[0], tuple):
+                        self.log.emit(f"   ⚠️ Keine Daten für UID {msg_id}")
+                        continue
                     raw_email = msg_data[0][1]
+                    if raw_email is None:
+                        self.log.emit(f"   ⚠️ Leere Antwort für UID {msg_id}")
+                        continue
                     msg = email.message_from_bytes(raw_email)
 
                     self._process_imap_message(msg, profile)
@@ -3235,10 +3265,20 @@ class MainWindow(QMainWindow):
         inv_btn_row = QHBoxLayout()
         btn_select_all = QPushButton("Alle")
         btn_select_all.clicked.connect(self.select_all_invoices)
+        btn_select_all.setObjectName("select_all_invoices_button")
+        btn_select_all.setAccessibleName("Alle sichtbaren Rechnungen auswählen")
+        btn_select_all.setAccessibleDescription(
+            "Markiert alle sichtbaren Rechnungen für Export- oder Löschaktionen."
+        )
         btn_select_all.setToolTip("Alle Einträge auswählen")
         btn_select_all.setMaximumWidth(50)
         btn_select_none = QPushButton("Keine")
         btn_select_none.clicked.connect(self.select_no_invoices)
+        btn_select_none.setObjectName("clear_invoice_selection_button")
+        btn_select_none.setAccessibleName("Rechnungsauswahl aufheben")
+        btn_select_none.setAccessibleDescription(
+            "Entfernt alle Markierungen in der Rechnungstabelle."
+        )
         btn_select_none.setToolTip("Auswahl aufheben")
         btn_select_none.setMaximumWidth(50)
         btn_delete_selected = QPushButton("❌")
@@ -3249,13 +3289,51 @@ class MainWindow(QMainWindow):
         btn_delete_selected.setMaximumWidth(35)
         btn_open_folder = QPushButton("Ordner öffnen")
         btn_open_folder.clicked.connect(self.open_download_folder)
+        btn_open_folder.setObjectName("open_invoice_folder_button")
+        btn_open_folder.setAccessibleName("Speicherordner für Rechnungen öffnen")
+        btn_open_folder.setAccessibleDescription(
+            "Öffnet den aktuellen Rechnungsordner im Dateimanager."
+        )
+        btn_open_folder.setToolTip("Speicherordner im Explorer öffnen")
         btn_refresh = QPushButton("Aktualisieren")
         btn_refresh.clicked.connect(self.refresh_invoice_table)
+        btn_refresh.setObjectName("refresh_invoice_table_button")
+        btn_refresh.setAccessibleName("Rechnungsliste aktualisieren")
+        btn_refresh.setAccessibleDescription(
+            "Synchronisiert die Tabelle mit dem Dateisystem und importiert neue Dateien."
+        )
+        btn_refresh.setToolTip("Rechnungstabelle mit Ordnerinhalt synchronisieren")
         btn_export_csv = QPushButton("CSV Export")
         btn_export_csv.clicked.connect(self.export_invoices_csv)
+        btn_export_csv.setObjectName("export_invoices_csv_button")
+        btn_export_csv.setAccessibleName("Rechnungsliste als CSV exportieren")
+        btn_export_csv.setAccessibleDescription(
+            "Exportiert die aktuelle Rechnungsliste als Tabellen-Datei."
+        )
         btn_export_csv.setToolTip("Rechnungsliste als CSV exportieren (filterbar in Excel)")
+        btn_bundle_export = QPushButton("Bundle Export")
+        btn_bundle_export.clicked.connect(self.export_invoice_bundle)
+        btn_bundle_export.setObjectName("export_invoice_bundle_button")
+        btn_bundle_export.setAccessibleName("Redigiertes Rechnungs-Bundle exportieren")
+        btn_bundle_export.setAccessibleDescription(
+            "Exportiert ausgewählte oder alle Rechnungen für Companion- oder Prüf-Workflows."
+        )
+        btn_bundle_export.setToolTip("Redigiertes Rechnungs-Bundle für Companion oder Prüfung exportieren")
+        btn_bundle_import = QPushButton("Bundle Import")
+        btn_bundle_import.clicked.connect(self.import_invoice_bundle)
+        btn_bundle_import.setObjectName("import_invoice_bundle_button")
+        btn_bundle_import.setAccessibleName("Companion-Bundle importieren")
+        btn_bundle_import.setAccessibleDescription(
+            "Übernimmt Betrag, Prüfflag und Notizen aus einem redigierten Rechnungs-Bundle."
+        )
+        btn_bundle_import.setToolTip("Companion-Änderungen für Betrag, Prüfflag und Notiz reimportieren")
         btn_datev = QPushButton("DATEV exportieren")
         btn_datev.clicked.connect(self._export_datev)
+        btn_datev.setObjectName("export_datev_button")
+        btn_datev.setAccessibleName("DATEV-Buchungsstapel exportieren")
+        btn_datev.setAccessibleDescription(
+            "Exportiert markierte Rechnungen als DATEV-Buchungsstapel für die Buchhaltung."
+        )
         btn_datev.setToolTip("Ausgewählte Rechnungen als DATEV-Buchungsstapel exportieren")
         btn_datev.setEnabled(DATEV_AVAILABLE)
         if not DATEV_AVAILABLE:
@@ -3266,6 +3344,8 @@ class MainWindow(QMainWindow):
         inv_btn_row.addWidget(btn_open_folder)
         inv_btn_row.addWidget(btn_refresh)
         inv_btn_row.addWidget(btn_export_csv)
+        inv_btn_row.addWidget(btn_bundle_export)
+        inv_btn_row.addWidget(btn_bundle_import)
         inv_btn_row.addWidget(btn_datev)
         inv_btn_row.addStretch()
         invoice_layout.addLayout(inv_btn_row)
@@ -3702,6 +3782,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                     filename=pdf_path.name,
                     date=file_date,
                     path=str_path,
+                    profile_id=profile.id,
                     sender="Manuell importiert" if not is_duplicate else "Duplikat (Import)",
                     subject=pdf_path.stem,
                     hash=file_hash or "",
@@ -4073,6 +4154,116 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 self.save_invoices_db()
                 break
 
+    def _get_selected_invoice_paths(self) -> set[str]:
+        """Returns invoice paths that are checked in the invoice table."""
+        selected_paths: set[str] = set()
+        for row in range(self.invoice_table.rowCount()):
+            item = self.invoice_table.item(row, 0)
+            if item and item.checkState() == Qt.CheckState.Checked:
+                path = item.data(Qt.ItemDataRole.UserRole)
+                if path:
+                    selected_paths.add(path)
+        return selected_paths
+
+    def export_invoice_bundle(self):
+        """Exports a redacted invoice bundle for companion usage."""
+        if not self.invoices:
+            QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
+            return
+
+        selected_paths = self._get_selected_invoice_paths()
+        bundle = build_invoice_bundle(
+            app_name=APP_NAME,
+            app_version=VERSION,
+            accounts=self.accounts,
+            profiles=self.profiles,
+            invoices=self.invoices,
+            download_path=self.settings.download_path,
+            datev_config=self.datev_config,
+            selected_paths=selected_paths,
+        )
+
+        invoice_count = len(bundle.get("invoices", []))
+        if invoice_count == 0:
+            QMessageBox.information(
+                self,
+                "Info",
+                "Die aktuelle Auswahl enthält keine exportierbaren Rechnungen.",
+            )
+            return
+
+        default_name = f"universalinvoicemail-invoicebundle-v1_{datetime.now().strftime('%Y-%m-%d')}.json"
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Bundle speichern",
+            str(Path(self.settings.download_path) / default_name),
+            "JSON Dateien (*.json)",
+        )
+        if not filepath:
+            return
+
+        try:
+            write_invoice_bundle(bundle, Path(filepath))
+            if hasattr(self, "log_output"):
+                self.log_output.appendPlainText(f"[BUNDLE] Exportiert: {filepath}")
+            scope = "Auswahl" if selected_paths else "Gesamtbestand"
+            QMessageBox.information(
+                self,
+                "Bundle Export",
+                f"Bundle erfolgreich exportiert:\n{filepath}\n\n{scope}: {invoice_count} Rechnungen.",
+            )
+        except (OSError, TypeError, ValueError) as e:
+            QMessageBox.warning(self, "Fehler", f"Bundle-Export fehlgeschlagen:\n{e}")
+
+    def import_invoice_bundle(self):
+        """Imports companion updates from a redacted invoice bundle."""
+        if not self.invoices:
+            QMessageBox.information(self, "Info", "Keine lokalen Rechnungen für einen Reimport vorhanden.")
+            return
+
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Bundle auswählen",
+            str(Path(self.settings.download_path)),
+            "JSON Dateien (*.json)",
+        )
+        if not filepath:
+            return
+
+        try:
+            bundle = load_invoice_bundle(Path(filepath))
+            result = apply_invoice_bundle_changes(self.invoices, bundle)
+        except (OSError, ValueError, json.JSONDecodeError, TypeError) as e:
+            QMessageBox.warning(self, "Fehler", f"Bundle-Import fehlgeschlagen:\n{e}")
+            return
+
+        self.save_invoices_db()
+        self.refresh_invoice_table()
+
+        if hasattr(self, "log_output"):
+            self.log_output.appendPlainText(
+                "[BUNDLE] Import: "
+                f"{result['updated']} aktualisiert, "
+                f"{len(result['conflicts'])} Konflikte, "
+                f"{len(result['missing_local'])} ohne lokales Gegenstück."
+            )
+
+        lines = [
+            f"{result['updated']} Rechnungen aktualisiert.",
+            f"{result['unchanged']} Rechnungen unverändert.",
+        ]
+        if result["missing_local"]:
+            lines.append(f"{len(result['missing_local'])} Bundle-Einträge hatten kein lokales Gegenstück.")
+        if result["conflicts"]:
+            lines.append(f"{len(result['conflicts'])} Konflikte wegen Datei- oder Hash-Abweichung erkannt.")
+        if result["invalid_rows"]:
+            lines.append(f"{len(result['invalid_rows'])} Bundle-Zeilen waren ungültig und wurden übersprungen.")
+        if result["conflicts"]:
+            preview = ", ".join(entry["id"] for entry in result["conflicts"][:5])
+            lines.append(f"Konflikt-Vorschau: {preview}")
+
+        QMessageBox.information(self, "Bundle Import", "\n".join(lines))
+
     def _export_datev(self):
         """Exportiert ausgewählte (oder alle) Rechnungen als DATEV-Buchungsstapel."""
         if not DATEV_AVAILABLE:
@@ -4086,13 +4277,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             return
 
         # Ausgewaehlte Rechnungen aus Checkbox-Spalte 0 ermitteln
-        selected_paths = set()
-        for row in range(self.invoice_table.rowCount()):
-            item = self.invoice_table.item(row, 0)
-            if item and item.checkState() == Qt.CheckState.Checked:
-                path = item.data(Qt.ItemDataRole.UserRole)
-                if path:
-                    selected_paths.add(path)
+        selected_paths = self._get_selected_invoice_paths()
 
         # Fallback: alle Rechnungen wenn nichts markiert
         if selected_paths:

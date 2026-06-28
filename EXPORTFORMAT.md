@@ -1,8 +1,8 @@
 # Exportformat - UniversalInvoiceMail
 
-Stand: 2026-06-01
+Stand: 2026-06-12
 
-Dieses Dokument beschreibt das geplante dateibasierte Austauschformat für Portierung, Companion-Nutzung und Buchhaltungsübergabe. Das Format ist ein Planungs- und Kompatibilitätsvertrag; die Desktop-App muss den Export/Reimport noch umsetzen.
+Dieses Dokument beschreibt das implementierte dateibasierte Austauschformat für Portierung, Companion-Nutzung und Buchhaltungsübergabe. Die Desktop-App exportiert und reimportiert das Bundle jetzt direkt über `Bundle Export` und `Bundle Import` im Rechnungs-Tab.
 
 ## Formatname
 
@@ -46,6 +46,8 @@ Belegdateien werden im Standard nur über relative Pfade, Dateinamen, MIME-Typen
     {
       "id": "profile-amazon",
       "name": "Amazon",
+      "account_id": "acc-1",
+      "account_label": "Gmail Hauptkonto",
       "sender_filter": "@amazon.de",
       "subject_filter": "Rechnung, Bestellung",
       "gmail_query": "from:amazon has:attachment",
@@ -56,15 +58,16 @@ Belegdateien werden im Standard nur über relative Pfade, Dateinamen, MIME-Typen
     {
       "id": "sha256:...",
       "profile_id": "profile-amazon",
+      "profile_name": "Amazon",
       "date": "2026-05-31",
       "sender": "billing@example.org",
       "subject": "Rechnung 12345",
-      "provider": "Amazon",
+      "filename": "2026-05-31_Rechnung_12345.pdf",
       "amount": "19.99",
       "currency": "EUR",
-      "datev_status": "ready",
       "review_status": "unchecked",
       "notes": "",
+      "datev_status": "ready",
       "files": [
         {
           "relative_path": "Amazon/2026-05-31_Rechnung_12345.pdf",
@@ -74,6 +77,7 @@ Belegdateien werden im Standard nur über relative Pfade, Dateinamen, MIME-Typen
           "size_bytes": 123456
         }
       ],
+      "local_hash": "...",
       "mail_reference": {
         "account_label": "Gmail Hauptkonto",
         "message_id_hash": "sha256:...",
@@ -84,6 +88,12 @@ Belegdateien werden im Standard nur über relative Pfade, Dateinamen, MIME-Typen
   "datev": {
     "berater_nr": "100000",
     "mandant_nr": "10000",
+    "wj_beginn": "20260101",
+    "waehrung": "EUR",
+    "sachkontenlaenge": 4,
+    "konten_mapping": {
+      "Amazon": [70001, 4930]
+    },
     "export_encoding": "cp1252",
     "last_export_at": null
   },
@@ -99,10 +109,8 @@ Belegdateien werden im Standard nur über relative Pfade, Dateinamen, MIME-Typen
 Ein Companion-Reimport darf nur fachliche Ergänzungen ändern:
 
 - `amount`
-- `currency`
 - `review_status`
 - `notes`
-- optional `datev_status`, wenn der Desktop dies ausdrücklich erlaubt
 
 Nicht überschrieben werden dürfen:
 
@@ -112,13 +120,14 @@ Nicht überschrieben werden dürfen:
 - Dateipfade ohne Hash-Abgleich
 - Original-Metadaten wie Sender, Betreff, Datum und Message-ID-Hash
 
-Konflikte müssen über `id` und Datei-Hash sichtbar gemacht werden. Wenn eine Rechnung lokal gelöscht oder die Datei verändert wurde, darf ein Reimport nicht still ein altes Companion-Feld übernehmen.
+Konflikte werden über `id` und Datei-Hash geprüft. Wenn eine Rechnung lokal gelöscht oder die Datei verändert wurde, übernimmt der Desktop keine Companion-Felder stillschweigend, sondern meldet den Konflikt im Importergebnis.
 
 ## Companion-Usecases
 
 - Rechnungsliste mobil oder im Browser prüfen.
 - Beträge ergänzen, wenn sie nach dem Abruf noch fehlen.
 - Prüfflags setzen: `unchecked`, `checked`, `needs_question`, `ready`.
+- Notizen für Rückfragen oder Korrekturen ergänzen.
 - Übergabe an Steuerberatung mit reduziertem Bestand ermöglichen.
 
 ## Nicht-Ziele

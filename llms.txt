@@ -32,7 +32,7 @@ Important files:
 - `README.md`: English user-facing project overview.
 - `README-DE.md`: German project overview.
 - `USER_GUIDE.md`: German setup and workflow guide.
-- `EXPORTFORMAT.md`: planned `universalinvoicemail-invoicebundle-v1.json` exchange contract.
+- `EXPORTFORMAT.md`: implemented `universalinvoicemail-invoicebundle-v1.json` exchange contract with desktop export/import.
 - `UniversalInvoiceMail.py`: PySide6 desktop application.
 - `datev_exporter.py`: DATEV CSV export helper.
 - `tests/`: mocked unit and integration tests.

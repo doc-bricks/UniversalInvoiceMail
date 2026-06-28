@@ -165,3 +165,63 @@ def test_symbol_buttons_expose_accessible_context(tmp_path, monkeypatch, qapp):
             assert button.toolTip() == tooltip
     finally:
         window.close()
+
+
+def test_invoice_action_buttons_expose_context(tmp_path, monkeypatch, qapp):
+    """Short action labels in the invoice toolbar keep clear accessible context."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        expected = {
+            "select_all_invoices_button": (
+                "Alle sichtbaren Rechnungen auswählen",
+                "Markiert alle sichtbaren Rechnungen für Export- oder Löschaktionen.",
+                "Alle Einträge auswählen",
+            ),
+            "clear_invoice_selection_button": (
+                "Rechnungsauswahl aufheben",
+                "Entfernt alle Markierungen in der Rechnungstabelle.",
+                "Auswahl aufheben",
+            ),
+            "open_invoice_folder_button": (
+                "Speicherordner für Rechnungen öffnen",
+                "Öffnet den aktuellen Rechnungsordner im Dateimanager.",
+                "Speicherordner im Explorer öffnen",
+            ),
+            "refresh_invoice_table_button": (
+                "Rechnungsliste aktualisieren",
+                "Synchronisiert die Tabelle mit dem Dateisystem und importiert neue Dateien.",
+                "Rechnungstabelle mit Ordnerinhalt synchronisieren",
+            ),
+            "export_invoices_csv_button": (
+                "Rechnungsliste als CSV exportieren",
+                "Exportiert die aktuelle Rechnungsliste als Tabellen-Datei.",
+                "Rechnungsliste als CSV exportieren (filterbar in Excel)",
+            ),
+            "export_invoice_bundle_button": (
+                "Redigiertes Rechnungs-Bundle exportieren",
+                "Exportiert ausgewählte oder alle Rechnungen für Companion- oder Prüf-Workflows.",
+                "Redigiertes Rechnungs-Bundle für Companion oder Prüfung exportieren",
+            ),
+            "import_invoice_bundle_button": (
+                "Companion-Bundle importieren",
+                "Übernimmt Betrag, Prüfflag und Notizen aus einem redigierten Rechnungs-Bundle.",
+                "Companion-Änderungen für Betrag, Prüfflag und Notiz reimportieren",
+            ),
+            "export_datev_button": (
+                "DATEV-Buchungsstapel exportieren",
+                "Exportiert markierte Rechnungen als DATEV-Buchungsstapel für die Buchhaltung.",
+                "Ausgewählte Rechnungen als DATEV-Buchungsstapel exportieren",
+            ),
+        }
+
+        for object_name, (accessible_name, accessible_description, tooltip) in expected.items():
+            button = window.findChild(QPushButton, object_name)
+            assert button is not None, object_name
+            assert button.accessibleName() == accessible_name
+            assert button.accessibleDescription() == accessible_description
+            assert button.toolTip() == tooltip
+    finally:
+        window.close()

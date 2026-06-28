@@ -16,10 +16,14 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ### Changed
 - README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
+- `EXPORTFORMAT.md` und `AUFGABEN.txt` auf den realen Bundle-Export/-Import-Stand gehoben; Companion-Rückfluss ist jetzt klar auf Betrag, Prüfflag und Notiz begrenzt.
+- Die kompakte Rechnungs-Aktionsleiste exponiert jetzt klare Accessible Names, Descriptions und Tooltips für Auswahl-, Export-, Bundle- und DATEV-Aktionen, ohne die UI sichtbar aufzublähen.
 
 ### Added
 - macOS/Linux platform smoke `tests/source_platform_smoke.py` (renamed from `tests/linux_platform_smoke.py` via `git mv`, history preserved) for offscreen PySide6 start, missing-keyring fallback, LibreOffice SOFFICE_PATH env-override detection and CSV export.
 - GitHub Actions workflow `.github/workflows/source-platform-smoke.yml` on `ubuntu-latest` + `macos-latest`; installs PySide6 only (avoids pywin32/google-auth build failures on non-Windows).
+- Neues Hilfsmodul `invoice_bundle.py` für redigierten Bundle-Export/-Import samt UI-Aktionen `Bundle Export` und `Bundle Import`.
+- Neue Regressionstests `tests/test_invoice_bundle.py` für Exportvertrag, Hash-Konflikte und UI-Roundtrip.
 
 ### CI
 - Source-platform smoke workflow now uses verified `actions/checkout@v6` and `actions/setup-python@v6`, matching the main test workflow, and forces UTF-8 Python output.
@@ -54,7 +58,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ### Verified
 - DATEV-Export als bereits vorhandene Migration gegen Code, Dialog, Doku und Regressionstests nachgezogen; `AUFGABEN.txt` entsprechend korrigiert
-- Lokaler Teststand auf 101 grüne Tests aktualisiert
+- Lokaler Teststand auf 104 grüne Tests aktualisiert
 
 ## [2.3.0] - 2026-05-02
 ### Added

@@ -133,7 +133,7 @@ class TestImapConnect(unittest.TestCase):
         with patch('imaplib.IMAP4_SSL', return_value=mock_mail):
             with patch('UniversalInvoiceMail.KEYRING_AVAILABLE', True):
                 with patch('keyring.get_password', return_value='secret'):
-                    mock_mail.search.return_value = (None, [b''])
+                    mock_mail.uid.return_value = (None, [b''])
                     worker._process_imap(account, [profile])
 
         mock_mail.login.assert_called_once_with('user@example.com', 'secret')
@@ -174,6 +174,101 @@ class TestImapConnect(unittest.TestCase):
                     worker._process_imap(account, [profile])
 
         self.assertTrue(any("IMAP Fehler" in m for m in log_messages))
+
+    def test_uid_called_not_msn(self):
+        """_search_imap muss uid() statt search()/fetch() verwenden (MSN/UID-Bug).
+
+        MSN-Nummern sind instabil sobald andere Clients Mails verschieben oder
+        löschen. uid() adressiert Mails über stabile UIDs (RFC 3501 §2.3.1.1).
+        """
+        account = self._make_account()
+        profile = self._make_profile()
+        settings = self._make_settings()
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+
+        mock_mail = MagicMock()
+        # uid('search', ...) gibt leere ID-Liste zurück → keine weiteren Fetch-Calls
+        mock_mail.uid.return_value = (None, [b''])
+
+        worker._search_imap(mock_mail, profile)
+
+        # search() darf NICHT aufgerufen worden sein
+        mock_mail.search.assert_not_called()
+        # uid() muss mit 'search' aufgerufen worden sein
+        calls = [str(c) for c in mock_mail.uid.call_args_list]
+        self.assertTrue(
+            any('search' in c.lower() for c in calls),
+            f"uid() wurde nicht mit 'search' aufgerufen. Calls: {calls}",
+        )
+
+    def test_uid_nil_response_guard(self):
+        """NIL-Antwort von uid('fetch') führt zu 'continue', nicht zu einem Absturz.
+
+        Ein IMAP-Server kann für eine nicht mehr existierende UID eine leere
+        Antwortstruktur zurückgeben. Der Guard verhindert AttributeError auf
+        msg_data[0][1].
+        """
+        account = self._make_account()
+        profile = self._make_profile()
+        settings = self._make_settings()
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+        log_messages = []
+        worker.log = MagicMock()
+        worker.log.emit = lambda msg: log_messages.append(msg)
+        worker.progress = MagicMock()
+
+        mock_mail = MagicMock()
+        # uid('search') liefert eine UID zurück, uid('fetch') liefert NIL
+        mock_mail.uid.side_effect = [
+            (None, [b'42']),   # search-Aufruf: 1 UID gefunden
+            (None, [None]),    # fetch-Aufruf: NIL-Antwort (z. B. Mail inzwischen gelöscht)
+        ]
+
+        # Kein Exception-Crash erwartet
+        worker._search_imap(mock_mail, profile)
+
+        # Es muss eine Warnung geloggt worden sein
+        self.assertTrue(
+            any("UID" in m or "Keine Daten" in m or "Leere" in m for m in log_messages),
+            f"Erwartete NIL-Warnung nicht gefunden. Log: {log_messages}",
+        )
+
+    def test_imap_message_body_charset(self):
+        """_get_imap_message_body dekodiert non-UTF-8 Charsets korrekt.
+
+        Viele ältere oder deutsche Mailer versenden text/plain in ISO-8859-1 oder
+        windows-1252. Früher wurde blind UTF-8 angenommen, was zu '?' für Umlaute führte.
+        """
+        account = self._make_account()
+        profile = self._make_profile()
+        settings = self._make_settings()
+        worker = uim.InvoiceWorker([account], [profile], settings, set())
+
+        # Erstellt eine E-Mail mit ISO-8859-1-Body (enthält echte Umlaute)
+        raw_body = "Rechnung für Müller & Söhne GmbH".encode('iso-8859-1')
+        msg = email.message.Message()
+        msg['Content-Type'] = 'text/plain; charset="iso-8859-1"'
+        msg['Content-Transfer-Encoding'] = 'quoted-printable'
+        msg.set_payload(raw_body)
+        # get_payload(decode=True) gibt raw bytes zurück; wir mocken es direkt
+        msg.set_payload(raw_body.decode('iso-8859-1'), charset='iso-8859-1')
+
+        # Direkter Byte-Test über ein synthetisches email.message.Message-Objekt
+        from email import message as email_message
+        part = email_message.Message()
+        part['Content-Type'] = 'text/plain; charset="iso-8859-1"'
+        part._payload = raw_body  # interne Repräsentation als bytes
+
+        class FakeMsg:
+            def walk(self_inner):
+                return [part]
+
+        with patch.object(type(part), 'get_payload', return_value=raw_body):
+            result = worker._get_imap_message_body(FakeMsg())
+
+        # Alle Umlaute müssen korrekt dekodiert sein
+        self.assertIn("Müller", result)
+        self.assertIn("Söhne", result)
 
 
 class TestGmailAuth(unittest.TestCase):
@@ -555,13 +650,13 @@ class TestDownloadAttachment(unittest.TestCase):
             capabilities = ("IMAP4REV1", "X-GM-EXT-1")
 
             def __init__(self):
-                self.search_args = None
+                self.uid_args = None
 
-            def search(self, *args):
-                self.search_args = args
-                return "OK", [b"1"]
-
-            def fetch(self, _msg_id, _spec):
+            def uid(self, command, *args):
+                if command.upper() == 'SEARCH':
+                    self.uid_args = args
+                    return "OK", [b"1"]
+                # FETCH: eine vollständige Test-Mail zurückgeben
                 msg = EmailMessage()
                 msg["From"] = "shop@example.com"
                 msg["Subject"] = "Ihre Rechnung"
@@ -572,10 +667,11 @@ class TestDownloadAttachment(unittest.TestCase):
         mail = FakeMail()
         worker._search_imap(mail, profile)
 
-        self.assertEqual(mail.search_args[0:2], (None, "X-GM-RAW"))
-        self.assertIn("label:finance has:attachment", mail.search_args[2])
-        self.assertIn("from:shop@example.com", mail.search_args[2])
-        self.assertIn("after:2026/05/20", mail.search_args[2])
+        # uid_args enthält die Argumente nach dem Command-Parameter
+        self.assertEqual(mail.uid_args[0:2], (None, "X-GM-RAW"))
+        self.assertIn("label:finance has:attachment", mail.uid_args[2])
+        self.assertIn("from:shop@example.com", mail.uid_args[2])
+        self.assertIn("after:2026/05/20", mail.uid_args[2])
         worker._process_imap_message.assert_called_once()
 
     def test_search_imap_falls_back_without_gmail_extension(self):
@@ -598,13 +694,13 @@ class TestDownloadAttachment(unittest.TestCase):
             capabilities = ("IMAP4REV1",)
 
             def __init__(self):
-                self.search_args = None
+                self.uid_args = None
 
-            def search(self, *args):
-                self.search_args = args
-                return "OK", [b"1"]
-
-            def fetch(self, _msg_id, _spec):
+            def uid(self, command, *args):
+                if command.upper() == 'SEARCH':
+                    self.uid_args = args
+                    return "OK", [b"1"]
+                # FETCH: eine vollständige Test-Mail zurückgeben
                 msg = EmailMessage()
                 msg["From"] = "shop@example.com"
                 msg["Subject"] = "Invoice"
@@ -615,8 +711,9 @@ class TestDownloadAttachment(unittest.TestCase):
         mail = FakeMail()
         worker._search_imap(mail, profile)
 
+        # uid_args enthält die Argumente nach dem Command-Parameter
         self.assertEqual(
-            mail.search_args,
+            mail.uid_args,
             (None, "SINCE", "20-May-2026", "FROM", '"shop@example.com"', "SUBJECT", '"Invoice"')
         )
         worker._process_imap_message.assert_called_once()
