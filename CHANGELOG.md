@@ -5,6 +5,9 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 ## [Unreleased]
 
 ### Fixed
+- IMAP MSN→UID (kritisch): `_search_imap` verwendet jetzt `uid('search')` und `uid('fetch')` statt `search()`/`fetch()`. MSN-Nummern sind instabil wenn andere Clients gleichzeitig Mails verschieben/löschen; UIDs sind stabile Kennungen gemäß RFC 3501 §2.3.1.1.
+- IMAP NIL-Guard: `uid('fetch')` kann bei nicht mehr existierenden UIDs eine leere/fehlerhafte Antwortstruktur zurückgeben; Guard verhindert AttributeError auf `msg_data[0][1]`.
+- MIME-Charset: `_get_imap_message_body` liest den Charset aus dem Content-Type-Header (`get_content_charset`) statt blind UTF-8 anzunehmen; verhindert Mojibake bei ISO-8859-1/windows-1252-Mails.
 - PDF-HTML-Sanitizer entfernen `script`-/`style`-Blöcke jetzt parserbasiert,
   sodass auch Varianten wie `</script >` zuverlässig gefiltert werden.
 - IMAP multi-subject OR: Wenn 2+ Betreff-Filter konfiguriert waren, wurden Betreff-Einträge nach dem ersten stillschweigend verworfen; es wurde kein OR-Ausdruck aufgebaut, sodass nur Nachrichten mit dem ersten Betreff gefunden wurden.
