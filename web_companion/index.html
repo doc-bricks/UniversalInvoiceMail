@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#255f63">
+    <title>UniversalInvoiceMail Companion</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">UniversalInvoiceMail</p>
+        <h1>Rechnungsprüfung</h1>
+      </div>
+      <div class="actions" aria-label="Bundle-Aktionen">
+        <label class="button primary" for="bundle-file">Bundle öffnen</label>
+        <input id="bundle-file" type="file" accept="application/json,.json">
+        <button id="restore-bundle" class="button" type="button">Letzten Stand</button>
+        <button id="clear-bundle" class="button ghost" type="button">Lokalen Stand löschen</button>
+        <button id="export-changes" class="button accent" type="button" disabled>Änderungen exportieren</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" id="summary" aria-live="polite"></section>
+
+      <section class="toolbar" aria-label="Filter">
+        <label>
+          <span>Suche</span>
+          <input id="query" type="search" autocomplete="off">
+        </label>
+        <label>
+          <span>Profil</span>
+          <select id="profile-filter"></select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="status-filter"></select>
+        </label>
+      </section>
+
+      <section class="workspace">
+        <nav class="invoice-list" id="invoice-list" aria-label="Rechnungen"></nav>
+        <article class="detail">
+          <p id="detail-empty" class="empty">Kein Bundle geladen</p>
+          <form id="detail-form" hidden>
+            <div class="detail-head">
+              <h2 id="detail-title"></h2>
+              <p id="detail-meta"></p>
+            </div>
+            <label>
+              <span>Betrag</span>
+              <input id="amount" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+            <label>
+              <span>Prüfstatus</span>
+              <select id="review-status"></select>
+            </label>
+            <label>
+              <span>Notiz</span>
+              <textarea id="notes" rows="8"></textarea>
+            </label>
+            <div class="hash-box">
+              <span>Datei-Hash</span>
+              <code id="file-hash"></code>
+            </div>
+          </form>
+        </article>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

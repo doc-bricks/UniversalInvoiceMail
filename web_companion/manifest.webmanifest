@@ -1,0 +1,17 @@
+{
+  "name": "UniversalInvoiceMail Companion",
+  "short_name": "Invoice Review",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f0e8",
+  "theme_color": "#255f63",
+  "description": "Local companion for redacted UniversalInvoiceMail invoice bundles.",
+  "icons": [
+    {
+      "src": "../UniversalInvoiceMail_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
