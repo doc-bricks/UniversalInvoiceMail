@@ -3203,6 +3203,12 @@ class MainWindow(QMainWindow):
 
         btn_row = QHBoxLayout()
         btn_add = QPushButton("➕ Profil")
+        btn_add.setObjectName("add_profile_button")
+        btn_add.setAccessibleName("Neues Suchprofil anlegen")
+        btn_add.setAccessibleDescription(
+            "Öffnet den Dialog zum Anlegen eines neuen Suchprofils für Rechnungen."
+        )
+        btn_add.setToolTip("Neues Suchprofil anlegen")
         btn_add.clicked.connect(self.add_profile)
         btn_del = QPushButton("❌")
         btn_del.setObjectName("delete_profile_button")
@@ -3227,6 +3233,12 @@ class MainWindow(QMainWindow):
 
         btn_row2 = QHBoxLayout()
         btn_add_acc = QPushButton("➕ Konto")
+        btn_add_acc.setObjectName("add_account_button")
+        btn_add_acc.setAccessibleName("Neues E-Mail-Konto anlegen")
+        btn_add_acc.setAccessibleDescription(
+            "Öffnet den Dialog zum Hinzufügen eines weiteren E-Mail-Kontos."
+        )
+        btn_add_acc.setToolTip("Neues E-Mail-Konto anlegen")
         btn_add_acc.clicked.connect(self.add_account)
         btn_del_acc = QPushButton("❌")
         btn_del_acc.setObjectName("delete_account_button")
@@ -3364,6 +3376,9 @@ class MainWindow(QMainWindow):
         btn_browse = QPushButton("...")
         btn_browse.setObjectName("browse_download_path_button")
         btn_browse.setAccessibleName("Speicherordner auswählen")
+        btn_browse.setAccessibleDescription(
+            "Öffnet die Ordnerauswahl für den lokalen Rechnungs-Speicherort."
+        )
         btn_browse.setToolTip("Speicherordner auswählen")
         btn_browse.setMaximumWidth(40)
         btn_browse.clicked.connect(self.browse_folder)

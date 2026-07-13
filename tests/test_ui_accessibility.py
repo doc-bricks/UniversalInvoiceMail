@@ -133,35 +133,50 @@ def test_account_dialog_restores_use_gmail_api_false_on_edit(qapp):
 
 
 def test_symbol_buttons_expose_accessible_context(tmp_path, monkeypatch, qapp):
-    """Compact icon buttons keep a screenreader-friendly name and tooltip."""
+    """Compact buttons keep a screenreader-friendly name, description, and tooltip."""
     monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
     monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
 
     window = uim.MainWindow()
     try:
         expected = {
+            "add_profile_button": (
+                "Neues Suchprofil anlegen",
+                "Öffnet den Dialog zum Anlegen eines neuen Suchprofils für Rechnungen.",
+                "Neues Suchprofil anlegen",
+            ),
             "delete_profile_button": (
                 "Ausgewähltes Suchprofil löschen",
+                "",
                 "Ausgewähltes Suchprofil löschen",
+            ),
+            "add_account_button": (
+                "Neues E-Mail-Konto anlegen",
+                "Öffnet den Dialog zum Hinzufügen eines weiteren E-Mail-Kontos.",
+                "Neues E-Mail-Konto anlegen",
             ),
             "delete_account_button": (
                 "Ausgewähltes E-Mail-Konto löschen",
+                "",
                 "Ausgewähltes E-Mail-Konto löschen",
             ),
             "delete_selected_invoices_button": (
                 "Ausgewählte Rechnungen und Dateien löschen",
+                "",
                 "Ausgewählte Einträge und Dateien löschen",
             ),
             "browse_download_path_button": (
                 "Speicherordner auswählen",
+                "Öffnet die Ordnerauswahl für den lokalen Rechnungs-Speicherort.",
                 "Speicherordner auswählen",
             ),
         }
 
-        for object_name, (accessible_name, tooltip) in expected.items():
+        for object_name, (accessible_name, accessible_description, tooltip) in expected.items():
             button = window.findChild(QPushButton, object_name)
             assert button is not None, object_name
             assert button.accessibleName() == accessible_name
+            assert button.accessibleDescription() == accessible_description
             assert button.toolTip() == tooltip
     finally:
         window.close()
