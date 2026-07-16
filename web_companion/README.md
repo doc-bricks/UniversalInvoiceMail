@@ -16,3 +16,13 @@ python -m http.server 8765 -d web_companion
 ```
 
 Danach `http://127.0.0.1:8765/` öffnen.
+
+## Mobile/PWA-Smoke
+
+Der lokale Android-/iOS-nahe Contract-Smoke liegt in `MOBILE_PWA_SMOKE.md`.
+Er prüft ein echtes redigiertes Bundle, Install-Metadaten, In-Scope-Icons,
+Offline-Assets und den begrenzten Rückexport ohne Credentials oder Mail-Bodies.
+
+```powershell
+npm --prefix web_companion test
+```

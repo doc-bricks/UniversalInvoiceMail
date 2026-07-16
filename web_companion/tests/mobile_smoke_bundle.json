@@ -1,0 +1,114 @@
+{
+  "schema": "universalinvoicemail-invoicebundle-v1",
+  "created_at": "2026-07-16T21:30:00+02:00",
+  "source": {
+    "app": "UniversalInvoiceMail",
+    "version": "2.3.0",
+    "platform": "windows"
+  },
+  "export_options": {
+    "include_profiles": true,
+    "include_file_references": true,
+    "include_mail_bodies": false,
+    "include_attachments": false
+  },
+  "profiles": [
+    {
+      "id": "profile-amazon",
+      "name": "Amazon",
+      "account_id": "account-redacted",
+      "account_label": "Gmail Rechnungskonto",
+      "sender_filter": "@amazon.de",
+      "subject_filter": "Rechnung, Bestellung",
+      "gmail_query": "from:amazon has:attachment",
+      "target_folder_label": "Rechnungen/Amazon"
+    },
+    {
+      "id": "profile-telefon",
+      "name": "Telefon",
+      "account_id": "account-redacted",
+      "account_label": "IMAP Rechnungskonto",
+      "sender_filter": "@provider.example",
+      "subject_filter": "Monatsrechnung",
+      "gmail_query": "",
+      "target_folder_label": "Rechnungen/Telefon"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "sha256:mobile-smoke-amazon-202607",
+      "profile_id": "profile-amazon",
+      "profile_name": "Amazon",
+      "date": "2026-07-01",
+      "sender": "billing@example.invalid",
+      "subject": "Rechnung A-2026-07",
+      "filename": "2026-07-01_amazon_rechnung.pdf",
+      "amount": null,
+      "currency": "EUR",
+      "review_status": "unchecked",
+      "notes": "",
+      "datev_status": "missing_amount",
+      "files": [
+        {
+          "relative_path": "Amazon/2026-07-01_amazon_rechnung.pdf",
+          "filename": "2026-07-01_amazon_rechnung.pdf",
+          "mime_type": "application/pdf",
+          "sha256": "f1caa8516a45e9a8b09c50f626f2b39c0d0ff6fdc5f79594f66d88374e0b4791",
+          "size_bytes": 92411
+        }
+      ],
+      "local_hash": "f1caa8516a45e9a8b09c50f626f2b39c0d0ff6fdc5f79594f66d88374e0b4791",
+      "mail_reference": {
+        "account_label": "Gmail Rechnungskonto",
+        "message_id_hash": "sha256:redacted-mobile-smoke-1",
+        "folder": "INBOX"
+      }
+    },
+    {
+      "id": "sha256:mobile-smoke-phone-202607",
+      "profile_id": "profile-telefon",
+      "profile_name": "Telefon",
+      "date": "2026-07-03",
+      "sender": "rechnung@example.invalid",
+      "subject": "Monatsrechnung Juli",
+      "filename": "2026-07-03_telefon.pdf",
+      "amount": "29.95",
+      "currency": "EUR",
+      "review_status": "checked",
+      "notes": "Bereits mit Vertrag abgeglichen",
+      "datev_status": "ready",
+      "files": [
+        {
+          "relative_path": "Telefon/2026-07-03_telefon.pdf",
+          "filename": "2026-07-03_telefon.pdf",
+          "mime_type": "application/pdf",
+          "sha256": "d0e58f12956dd8f07e7e3b5c86f2d9e8ad0fdf1710223561e09f32e739a02a81",
+          "size_bytes": 48122
+        }
+      ],
+      "local_hash": "d0e58f12956dd8f07e7e3b5c86f2d9e8ad0fdf1710223561e09f32e739a02a81",
+      "mail_reference": {
+        "account_label": "IMAP Rechnungskonto",
+        "message_id_hash": "sha256:redacted-mobile-smoke-2",
+        "folder": "INBOX"
+      }
+    }
+  ],
+  "datev": {
+    "berater_nr": "100000",
+    "mandant_nr": "200000",
+    "wj_beginn": "20260101",
+    "waehrung": "EUR",
+    "sachkontenlaenge": 4,
+    "konten_mapping": {
+      "Amazon": [70001, 4930],
+      "Telefon": [70002, 4920]
+    },
+    "export_encoding": "cp1252",
+    "last_export_at": null
+  },
+  "companion_changes": {
+    "mode": "none",
+    "allowed_fields": ["amount", "review_status", "notes"]
+  }
+}

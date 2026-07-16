@@ -151,5 +151,5 @@ test("static PWA shell references only local assets", async () => {
   assert.match(indexHtml, /type="module" src="\.\/app\.js"/);
   assert.match(indexHtml, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.equal(JSON.parse(manifest).display, "standalone");
-  assert.match(serviceWorker, /CACHE_NAME = "universalinvoicemail-companion-v1"/);
+  assert.match(serviceWorker, /CACHE_NAME = "universalinvoicemail-companion-v2"/);
 });

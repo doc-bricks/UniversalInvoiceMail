@@ -1,10 +1,16 @@
-const CACHE_NAME = "universalinvoicemail-companion-v1";
+const CACHE_NAME = "universalinvoicemail-companion-v2";
 const ASSETS = [
   "./index.html",
   "./styles.css",
   "./library.js",
   "./app.js",
   "./manifest.webmanifest",
+  "./icons/favicon.png",
+  "./icons/apple-touch-icon-180.png",
+  "./icons/Icon-192.png",
+  "./icons/Icon-512.png",
+  "./icons/Icon-maskable-192.png",
+  "./icons/Icon-maskable-512.png",
 ];
 
 self.addEventListener("install", (event) => {
