@@ -1,14 +1,61 @@
 <img src="assets/banner.svg" width="100%" alt="UniversalInvoiceMail — Rechnungen automatisch erfassen und DATEV-Export">
 
-# UniversalInvoiceMail v2.3.0
+# UniversalInvoiceMail
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
+[![Pytest 110 passed](https://img.shields.io/badge/Pytest-110%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions)
+[![Web Companion 10 passed](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion)
+[![License: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
+[![Local-First Privacy](https://img.shields.io/badge/Datenschutz-Local--First-purple.svg)](#datenschutz)
+[![LLM-Ready](https://img.shields.io/badge/LLM--Kontext-llms.txt-success.svg)](llms.txt)
 
 Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
 
-> **English documentation:** [README.md](README.md)
+**Sprachen:** [English](README.md) | [Deutsch](README-DE.md)
+
+> [!NOTE]
+> **KI-Agenten & LLM-Kontext:** Dieses Repository stellt strukturierte Metadaten in [`llms.txt`](llms.txt) bereit. Autonome KI-Agenten und LLMs können `llms.txt` abfragen, um Projektstruktur, Testbefehle, Sicherheitsgrenzen und lokale Datenpfade sicher zu analysieren, ohne Benutzereinstellungen oder Zugangsdaten zu verändern.
 
 ![UniversalInvoiceMail Vorschau](README/screenshots/main.png)
+
+## Architektur & Datenfluss
+
+```mermaid
+flowchart TD
+    subgraph Sources ["E-Mail-Quellen (IMAP & Gmail API)"]
+        IMAP["IMAP-Server (Gmail, Outlook, GMX, T-Online)"]
+        GAPI["Gmail API (OAuth2 / X-GM-RAW)"]
+    end
+
+    subgraph Core ["UniversalInvoiceMail Desktop (PySide6)"]
+        Filter["Profil-Filter-Engine & Query Builder"]
+        Convert["Anhang-PDF-Konverter & OCR (Tesseract / pypdfium2)"]
+        Archive["Lokales Rechnungsarchiv & Hash-Duplikaterkennung"]
+        Datev["DATEV-CSV-Export-Engine (cp1252)"]
+    end
+
+    subgraph Storage ["Lokaler Windows-Speicher"]
+        Config["%USERPROFILE%\\.universal_invoice_mail\\ (Config, DB, Credentials)"]
+        DocArchive["%USERPROFILE%\\Documents\\Rechnungen\\ (PDF-Archiv)"]
+    end
+
+    subgraph Companion ["Companion & Buchhaltung"]
+        Bundle["Redigiertes Bundle (v1 JSON)"]
+        WebPWA["Web Companion PWA (Review & Betragsbearbeitung)"]
+        DATEVOut["DATEV-Buchungsstapel (CSV-Übergabe)"]
+    end
+
+    IMAP --> Filter
+    GAPI --> Filter
+    Filter --> Convert
+    Convert --> Archive
+    Archive --> Config
+    Archive --> DocArchive
+    Archive --> Datev
+    Archive --> Bundle
+    Bundle <--> WebPWA
+    Datev --> DATEVOut
+```
 
 ## Einstieg
 
@@ -106,9 +153,10 @@ UniversalInvoiceMail passt zu Suchanfragen wie `lokales Rechnungsarchiv aus E-Ma
 
 ```bash
 PYTHONIOENCODING=utf-8 python -m pytest -q
+cd web_companion && npm test
 ```
 
-Vorhanden sind aktuell 104 gemockte Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import und die Barrierefreiheits-Metadaten kompakter Symbolbuttons.
+Vorhanden sind aktuell 120 verifizierte grüne Tests (110 Pytest-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import und UI-Barrierefreiheit sowie 10 Node.js-Tests für den Web Companion PWA).
 
 ## Datenschutz
 

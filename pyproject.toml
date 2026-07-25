@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "universalinvoicemail"
+version = "2.3.0"
+description = "Local-first Windows desktop app for collecting invoices and receipts from email, attachment PDF conversion, private archive and DATEV CSV export."
+readme = "README.md"
+authors = [
+    { name = "Lukas Geiger" }
+]
+license = { text = "MIT" }
+keywords = ["invoice", "email", "imap", "gmail", "datev", "pdf", "accounting", "pyside6", "local-first"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+dependencies = [
+    "PySide6",
+    "keyring",
+    "reportlab",
+    "pypdfium2",
+    "pytesseract",
+    "pypdf",
+    "docx2pdf",
+]
+
+[project.urls]
+Homepage = "https://github.com/doc-bricks/UniversalInvoiceMail"
+Repository = "https://github.com/doc-bricks/UniversalInvoiceMail.git"
+Issues = "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "."]
