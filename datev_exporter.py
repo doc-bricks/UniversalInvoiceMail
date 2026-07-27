@@ -172,12 +172,15 @@ class DATEVExporter:
 
     def _get_konten(self, provider: str) -> Tuple[int, int]:
         """Ermittelt Konto und Gegenkonto für einen Provider."""
+        if not provider:
+            return self.config.konten_mapping.get("Sonstige", (70000, 4900))
+
         # Exakte Übereinstimmung
         if provider in self.config.konten_mapping:
             return self.config.konten_mapping[provider]
 
         # Teilübereinstimmung (case-insensitive)
-        provider_lower = provider.lower()
+        provider_lower = str(provider).lower()
         for key, konten in self.config.konten_mapping.items():
             if key.lower() in provider_lower or provider_lower in key.lower():
                 return konten

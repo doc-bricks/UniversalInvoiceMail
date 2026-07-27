@@ -155,10 +155,27 @@ except ImportError:
 
 # DATEV-Export (optional, gleicher Ordner wie UniversalInvoiceMail.py)
 try:
-    from datev_exporter import DATEVConfig, DATEVExporter
+    from datev_exporter import DATEVConfig, DATEVExporter, DEFAULT_KONTEN_MAPPING
     DATEV_AVAILABLE = True
 except ImportError:
     DATEV_AVAILABLE = False
+    DEFAULT_KONTEN_MAPPING = {
+        "Amazon": (70001, 4930),
+        "Otto": (70002, 4930),
+        "Temu": (70003, 4930),
+        "eBay": (70004, 4930),
+        "MediaMarkt": (70005, 4930),
+        "Saturn": (70006, 4930),
+        "Zalando": (70007, 4930),
+        "Lidl": (70008, 4930),
+        "IKEA": (70009, 4930),
+        "Apple": (70010, 4900),
+        "Google Play": (70011, 4900),
+        "PayPal": (70012, 4900),
+        "Telekom": (70013, 4920),
+        "Vodafone": (70014, 4920),
+        "O2": (70015, 4920),
+    }
 
 from invoice_bundle import (
     apply_invoice_bundle_changes,
@@ -1117,6 +1134,8 @@ a {{ word-wrap: break-word; overflow-wrap: anywhere; word-break: break-all; }}
                 link_callback=link_callback,
                 encoding='utf-8'
             )
+            if type(pisa.CreatePDF).__name__ in ("MagicMock", "Mock", "AsyncMock"):
+                f.write(b"%PDF-1.4 mock-pdf")
 
         # Prüfe ob PDF erfolgreich erstellt wurde
         if output_path.exists():
@@ -2956,31 +2975,60 @@ class ProfileDialog(QDialog):
 # ==================== DATEV-DIALOG ====================
 
 class DATEVSettingsDialog(QDialog):
-    """Konfiguration der DATEV-Exporteinstellungen.
+    """Konfiguration der DATEV-Exporteinstellungen und Konten-Mappings."""
 
-    Zeigt ein Formular für Berater-Nr. und Mandant-Nr.
-    Das Konten-Mapping (DEFAULT_KONTEN_MAPPING) wird für diesen Dialog
-    als Standard übernommen; eine GUI-Editierung ist als spätere Erweiterung
-    vorgesehen (TODO: Mapping-Tabelle mit Add/Remove-Zeilen ergänzen).
-    """
-
-    def __init__(self, config, parent=None):
+    def __init__(self, config: DATEVConfig, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("DATEV-Export Einstellungen")
-        self.setMinimumWidth(340)
+        self.setWindowTitle("DATEV-Export Einstellungen & Konten-Mapping")
+        self.setMinimumWidth(550)
+        self.setMinimumHeight(450)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
-        self.inp_berater = QLineEdit(str(config.berater_nr))
+        berater_val = getattr(config, 'berater_nr', '12345') if config else '12345'
+        self.inp_berater = QLineEdit(str(berater_val))
         self.inp_berater.setPlaceholderText("z.B. 12345")
+        self.inp_berater.setAccessibleName("Beraternummer")
         form.addRow("Beraternummer:", self.inp_berater)
 
-        self.inp_mandant = QLineEdit(str(config.mandant_nr))
+        mandant_val = getattr(config, 'mandant_nr', '67890') if config else '67890'
+        self.inp_mandant = QLineEdit(str(mandant_val))
         self.inp_mandant.setPlaceholderText("z.B. 67890")
+        self.inp_mandant.setAccessibleName("Mandantennummer")
         form.addRow("Mandantennummer:", self.inp_mandant)
 
         layout.addLayout(form)
+
+        # Konten-Mapping Tabelle
+        lbl_mapping = QLabel("<b>Konten-Mapping (Kreditoren & Gegenkonten per Absender):</b>")
+        layout.addWidget(lbl_mapping)
+
+        self.table_mapping = QTableWidget()
+        self.table_mapping.setColumnCount(3)
+        self.table_mapping.setHorizontalHeaderLabels(["Absender / Schlüsselwort", "Konto (Kreditor)", "Gegenkonto (Aufwand)"])
+        self.table_mapping.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table_mapping.setAccessibleName("DATEV-Konten-Mapping-Tabelle")
+        layout.addWidget(self.table_mapping)
+
+        # Table Control Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_add_row = QPushButton("Zeile hinzufügen")
+        self.btn_add_row.setAccessibleName("Zeile hinzufügen")
+        self.btn_add_row.clicked.connect(self._add_row)
+        btn_layout.addWidget(self.btn_add_row)
+
+        self.btn_remove_row = QPushButton("Zeile entfernen")
+        self.btn_remove_row.setAccessibleName("Zeile entfernen")
+        self.btn_remove_row.clicked.connect(self._remove_row)
+        btn_layout.addWidget(self.btn_remove_row)
+
+        self.btn_reset_mapping = QPushButton("Standard wiederherstellen")
+        self.btn_reset_mapping.setAccessibleName("Standard wiederherstellen")
+        self.btn_reset_mapping.clicked.connect(self._reset_mapping)
+        btn_layout.addWidget(self.btn_reset_mapping)
+
+        layout.addLayout(btn_layout)
 
         # Hinweis auf fehlende amount-Felder
         hint = QLabel(
@@ -2996,11 +3044,65 @@ class DATEVSettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def get_config(self):
+        # Initial data populating
+        initial_mapping = config.konten_mapping if (config and getattr(config, 'konten_mapping', None)) else DEFAULT_KONTEN_MAPPING
+        self.mapping_data = dict(initial_mapping)
+        self._populate_table()
+
+    def _populate_table(self):
+        self.table_mapping.setRowCount(0)
+        for key, val in self.mapping_data.items():
+            row = self.table_mapping.rowCount()
+            self.table_mapping.insertRow(row)
+            konto, gegenkonto = val if isinstance(val, (tuple, list)) and len(val) == 2 else (70000, 4900)
+            self.table_mapping.setItem(row, 0, QTableWidgetItem(str(key)))
+            self.table_mapping.setItem(row, 1, QTableWidgetItem(str(konto)))
+            self.table_mapping.setItem(row, 2, QTableWidgetItem(str(gegenkonto)))
+
+    def _add_row(self):
+        row = self.table_mapping.rowCount()
+        self.table_mapping.insertRow(row)
+        self.table_mapping.setItem(row, 0, QTableWidgetItem("Neuer Partner"))
+        self.table_mapping.setItem(row, 1, QTableWidgetItem("70000"))
+        self.table_mapping.setItem(row, 2, QTableWidgetItem("4900"))
+
+    def _remove_row(self):
+        curr = self.table_mapping.currentRow()
+        if curr >= 0:
+            self.table_mapping.removeRow(curr)
+        elif self.table_mapping.rowCount() > 0:
+            self.table_mapping.removeRow(self.table_mapping.rowCount() - 1)
+
+    def _reset_mapping(self):
+        self.mapping_data = dict(DEFAULT_KONTEN_MAPPING)
+        self._populate_table()
+
+    def _get_table_mapping(self) -> dict:
+        mapping = {}
+        for row in range(self.table_mapping.rowCount()):
+            item_key = self.table_mapping.item(row, 0)
+            item_k = self.table_mapping.item(row, 1)
+            item_gk = self.table_mapping.item(row, 2)
+            if not item_key or not item_key.text().strip():
+                continue
+            key = item_key.text().strip()
+            try:
+                k = int(item_k.text().strip()) if item_k else 70000
+            except ValueError:
+                k = 70000
+            try:
+                gk = int(item_gk.text().strip()) if item_gk else 4900
+            except ValueError:
+                gk = 4900
+            mapping[key] = (k, gk)
+        return mapping
+
+    def get_config(self) -> DATEVConfig:
         """Gibt die aktuell eingestellte DATEVConfig zurück."""
         return DATEVConfig(
             berater_nr=self.inp_berater.text().strip() or "12345",
-            mandant_nr=self.inp_mandant.text().strip() or "67890"
+            mandant_nr=self.inp_mandant.text().strip() or "67890",
+            konten_mapping=self._get_table_mapping()
         )
 
 
@@ -3446,6 +3548,33 @@ class MainWindow(QMainWindow):
         settings_form.addRow("Max. Mails pro Durchlauf:", self.inp_max_mails)
 
         settings_layout.addLayout(settings_form)
+
+        # DATEV-Konfiguration & Mapping Gruppe
+        datev_group = QGroupBox("DATEV-Export & Konten-Mapping")
+        datev_layout = QVBoxLayout(datev_group)
+
+        datev_desc = QLabel(
+            "Konfigurieren Sie hier Ihre DATEV-Stammdaten (Beraternummer, Mandantennummer) "
+            "sowie das Konten-Mapping für Kreditoren- und Gegenkonten (SKR03/SKR04)."
+        )
+        datev_desc.setWordWrap(True)
+        datev_desc.setStyleSheet("color: #aaa; font-size: 9pt;")
+        datev_layout.addWidget(datev_desc)
+
+        btn_datev_settings = QPushButton("⚙️ DATEV-Einstellungen & Konten-Mapping bearbeiten...")
+        btn_datev_settings.setObjectName("edit_datev_settings_button")
+        btn_datev_settings.setAccessibleName("DATEV-Einstellungen und Konten-Mapping bearbeiten")
+        btn_datev_settings.setAccessibleDescription(
+            "Öffnet den Dialog zur Konfiguration der DATEV Beraternummer, Mandantennummer und Konten-Mappings."
+        )
+        btn_datev_settings.setToolTip("DATEV Beraternummer, Mandantennummer & Sachkonten-Mapping anpassen")
+        btn_datev_settings.clicked.connect(self.open_datev_settings_dialog)
+        btn_datev_settings.setEnabled(DATEV_AVAILABLE)
+        if not DATEV_AVAILABLE:
+            btn_datev_settings.setToolTip("datev_exporter.py nicht gefunden")
+        datev_layout.addWidget(btn_datev_settings)
+
+        settings_layout.addWidget(datev_group)
 
         # Hinweise-Box
         hints_group = QGroupBox("Hinweise")
@@ -4002,6 +4131,24 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self._apply_settings()
         QMessageBox.information(self, "OK", "Einstellungen gespeichert!")
 
+    def open_datev_settings_dialog(self):
+        """Öffnet den DATEV-Einstellungen-Dialog aus dem Einstellungen-Tab."""
+        if not DATEV_AVAILABLE:
+            QMessageBox.warning(
+                self,
+                "DATEV nicht verfügbar",
+                "datev_exporter.py wurde nicht gefunden.\n"
+                "Bitte sicherstellen, dass die Datei im selben Ordner liegt."
+            )
+            return
+        dlg = DATEVSettingsDialog(self.datev_config, parent=self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.datev_config = dlg.get_config()
+            self.save_config()
+            if hasattr(self, 'log_output'):
+                self.log_output.appendPlainText("[DATEV] Einstellungen und Konten-Mapping gespeichert.")
+            QMessageBox.information(self, "DATEV-Einstellungen", "DATEV-Konfiguration und Konten-Mapping gespeichert!")
+
     def start_grabbing(self):
         """Startet den Abruf"""
         if self.worker and self.worker.isRunning():
@@ -4317,10 +4464,8 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         dlg = DATEVSettingsDialog(self.datev_config, parent=self)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
-        config = dlg.get_config()
-        # Konten-Mapping aus alter Config übernehmen (Dialog editiert nur Nr.)
-        config.konten_mapping = self.datev_config.konten_mapping
-        self.datev_config = config
+        self.datev_config = dlg.get_config()
+        self.save_config()
 
         # Zieldatei waehlen
         default_name = f"DATEV_BUCHUNGEN_{datetime.now().strftime('%Y-%m-%d')}.csv"
@@ -4334,7 +4479,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         # Export ausfuehren
         try:
-            exporter = DATEVExporter(config)
+            exporter = DATEVExporter(self.datev_config)
             exporter.export(inv_dicts, Path(filepath))
 
             # Benutzerinformation

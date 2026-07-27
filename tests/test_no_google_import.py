@@ -56,6 +56,7 @@ def test_import_without_gmail_packages():
 
     # Vorherigen Zustand sichern (kann MagicMock, echtes Modul oder None sein)
     saved = {k: sys.modules.get(k, _MISSING) for k in google_block}
+    saved_uim = sys.modules.get('UniversalInvoiceMail', _MISSING)
 
     # Auf None setzen → Python meldet ImportError wenn dieses Modul angefordert wird
     for k in google_block:
@@ -69,7 +70,10 @@ def test_import_without_gmail_packages():
         assert hasattr(uim, 'InvoiceWorker'), "InvoiceWorker fehlt nach Import"
         assert uim.GMAIL_API_AVAILABLE is False, "GMAIL_API_AVAILABLE sollte False sein"
     finally:
-        sys.modules.pop('UniversalInvoiceMail', None)
+        if saved_uim is _MISSING:
+            sys.modules.pop('UniversalInvoiceMail', None)
+        else:
+            sys.modules['UniversalInvoiceMail'] = saved_uim
         for k, v in saved.items():
             if v is _MISSING:
                 sys.modules.pop(k, None)

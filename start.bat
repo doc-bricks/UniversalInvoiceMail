@@ -15,6 +15,12 @@ if exist "dist\UniversalInvoiceMail_v2.3.0\UniversalInvoiceMail_v2.3.0.exe" (
     exit /b 0
 )
 
+if exist "releases\v2.3.0\UniversalInvoiceMail_v2.3.0\UniversalInvoiceMail_v2.3.0.exe" (
+    echo Starte Release-EXE...
+    start "" "releases\v2.3.0\UniversalInvoiceMail_v2.3.0\UniversalInvoiceMail_v2.3.0.exe"
+    exit /b 0
+)
+
 REM Pruefe ob Python verfuegbar ist
 where python >nul 2>&1
 if %errorlevel% neq 0 (

@@ -267,3 +267,26 @@ def test_main_window_bundle_export_import_roundtrip(tmp_path, monkeypatch, qapp)
         assert info_calls, "expected information dialogs for export/import"
     finally:
         window.close()
+
+
+def test_apply_invoice_bundle_changes_supports_dict(tmp_path):
+    """apply_invoice_bundle_changes muss auch Dictionaries als local_invoices unterstützen."""
+    pdf = tmp_path / "dict_test.pdf"
+    pdf.write_bytes(b"pdf data")
+    import hashlib
+    file_hash = hashlib.sha256(b"pdf data").hexdigest()
+
+    local_inv = {
+        "id": "inv-dict-1",
+        "path": str(pdf),
+        "amount": 5.0,
+    }
+    bundle = {
+        "schema": BUNDLE_SCHEMA,
+        "companion_changes": {"allowed_fields": ["amount"]},
+        "invoices": [{"id": "inv-dict-1", "amount": 15.0, "files": [{"sha256": file_hash}]}],
+    }
+    res = apply_invoice_bundle_changes([local_inv], bundle)
+    assert res["updated"] == 1
+    assert local_inv["amount"] == 15.0
+

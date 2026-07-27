@@ -1,88 +1,83 @@
-ROADMAP - UniversalInvoiceMail
+# ROADMAP - UniversalInvoiceMail
 ==============================
 
-AKTUELL: v1.8.1
+AKTUELL: v2.3.0
 ===============
-[x] Import-Feature: Neue PDFs in Profilordnern automatisch erkennen
-[x] Mehrfachauswahl mit Checkboxen in Rechnungsliste
-[x] Loeschen ohne Bestaetigung (Design: nichts Schlimmes kann passieren)
-[x] Query-Fix: Subject-Filter hebelt hardcoded Filter nicht mehr aus
-[x] Link-Umbruch in PDFs verbessert
-[x] Hinweise-Box (Mini-README) in Einstellungen
-[x] Typ-Symbol in Rechnungsliste (Anhang vs Body-PDF)
-[x] Blacklist-Filter im Profil
-[x] Body-Filter: "muss enthalten" / "darf nicht enthalten"
-[x] Merge-Option: Body an PDF-Anhaenge anfuegen
-[x] Hybrid-Design: Mail-Header in Body-PDFs (Datum, Betreff, Absender)
+Status: Produktionsreif (Desktop Master-App v2.3.0 + Web/PWA Companion)
+Stand: 2026-07-25
 
-BUGS (zu beheben):
-==================
-[ ] Hyperlinks gehen ueber PDF-Rand hinaus (xhtml2pdf word-break Problem)
-[ ] Typ-Spalte zeigt "..." statt Bueroklammer-Emoji (Spaltenbreite/Font?)
+## ERLEDIGTE MEILENSTEINE (v1.0 bis v2.3.0)
 
-GEPLANT: v1.9 (Mail-Dateien Import)
-===================================
-[ ] E-Mail-Dateien (.eml) im Ordner unterstuetzen
-[ ] Body + Anhaenge in EINE PDF zusammenfuehren
-[ ] Original .eml nach Konvertierung loeschen
-[ ] Optional: .msg Support (Outlook)
-Siehe: IMPLEMENTATION_GUIDE_IMPORT.md
+### v2.3.0 — Redigierte Bundles & Web/PWA Companion (2026-07)
+- [x] Schema-Kontrakt `universalinvoicemail-invoicebundle-v1.json` für redigierte Rechnungsbundles.
+- [x] Desktop-Export & Reimport mit Hash-Abgleich und Konflikterkennung.
+- [x] Web/PWA-Companion (`web_companion/`) für browserbasierte Vorschau, Filterung und Rückexport (Betrag, Status, Notiz).
+- [x] Offline-Shell mit Service Worker und PWA-Manifest.
+- [x] Accessibility-Härtung (Accessible Names/Descriptions) für alle UI-Aktionen.
+- [x] Cross-Platform Source Smoke (`tests/source_platform_smoke.py`) und GitHub Actions CI.
 
-GEPLANT: v2.0 (Code-Qualitaet)
-==============================
-[ ] Policy anwenden: UTF-8 Header + ae->ä, oe->ö, ue->ü
-[ ] Code mit c_standard_fixer.py --with-policies bearbeiten
-[ ] Konsistente Encoding-Deklaration
+### v2.2.0 — DATEV-Export & Betragsbearbeitung (2026-05)
+- [x] DATEV-Buchungsstapel-Export (CSV, cp1252) mit Berater- & Mandanten-Konfiguration.
+- [x] Editierbare `Invoice.amount`-Spalte direkt in der GUI.
+- [x] IMAP MSN -> UID Umstellung (RFC 3501 §2.3.1.1) & NIL-Guard.
+- [x] MIME-Charset-Dekodierung (`get_content_charset`) für ISO-8859-1 / windows-1252 Mails.
 
-FEATURE-ANALYSE (zu pruefen):
-=============================
-[x] Weitere Anhangstypen herunterladen und zu PDF konvertieren -- erledigt 2026-04-29
-    Implementiert:
-    - .docx (python-docx)
-    - .xlsx (openpyxl)
-    - .jpg/.png und weitere Bildformate (Pillow)
-    Offen:
-    - Legacy .doc/.xls nur bei echtem Bedarf ueber LibreOffice/COM nachruesten
+### v2.1.0 — Multiformat-Anhänge & Gmail Query Builder (2026-04)
+- [x] Automatische PDF-Konvertierung für Bilder (`.png`, `.jpg`), `.xlsx` und `.docx`.
+- [x] Legacy Office-Fallback (`.doc`, `.xls`) via LibreOffice/COM.
+- [x] Gmail Query Builder im Profil-Dialog für Roh-Suchanfragen.
+- [x] IMAP/Gmail `X-GM-RAW` Integration.
 
-GEPLANT: v2.1+ (Mailintegration)
-================================
-[ ] Direkte Anbindung an weitere Mail-Provider
-[ ] Erweiterte OAuth-Unterstuetzung
-[ ] Microsoft Graph API fuer Outlook.com
+### v2.0.0 — Mail-Dateien Import & Security-Härtung (2026-04)
+- [x] `.eml` und `.msg` Import & Konvertierung in PDF mit Body/Anhang-Merge.
+- [x] HTML-Sanitisierung & Escaping gegen HTML-Injection in PDF-Covern, OCR und Mail-Bodies.
+- [x] PySide6-Migration (6.10+).
+- [x] Dependency Floor Härtung (`Pillow >= 12.2.0`).
 
-IDEEN (v3.x+):
-==============
-[ ] Intelligente Kategorisierung (PDF-Inhalt -> Shop erkennen)
-[ ] OCR fuer gescannte Rechnungen (pytesseract)
-[ ] System-Tray mit Fortschritt -> nein überflüssig streichen
-[ ] Automatischer Zeitplan: Taeglicher/woechentlicher Abruf -> nein überflüssig
-[ ] Dark Mode -> überflüssig 
-[ ] Statistik-Dashboard: Ausgaben pro Shop/Monat -> überflüssig
+### v1.0.0 – v1.8.1 — Basis-App & Filter-Engine (2026-01 bis 2026-03)
+- [x] IMAP & Gmail API Integration.
+- [x] Vorkonfigurierte Shop-Profile & Sender/Subject/Body-Filter (muss/darf nicht enthalten).
+- [x] Hybrid-Design mit Mail-Header in Body-PDFs.
+- [x] Sichere Passwort-Speicherung via Keyring.
+- [x] Sicheres Tempfile- & Hash-Dedup-Handling.
 
-BEKANNTE EINSCHRAENKUNGEN:
-==========================
-- Gmail API: Erfordert OAuth-Credentials von Google Cloud Console
-- IMAP: Nur ein Sender-Filter wird fuer IMAP-Suche verwendet
-- Max 5 Ordner werden durchsucht (Performance)
-- xhtml2pdf: Keine CSS-Gradients, eingeschraenkter word-break Support
 
-ABGESCHLOSSEN:
-==============
-v1.8.1 - Header-Fix, Body-Filter (muss/darf nicht enthalten)
-v1.8.0 - Merge Body+PDF, Hybrid-Design Header
-v1.7.5 - Typ-Symbol, Blacklist-Filter
-v1.7.4 - Mehrfachauswahl, Loeschen, Query-Fix, Hinweise-Box
-v1.7.0 - Import-Feature (Ordner-Scan)
-v1.6   - Dateiliste-Sync mit Dateisystem
-v1.5   - CSV Export
-v1.4   - Von/Bis Datum-Auswahl, Bestellnummer aus Body
-v1.3   - Konto bearbeiten, Papierkorb-Option, Tooltips
-v1.2   - PDF-Layout fix, Alle Ordner durchsuchen
-v1.1   - Start-Button fix, Credentials auto-suche
-v1.0   - Initial Release
+## BEKANNTE BUGS & FEHLERFREIHEIT
+- Core-Codebase: Keine bekannten offenen P0/P1-Bugs. 49/49 Pytest-Tests grün.
+- HTML-Escaping & Sanitizing vollständig abgedeckte Guards.
 
-DOKUMENTATION:
-==============
-- AUFGABEN.txt - Aktuelle Bugs und offene Tasks
-- IMPLEMENTATION_GUIDE_IMPORT.md - Detaillierte Implementierungsanleitung
-- Code-Referenzen aus DokuZentrum (watcher.py, merger.py, file_index.py)
+
+## OFFENE GEPLANTE STRÄNGE & TASKPLAN-AUFGABEN
+
+### [TW-UIM-01] Echter Android-/iOS-Geräte- & Emulator-Signoff (TASKPLAN #1153)
+- **Status:** Open (PWA Contract-Smoke grün, eche Hardware/Emulator-Abnahme ausstehend)
+- **Ziel:** Manuelle Verifikation der PWA auf echten Android (Chrome) & iOS (Safari) Geräten mit realem `universalinvoicemail-invoicebundle-v1.json`.
+- **Scope:** Local / Companion-Abnahme.
+
+### [TW-UIM-02] Erweiterte Mail-Provider Anbindung (TASKPLAN #1154)
+- **Status:** Open / Evaluierung (P3)
+- **Ziel:** Evaluierung direkter Anbindungen an weitere Provider (ProtonMail, Tutanota, Microsoft Graph API / Outlook.com).
+- **Voraussetzung:** Konkreter Nutzerbedarf & API-Spezifikation ohne Security-Einbußen.
+
+### [TW-UIM-03] Selenium-Webportal-Kanal für Login-geschützte Portale (TASKPLAN #1155)
+- **Status:** Open / Evaluierung (P3)
+- **Ziel:** Abruf von Rechnungen direkt aus Login-Portalen ohne E-Mail-Versand.
+- **Voraussetzung:** Bedarfsbeleg, MFA-Strategie & ToS-Prüfung.
+
+### [TW-UIM-04] GUI für DATEV-Konten-Mapping-Tabelle (TASKPLAN #1156)
+- **Status:** Open / Design (P2)
+- **Ziel:** UI-Dialog im Einstellungen-Tab zur Definition benutzerdefinierter Sachkonten- & Gegenkonten-Mappings.
+- **Basis:** `DATEVConfig` unterstützt Laden/Speichern; UI-Formular ausstehend.
+
+
+## NICHT-ZIELE & VERWORFENE IDEEN
+- **System-Tray mit Abruf-Fortschritt:** Verworfen (unnötig).
+- **Direct Cloud Server-Sync:** Nicht-Ziel (Widerspricht Local-First & Datensparsamkeit; Bundle-Export/Import wird bevorzugt).
+- **Native Mobile-Apps (Swift/Kotlin):** Nicht-Ziel (Web/PWA-Companion deckt den mobilen Prüf- & Rückexport-Usecase ab).
+
+
+## DOKUMENTATIONS-RESERVEN & REFERENZEN
+- `AUFGABEN.txt` — Aktuelle Taskplan-Referenzen & Detailfortschritte
+- `CHANGELOG.md` — Chronologische Versionshistorie
+- `EXPORTFORMAT.md` — Spezifikation des Bundle-Formats `universalinvoicemail-invoicebundle-v1.json`
+- `USER_GUIDE.md` — Handbuch für Einrichtung & Benutzung

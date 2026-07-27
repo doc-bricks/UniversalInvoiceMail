@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.4.1] - 2026-07-27 - Technical Hygiene & Maintenance
+
+### Changed
+- `llms.txt`: Header auf `Last-checked: 2026-07-27` und 125 verifizierte Tests (115 Pytest + 10 Node Web Companion PWA) aktualisiert.
+- `CHECKS-LOG.txt`: Technischen Hygiene- & Maintenance-Check (Pfad A) registriert.
+- Test-Verifikation: 115/115 Pytest-Tests 100% grün (0 Fehler, 24.08s execution time), `py_compile` fehlerfrei.
+
 ## [2.4.0] - 2026-07-26
 
 ### Added

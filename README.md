@@ -3,59 +3,12 @@
 # UniversalInvoiceMail
 
 [![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
-[![Pytest 110 passed](https://img.shields.io/badge/Pytest-110%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions)
-[![Web Companion 10 passed](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Local-First Privacy](https://img.shields.io/badge/Privacy-Local--First-purple.svg)](#privacy)
-[![LLM-Ready](https://img.shields.io/badge/LLM--Context-llms.txt-success.svg)](llms.txt)
 
 Local-first Windows desktop tool for collecting invoices and receipts from email accounts, converting attachments to PDF, keeping a private archive, and preparing DATEV-style CSV exports.
 
-**Languages:** [English](README.md) | [Deutsch](README-DE.md)
-
-> [!NOTE]
-> **AI Agent & LLM Context:** This repository contains structured LLM metadata in [`llms.txt`](llms.txt). Autonomous coding agents and LLMs can query `llms.txt` to safely discover project layout, test commands, safety boundaries, and local data paths without modifying runtime user credentials.
+> **Deutsche Dokumentation:** [README-DE.md](README-DE.md)
 
 ![UniversalInvoiceMail Preview](README/screenshots/main.png)
-
-## Architecture & Data Flow
-
-```mermaid
-flowchart TD
-    subgraph Sources ["Mail Sources (IMAP & Gmail API)"]
-        IMAP["IMAP Server (Gmail, Outlook, GMX, T-Online)"]
-        GAPI["Gmail API (OAuth2 / X-GM-RAW)"]
-    end
-
-    subgraph Core ["UniversalInvoiceMail Desktop (PySide6)"]
-        Filter["Profile Filter Engine & Query Builder"]
-        Convert["Attachment PDF Converter & OCR (Tesseract / pypdfium2)"]
-        Archive["Local Invoice Archive & Hash Deduplication"]
-        Datev["DATEV CSV Export Engine (cp1252)"]
-    end
-
-    subgraph Storage ["Local Windows Storage"]
-        Config["%USERPROFILE%\\.universal_invoice_mail\\ (config, db, credentials)"]
-        DocArchive["%USERPROFILE%\\Documents\\Rechnungen\\ (PDF Archive)"]
-    end
-
-    subgraph Companion ["Companion & Accounting"]
-        Bundle["Redacted Bundle (v1 JSON)"]
-        WebPWA["Web Companion PWA (Review & Field Edits)"]
-        DATEVOut["DATEV Booking Batch (CSV Hand-off)"]
-    end
-
-    IMAP --> Filter
-    GAPI --> Filter
-    Filter --> Convert
-    Convert --> Archive
-    Archive --> Config
-    Archive --> DocArchive
-    Archive --> Datev
-    Archive --> Bundle
-    Bundle <--> WebPWA
-    Datev --> DATEVOut
-```
 
 ## Start Here
 
@@ -66,6 +19,7 @@ flowchart TD
 | Keep a local invoice archive | Target folders under your Windows user profile or a local sync folder |
 | Prepare accounting handoff | Editable EUR amounts and DATEV-style cp1252 CSV export |
 | Understand portable data | [EXPORTFORMAT.md](EXPORTFORMAT.md) for the implemented redacted exchange bundle |
+| Review a redacted bundle in a browser | `web_companion/` for local-only invoice checks and change export |
 
 ## Features
 
@@ -79,6 +33,7 @@ flowchart TD
 - Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
 - Manual invoice amount column plus DATEV export for selected invoices
 - Redacted `universalinvoicemail-invoicebundle-v1.json` export/import for companion review workflows
+- Static `web_companion/` PWA for local redacted bundle review, amount/status/notes edits, and change-bundle export
 - Hash-based duplicate detection across local archive folders
 - Secure credential storage via `keyring`
 
@@ -139,6 +94,7 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 - Invoices without an entered amount are skipped deliberately and called out after export.
 - `Bundle Export` writes a redacted JSON bundle with profile filters, DATEV base data, invoice hashes, and optional file references.
 - `Bundle Import` accepts only amount, review status, and notes back from a companion, guarded by invoice ID and file hash checks.
+- The dependency-free `web_companion/` opens the redacted bundle locally in a browser and exports a minimal change bundle for the desktop importer.
 
 ## Search Context
 
@@ -148,10 +104,11 @@ UniversalInvoiceMail is intended for searches such as `local invoice email archi
 
 ```bash
 PYTHONIOENCODING=utf-8 python -m pytest -q
-cd web_companion && npm test
+QT_QPA_PLATFORM=offscreen python tests/source_platform_smoke.py
+npm --prefix web_companion test
 ```
 
-The repository currently has 120 verified passing unit and integration tests (110 Pytest tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, and UI control accessibility, plus 10 Node.js tests for the Web Companion PWA).
+The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, plus Node contract tests for the Web Companion.
 
 For Linux, an additional headless smoke covers the desktop start path, missing-keyring handling, LibreOffice fallback detection and CSV export without requiring a visible session.
 
@@ -174,3 +131,5 @@ Part of the [doc-bricks](https://github.com/doc-bricks) mail suite:
 ## License
 
 [MIT](LICENSE)
+
+Third-party runtime inventory: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)

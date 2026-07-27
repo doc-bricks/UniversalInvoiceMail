@@ -52,6 +52,16 @@ from UniversalInvoiceMail import (
     InvoiceWorker,
     OCRProcessor,
 )
+import UniversalInvoiceMail
+UniversalInvoiceMail.XHTML2PDF_AVAILABLE = True
+UniversalInvoiceMail.PILLOW_AVAILABLE = True
+UniversalInvoiceMail.PYTHON_DOCX_AVAILABLE = True
+UniversalInvoiceMail.OPENPYXL_AVAILABLE = True
+UniversalInvoiceMail.WIN32COM_AVAILABLE = True
+UniversalInvoiceMail.OCR_AVAILABLE = True
+UniversalInvoiceMail.pythoncom = sys.modules['pythoncom']
+UniversalInvoiceMail.win32com = sys.modules['win32com']
+UniversalInvoiceMail.pisa = sys.modules['xhtml2pdf.pisa']
 
 
 class TestSanitizeFilename(unittest.TestCase):

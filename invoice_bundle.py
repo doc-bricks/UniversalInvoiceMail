@@ -312,8 +312,12 @@ def apply_invoice_bundle_changes(invoices: Iterable[Any], bundle: Mapping[str, A
                 result["invalid_rows"].append({"id": invoice_id, "reason": f"invalid_{field_name}"})
                 continue
 
-            if _get_value(local_invoice, field_name, None) != new_value:
-                setattr(local_invoice, field_name, new_value)
+            current_val = local_invoice[field_name] if isinstance(local_invoice, Mapping) else getattr(local_invoice, field_name, None)
+            if current_val != new_value:
+                if isinstance(local_invoice, dict):
+                    local_invoice[field_name] = new_value
+                else:
+                    setattr(local_invoice, field_name, new_value)
                 changed = True
 
         if changed:

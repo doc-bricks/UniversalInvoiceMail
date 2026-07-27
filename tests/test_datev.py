@@ -1,5 +1,6 @@
 """Tests für DATEV-Export."""
 import csv
+import os
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -102,3 +103,74 @@ def test_invoice_amount_field():
     d = inv2.to_dict()
     inv3 = Invoice.from_dict(d)
     assert inv3.amount == 99.99
+
+
+def test_datev_settings_dialog_table_operations():
+    """DATEVSettingsDialog muss Konten-Mapping in Tabelle anzeigen, editieren und zurückgeben."""
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    from PySide6.QtWidgets import QApplication
+    from datev_exporter import DATEVConfig, DEFAULT_KONTEN_MAPPING
+    from UniversalInvoiceMail import DATEVSettingsDialog
+
+    app = QApplication.instance() or QApplication([])
+
+    cfg = DATEVConfig(berater_nr="99999", mandant_nr="11111", konten_mapping={"CustomShop": (70099, 4999)})
+    dlg = DATEVSettingsDialog(cfg)
+
+    # Initial populating
+    assert dlg.table_mapping.rowCount() == 1
+    assert dlg.table_mapping.item(0, 0).text() == "CustomShop"
+    assert dlg.table_mapping.item(0, 1).text() == "70099"
+    assert dlg.table_mapping.item(0, 2).text() == "4999"
+
+    # Add row
+    dlg._add_row()
+    assert dlg.table_mapping.rowCount() == 2
+    assert dlg.table_mapping.item(1, 0).text() == "Neuer Partner"
+
+    # Reset mapping
+    dlg._reset_mapping()
+    assert dlg.table_mapping.rowCount() == len(DEFAULT_KONTEN_MAPPING)
+
+    # get_config
+    new_cfg = dlg.get_config()
+    assert new_cfg.berater_nr == "99999"
+    assert new_cfg.mandant_nr == "11111"
+    assert "Amazon" in new_cfg.konten_mapping
+    assert new_cfg.konten_mapping["Amazon"] == (70001, 4930)
+
+    dlg.close()
+
+
+def test_datev_settings_dialog_accessibility():
+    """DATEVSettingsDialog Bedienelemente müssen Accessibility-Attribute besitzen."""
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    from PySide6.QtWidgets import QApplication
+    from datev_exporter import DATEVConfig
+    from UniversalInvoiceMail import DATEVSettingsDialog
+
+    app = QApplication.instance() or QApplication([])
+
+    cfg = DATEVConfig()
+    dlg = DATEVSettingsDialog(cfg)
+
+    assert dlg.inp_berater.accessibleName() == "Beraternummer"
+    assert dlg.inp_mandant.accessibleName() == "Mandantennummer"
+    assert dlg.table_mapping.accessibleName() == "DATEV-Konten-Mapping-Tabelle"
+    assert dlg.btn_add_row.accessibleName() == "Zeile hinzufügen"
+    assert dlg.btn_remove_row.accessibleName() == "Zeile entfernen"
+    assert dlg.btn_reset_mapping.accessibleName() == "Standard wiederherstellen"
+
+    dlg.close()
+
+
+def test_datev_export_none_provider():
+    """export() muss robuster gegenüber None-Provider/Kategorie sein."""
+    from datev_exporter import DATEVConfig, DATEVExporter
+    cfg = DATEVConfig()
+    exp = DATEVExporter(cfg)
+    invoices = [{"provider": None, "category": None, "amount": 50.0}]
+    csv_str = exp.export(invoices)
+    assert "50,00" in csv_str
+
+
