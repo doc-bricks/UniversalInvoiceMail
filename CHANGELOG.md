@@ -24,6 +24,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 ## [Unreleased]
 
 ### Fixed
+- PWA-Manifest und Companion-HTML referenzieren wieder ausschließlich die versionierten Icons unter `web_companion/icons/`; dadurch bleibt die Offline-Installation auf case-sensitiven Hosts funktionsfähig und der mobile PWA-Smoke-Test grün.
 - IMAP MSN→UID (kritisch): `_search_imap` verwendet jetzt `uid('search')` und `uid('fetch')` statt `search()`/`fetch()`. MSN-Nummern sind instabil wenn andere Clients gleichzeitig Mails verschieben/löschen; UIDs sind stabile Kennungen gemäß RFC 3501 §2.3.1.1.
 - IMAP NIL-Guard: `uid('fetch')` kann bei nicht mehr existierenden UIDs eine leere/fehlerhafte Antwortstruktur zurückgeben; Guard verhindert AttributeError auf `msg_data[0][1]`.
 - MIME-Charset: `_get_imap_message_body` liest den Charset aus dem Content-Type-Header (`get_content_charset`) statt blind UTF-8 anzunehmen; verhindert Mojibake bei ISO-8859-1/windows-1252-Mails.
