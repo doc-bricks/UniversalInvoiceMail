@@ -2990,12 +2990,20 @@ class DATEVSettingsDialog(QDialog):
         self.inp_berater = QLineEdit(str(berater_val))
         self.inp_berater.setPlaceholderText("z.B. 12345")
         self.inp_berater.setAccessibleName("Beraternummer")
+        self.inp_berater.setAccessibleDescription(
+            "DATEV-Beraternummer für den Buchungsstapel."
+        )
+        self.inp_berater.setToolTip("DATEV-Beraternummer eingeben")
         form.addRow("Beraternummer:", self.inp_berater)
 
         mandant_val = getattr(config, 'mandant_nr', '67890') if config else '67890'
         self.inp_mandant = QLineEdit(str(mandant_val))
         self.inp_mandant.setPlaceholderText("z.B. 67890")
         self.inp_mandant.setAccessibleName("Mandantennummer")
+        self.inp_mandant.setAccessibleDescription(
+            "DATEV-Mandantennummer für den Buchungsstapel."
+        )
+        self.inp_mandant.setToolTip("DATEV-Mandantennummer eingeben")
         form.addRow("Mandantennummer:", self.inp_mandant)
 
         layout.addLayout(form)
@@ -3009,22 +3017,40 @@ class DATEVSettingsDialog(QDialog):
         self.table_mapping.setHorizontalHeaderLabels(["Absender / Schlüsselwort", "Konto (Kreditor)", "Gegenkonto (Aufwand)"])
         self.table_mapping.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table_mapping.setAccessibleName("DATEV-Konten-Mapping-Tabelle")
+        self.table_mapping.setAccessibleDescription(
+            "Ordnet Absendern oder Schlüsselwörtern ein Kreditor- und ein Aufwandskonto zu."
+        )
+        self.table_mapping.setToolTip(
+            "Absender oder Schlüsselwort sowie Kreditor- und Aufwandskonto bearbeiten"
+        )
         layout.addWidget(self.table_mapping)
 
         # Table Control Buttons
         btn_layout = QHBoxLayout()
         self.btn_add_row = QPushButton("Zeile hinzufügen")
         self.btn_add_row.setAccessibleName("Zeile hinzufügen")
+        self.btn_add_row.setAccessibleDescription(
+            "Fügt eine neue, editierbare Konten-Mapping-Zeile hinzu."
+        )
+        self.btn_add_row.setToolTip("Neue Konten-Mapping-Zeile hinzufügen")
         self.btn_add_row.clicked.connect(self._add_row)
         btn_layout.addWidget(self.btn_add_row)
 
         self.btn_remove_row = QPushButton("Zeile entfernen")
         self.btn_remove_row.setAccessibleName("Zeile entfernen")
+        self.btn_remove_row.setAccessibleDescription(
+            "Entfernt die aktuell ausgewählte Konten-Mapping-Zeile."
+        )
+        self.btn_remove_row.setToolTip("Ausgewählte Konten-Mapping-Zeile entfernen")
         self.btn_remove_row.clicked.connect(self._remove_row)
         btn_layout.addWidget(self.btn_remove_row)
 
         self.btn_reset_mapping = QPushButton("Standard wiederherstellen")
         self.btn_reset_mapping.setAccessibleName("Standard wiederherstellen")
+        self.btn_reset_mapping.setAccessibleDescription(
+            "Ersetzt alle Einträge durch die standardmäßige Konten-Zuordnung."
+        )
+        self.btn_reset_mapping.setToolTip("Standardmäßige Konten-Zuordnung wiederherstellen")
         self.btn_reset_mapping.clicked.connect(self._reset_mapping)
         btn_layout.addWidget(self.btn_reset_mapping)
 
@@ -3039,10 +3065,24 @@ class DATEVSettingsDialog(QDialog):
         hint.setStyleSheet("color: #aaa; font-size: 9pt;")
         layout.addWidget(hint)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        self.dialog_buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        ok_button = self.dialog_buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok_button.setAccessibleName("DATEV-Einstellungen speichern")
+        ok_button.setAccessibleDescription(
+            "Speichert Beraternummer, Mandantennummer und Konten-Mapping."
+        )
+        ok_button.setToolTip("DATEV-Einstellungen speichern")
+        cancel_button = self.dialog_buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        cancel_button.setAccessibleName("DATEV-Einstellungen verwerfen")
+        cancel_button.setAccessibleDescription(
+            "Schließt den Dialog ohne Änderungen zu speichern."
+        )
+        cancel_button.setToolTip("DATEV-Einstellungen ohne Speichern schließen")
+        self.dialog_buttons.accepted.connect(self.accept)
+        self.dialog_buttons.rejected.connect(self.reject)
+        layout.addWidget(self.dialog_buttons)
 
         # Initial data populating
         initial_mapping = config.konten_mapping if (config and getattr(config, 'konten_mapping', None)) else DEFAULT_KONTEN_MAPPING

@@ -38,6 +38,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - start_grabbing: redundanter log_output.clear()-Aufruf entfernt, der Sync-Status-Meldungen löschte, bevor der Worker-Thread startete.
 
 ### Changed
+- Der DATEV-Einstellungsdialog erläutert seine Konten-Mapping-Felder, Tabellenaktionen und Speichern-/Abbrechen-Aktionen jetzt zusätzlich per Accessible Description und Tooltip; das kompakte Layout bleibt unverändert.
 - README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
 - `EXPORTFORMAT.md` und `AUFGABEN.txt` auf den realen Bundle-Export/-Import-Stand gehoben; Companion-Rückfluss ist jetzt klar auf Betrag, Prüfflag und Notiz begrenzt.
 - Die kompakte Rechnungs-Aktionsleiste exponiert jetzt klare Accessible Names, Descriptions und Tooltips für Auswahl-, Export-, Bundle- und DATEV-Aktionen, ohne die UI sichtbar aufzublähen.

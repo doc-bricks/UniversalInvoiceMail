@@ -145,7 +145,7 @@ def test_datev_settings_dialog_table_operations():
 def test_datev_settings_dialog_accessibility():
     """DATEVSettingsDialog Bedienelemente müssen Accessibility-Attribute besitzen."""
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    from PySide6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication, QDialogButtonBox
     from datev_exporter import DATEVConfig
     from UniversalInvoiceMail import DATEVSettingsDialog
 
@@ -155,11 +155,41 @@ def test_datev_settings_dialog_accessibility():
     dlg = DATEVSettingsDialog(cfg)
 
     assert dlg.inp_berater.accessibleName() == "Beraternummer"
+    assert dlg.inp_berater.accessibleDescription() == "DATEV-Beraternummer für den Buchungsstapel."
+    assert dlg.inp_berater.toolTip() == "DATEV-Beraternummer eingeben"
     assert dlg.inp_mandant.accessibleName() == "Mandantennummer"
+    assert dlg.inp_mandant.accessibleDescription() == "DATEV-Mandantennummer für den Buchungsstapel."
+    assert dlg.inp_mandant.toolTip() == "DATEV-Mandantennummer eingeben"
     assert dlg.table_mapping.accessibleName() == "DATEV-Konten-Mapping-Tabelle"
+    assert dlg.table_mapping.accessibleDescription() == (
+        "Ordnet Absendern oder Schlüsselwörtern ein Kreditor- und ein Aufwandskonto zu."
+    )
+    assert dlg.table_mapping.toolTip() == (
+        "Absender oder Schlüsselwort sowie Kreditor- und Aufwandskonto bearbeiten"
+    )
     assert dlg.btn_add_row.accessibleName() == "Zeile hinzufügen"
+    assert dlg.btn_add_row.accessibleDescription() == (
+        "Fügt eine neue, editierbare Konten-Mapping-Zeile hinzu."
+    )
     assert dlg.btn_remove_row.accessibleName() == "Zeile entfernen"
+    assert dlg.btn_remove_row.accessibleDescription() == (
+        "Entfernt die aktuell ausgewählte Konten-Mapping-Zeile."
+    )
     assert dlg.btn_reset_mapping.accessibleName() == "Standard wiederherstellen"
+    assert dlg.btn_reset_mapping.accessibleDescription() == (
+        "Ersetzt alle Einträge durch die standardmäßige Konten-Zuordnung."
+    )
+
+    ok_button = dlg.dialog_buttons.button(QDialogButtonBox.StandardButton.Ok)
+    cancel_button = dlg.dialog_buttons.button(QDialogButtonBox.StandardButton.Cancel)
+    assert ok_button.accessibleName() == "DATEV-Einstellungen speichern"
+    assert ok_button.accessibleDescription() == (
+        "Speichert Beraternummer, Mandantennummer und Konten-Mapping."
+    )
+    assert cancel_button.accessibleName() == "DATEV-Einstellungen verwerfen"
+    assert cancel_button.accessibleDescription() == (
+        "Schließt den Dialog ohne Änderungen zu speichern."
+    )
 
     dlg.close()
 
