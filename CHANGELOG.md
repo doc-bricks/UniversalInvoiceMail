@@ -23,6 +23,11 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Maintainer verification (2026-08-01)
+- 114/114 Pytest-Tests, 10/10 Node-Web-Companion-PWA-Tests, `py_compile` und der
+  Source-Platform-Smoke erfolgreich verifiziert. Der Plattform-Smoke meldete nur
+  einen nicht-fatalen Qt-Font-Hinweis; der echte Android-/iOS-Geräte-Signoff bleibt offen.
+
 ### Fixed
 - PWA-Manifest und Companion-HTML referenzieren wieder ausschließlich die versionierten Icons unter `web_companion/icons/`; dadurch bleibt die Offline-Installation auf case-sensitiven Hosts funktionsfähig und der mobile PWA-Smoke-Test grün.
 - IMAP MSN→UID (kritisch): `_search_imap` verwendet jetzt `uid('search')` und `uid('fetch')` statt `search()`/`fetch()`. MSN-Nummern sind instabil wenn andere Clients gleichzeitig Mails verschieben/löschen; UIDs sind stabile Kennungen gemäß RFC 3501 §2.3.1.1.
