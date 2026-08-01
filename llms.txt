@@ -25,7 +25,7 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-07-27
+## Last-checked: 2026-08-01
 
 Important files:
 
@@ -36,7 +36,11 @@ Important files:
 - `pyproject.toml`: PEP 621 metadata and Pytest configuration.
 - `UniversalInvoiceMail.py`: PySide6 desktop application.
 - `datev_exporter.py`: DATEV CSV export helper.
-- `tests/`: mocked unit and integration tests (115 Pytest tests + 10 Node Web Companion PWA tests = 125 verified passing tests total).
+- `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
+- `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
+- `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
+- `web_companion/`: local-only PWA review surface with committed install manifest and icons.
+- `tests/`: mocked unit and integration tests for desktop, bundle and Web Companion contracts (114 Pytest + 10 Node tests verified on 2026-08-01).
 
 Safety boundary:
 

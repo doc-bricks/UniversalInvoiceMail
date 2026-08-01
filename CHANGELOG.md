@@ -6,7 +6,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ### Changed
 - `llms.txt`: Header auf `Last-checked: 2026-07-27` und 125 verifizierte Tests (115 Pytest + 10 Node Web Companion PWA) aktualisiert.
-- `CHECKS-LOG.txt`: Technischen Hygiene- & Maintenance-Check (Pfad A) registriert.
+- Technischen Hygiene- & Maintenance-Check (Pfad A) in den internen Wartungsprotokollen registriert.
 - Test-Verifikation: 115/115 Pytest-Tests 100% grün (0 Fehler, 24.08s execution time), `py_compile` fehlerfrei.
 
 ## [2.4.0] - 2026-07-26
@@ -40,6 +40,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 ### Changed
 - Der DATEV-Einstellungsdialog erläutert seine Konten-Mapping-Felder, Tabellenaktionen und Speichern-/Abbrechen-Aktionen jetzt zusätzlich per Accessible Description und Tooltip; das kompakte Layout bleibt unverändert.
 - README, README-DE und `llms.txt` mit Startpunkten, local-first Invoice-Archive-/Gmail-/IMAP-/DATEV-Suchkontext und klarer Privacy-Abgrenzung geschärft.
+- Interne Wartungsdateien (`CHECKS-LOG*.txt`, `LOCK*.txt`) sind jetzt gitignored; das Repo führt stattdessen nur veröffentlichbare Projektdateien.
 - `EXPORTFORMAT.md` und `AUFGABEN.txt` auf den realen Bundle-Export/-Import-Stand gehoben; Companion-Rückfluss ist jetzt klar auf Betrag, Prüfflag und Notiz begrenzt.
 - Die kompakte Rechnungs-Aktionsleiste exponiert jetzt klare Accessible Names, Descriptions und Tooltips für Auswahl-, Export-, Bundle- und DATEV-Aktionen, ohne die UI sichtbar aufzublähen.
 
@@ -48,6 +49,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - GitHub Actions workflow `.github/workflows/source-platform-smoke.yml` on `ubuntu-latest` + `macos-latest`; installs PySide6 only (avoids pywin32/google-auth build failures on non-Windows).
 - Neues Hilfsmodul `invoice_bundle.py` für redigierten Bundle-Export/-Import samt UI-Aktionen `Bundle Export` und `Bundle Import`.
 - Neue Regressionstests `tests/test_invoice_bundle.py` für Exportvertrag, Hash-Konflikte und UI-Roundtrip.
+- Committebare Web-Companion-PWA-Ressourcen (`favicon.ico`, `favicon.png`, `apple-touch-icon-180.png`) für lokale Installierbarkeit ohne tote Repo-Referenzen.
 
 ### CI
 - Source-platform smoke workflow now uses verified `actions/checkout@v6` and `actions/setup-python@v6`, matching the main test workflow, and forces UTF-8 Python output.

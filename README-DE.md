@@ -38,7 +38,7 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 - Editierbare Rechnungsbeträge direkt in der Tabelle für nachgelagerte Buchhaltung
 - Optionaler DATEV-Export mit konfigurierbarer Berater-/Mandantennummer und Konten-Mapping im SKR03-Stil
 - Redigierter Export/Reimport von `universalinvoicemail-invoicebundle-v1.json` für Companion- und Prüf-Workflows
-- Statischer `web_companion/` als PWA für lokale Bundle-Prüfung, Betrags-/Status-/Notiznachtrag und Änderungsbundle-Export
+- Statischer `web_companion/` als PWA für lokale Bundle-Prüfung, Betrags-/Status-/Notiznachtrag, Änderungsbundle-Export und committed Install-Icons/Manifest
 - Hash-basierte Duplikat-Erkennung über lokale Archivordner
 - Sichere Passwortspeicherung via `keyring`
 

@@ -33,7 +33,7 @@ Local-first Windows desktop tool for collecting invoices and receipts from email
 - Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
 - Manual invoice amount column plus DATEV export for selected invoices
 - Redacted `universalinvoicemail-invoicebundle-v1.json` export/import for companion review workflows
-- Static `web_companion/` PWA for local redacted bundle review, amount/status/notes edits, and change-bundle export
+- Static `web_companion/` PWA for local redacted bundle review, amount/status/notes edits, change-bundle export, and committed install icons/manifest
 - Hash-based duplicate detection across local archive folders
 - Secure credential storage via `keyring`
 

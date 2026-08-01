@@ -1,0 +1,72 @@
+UniversalInvoiceMail — Third-Party Software & Licenses Inventory
+===============================================================
+
+This project incorporates open-source third-party components listed below.
+
+1. Python GUI & Desktop Framework
+---------------------------------
+- PySide6 (Qt for Python)
+  License: LGPL-3.0-only
+  Homepage: https://www.qt.io/qt-for-python
+
+2. Passwords & Credential Storage
+---------------------------------
+- keyring
+  License: MIT
+  Homepage: https://github.com/jaraco/keyring
+
+3. Document & PDF Processing
+----------------------------
+- reportlab
+  License: BSD-3-Clause
+  Homepage: https://www.reportlab.com/
+
+- pypdfium2
+  License: Apache-2.0 AND BSD-3-Clause
+  Homepage: https://github.com/pypdfium2-team/pypdfium2
+
+- pypdf
+  License: BSD-3-Clause
+  Homepage: https://github.com/py-pdf/pypdf
+
+- docx2pdf
+  License: MIT
+  Homepage: https://github.com/cfhsu/docx2pdf
+
+- xhtml2pdf
+  License: Apache-2.0
+  Homepage: https://github.com/xhtml2pdf/xhtml2pdf
+
+- openpyxl
+  License: MIT
+  Homepage: https://openpyxl.readthedocs.io/
+
+- Pillow
+  License: HPND / Pillow License
+  Homepage: https://python-pillow.org/
+
+- python-docx
+  License: MIT
+  Homepage: https://github.com/python-openxml/python-docx
+
+4. Optical Character Recognition (OCR)
+--------------------------------------
+- pytesseract
+  License: Apache-2.0
+  Homepage: https://github.com/madmaze/pytesseract
+
+5. Google API & Authentication (Optional)
+-----------------------------------------
+- google-api-python-client
+  License: Apache-2.0
+  Homepage: https://github.com/googleapis/google-api-python-client
+
+- google-auth / google-auth-oauthlib
+  License: Apache-2.0
+  Homepage: https://github.com/googleapis/google-auth-library-python
+
+6. Web Companion & Node.js Environment
+--------------------------------------
+- Node.js Built-in Test Runner & Standard APIs
+  License: MIT
+  Homepage: https://nodejs.org/

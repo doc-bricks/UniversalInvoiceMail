@@ -17,6 +17,8 @@ env/
 
 # ---- Interne Steuerungsdateien ----
 AUFGABEN.txt
+CHECKS-LOG.txt
+CHECKS-LOG-*.txt
 TEST.txt
 TESTS.txt
 TESTERGEBNISSE.txt
@@ -25,6 +27,7 @@ DIAGNOSE_REPORT.md
 SKILL.md
 tmpclaude-*
 EXPERIMENT_BEFEHLSKETTE.txt
+LOCK*.txt
 
 # ---- Sensible Daten ----
 _USER/
@@ -52,6 +55,21 @@ releases/
 *.spec
 logs/
 *.log
+web_companion/apple-touch-icon.png
+web_companion/apple-touch-icon-180.png
+web_companion/favicon.ico
+web_companion/favicon.png
+web_companion/icon-192.png
+web_companion/icon-512.png
+web_companion/icon-maskable-192.png
+web_companion/icon-maskable-512.png
+web_companion/icon.png
+web_companion/icon.svg
+web_companion/manifest.json
+web_companion/icons/apple-touch-icon.png
+web_companion/icons/favicon.ico
+web_companion/icons/icon.png
+web_companion/icons/icon.svg
 
 # ---- Drittanbieter-Bundles / lokal ----
 tesseract_portable/

@@ -1,5 +1,0 @@
-2026-07-27 | MAIL/REL-PUB_UniversalInvoiceMail | TECHNISCHE HYGIENE & MAINTENANCE (Pfad A):
-- Repo-Root Doku- & Hygiene-Check für doc-bricks/UniversalInvoiceMail durchgeführt.
-- llms.txt Header auf Last-checked: 2026-07-27 und 125 verifizierte Tests (115 Pytest + 10 Node Web Companion PWA) aktualisiert.
-- Test-Verifikation: 115/115 Pytest-Tests 100% grün (0.00s fail, 24.08s total), py_compile fehlerfrei.
-- Cooldown-Check: >24h seit letztem Remote-Commit/Push (35.5h) & 45 Tage seit letztem Pfad A Check.
