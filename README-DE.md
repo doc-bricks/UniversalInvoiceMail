@@ -1,14 +1,62 @@
 <img src="assets/banner.svg" width="100%" alt="UniversalInvoiceMail — Rechnungen automatisch erfassen und DATEV-Export">
 
-# UniversalInvoiceMail v2.3.0
+# UniversalInvoiceMail
 
-[![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
+[![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
+[![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
+[![Pytest](https://img.shields.io/badge/Tests-114%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
 
-> **English documentation:** [README.md](README.md)
+**[English](README.md)** | **[Deutsch](README-DE.md)**
+
+> [!NOTE]
+> **KI / LLM-Integration:** Maschinenlesbarer Index und Architekturkontext sind unter [llms.txt](llms.txt) verfügbar.
 
 ![UniversalInvoiceMail Vorschau](README/screenshots/main.png)
+
+## Systemarchitektur & Datenfluss
+
+```mermaid
+flowchart TD
+    subgraph Sources ["Mail-Quellen (Local-First)"]
+        IMAP["IMAP-Postfächer<br/>(Gmail, Outlook, GMX, Web.de)"]
+        GAPI["Gmail API<br/>(OAuth2 / Raw Queries)"]
+    end
+
+    subgraph Processing ["Verarbeitungs-Engine"]
+        Fetch["Anhang- & Mail-Abrufer"]
+        Conv["PDF-Konverter<br/>(Bilder, DOCX, XLSX, Legacy)"]
+        OCR["OCR-Engine<br/>(Tesseract + pypdfium2)"]
+        Dedup["Hash-Duplikaterkennung"]
+    end
+
+    subgraph Storage ["Lokale Speicherung (%USERPROFILE%)"]
+        Config[".universal_invoice_mail/"]
+        Archive["Dokumentenarchiv<br/>(Lokaler PDF-Ordner)"]
+    end
+
+    subgraph Handoff ["Export & Review Workflows"]
+        DATEV["DATEV Export<br/>(cp1252 CSV Buchungsstapel)"]
+        BundleExp["Redigierter Bundle Export<br/>(universalinvoicemail-invoicebundle-v1.json)"]
+        WebComp["Web Companion PWA<br/>(Lokale Browser-Prüfung)"]
+        BundleImp["Desktop Bundle Import<br/>(Betrag/Status/Notizen Sync)"]
+    end
+
+    IMAP --> Fetch
+    GAPI --> Fetch
+    Fetch --> Conv --> OCR --> Dedup
+    Dedup --> Config
+    Dedup --> Archive
+    Config --> DATEV
+    Config --> BundleExp
+    BundleExp --> WebComp
+    WebComp --> BundleImp
+    BundleImp --> Config
+```
 
 ## Einstieg
 

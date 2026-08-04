@@ -23,6 +23,13 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Maintainer verification & Discoverability (2026-08-04)
+- Discoverability, README-Design & SEO Check (Pfad B) für `doc-bricks/UniversalInvoiceMail` durchgeführt.
+- Shields.io-Badges für doc-bricks Organisation, open-bricks Ökosystem, Pytest (114 passed), Web Companion (10 passed), Python 3.10+ und MIT-Lizenz in `README.md` & `README-DE.md` integriert.
+- Interaktive Mermaid-Systemarchitekturdiagramme für Datenfluss (IMAP/Gmail API -> Conversion/OCR -> Archive/DATEV/Web Companion) in deutscher und englischer Dokumentation hinterlegt.
+- GFM-KI-Agenten-Callout-Box (`> [!NOTE]`) für `llms.txt` Discovery Index eingebunden; `llms.txt` Timestamp auf `2026-08-04` und 124 passed Tests (114 Pytest + 10 Node Web Companion) aktualisiert.
+- PWA-Manifest `manifest.webmanifest` Icon-Pfade für case-sensitive und offline PWA Installationen gehärtet (`./icons/Icon-192.png`, etc.); Node test suite (10/10 passed) und Pytest test suite (114/114 passed) 100% grün.
+
 ### Maintainer verification (2026-08-01)
 - 114/114 Pytest-Tests, 10/10 Node-Web-Companion-PWA-Tests, `py_compile` und der
   Source-Platform-Smoke erfolgreich verifiziert. Der Plattform-Smoke meldete nur

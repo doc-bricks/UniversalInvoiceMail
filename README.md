@@ -2,13 +2,61 @@
 
 # UniversalInvoiceMail
 
-[![UniversalInvoiceMail tests](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml/badge.svg)](https://github.com/doc-bricks/UniversalInvoiceMail/actions/workflows/tests.yml)
+[![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
+[![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
+[![Pytest](https://img.shields.io/badge/Tests-114%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Local-first Windows desktop tool for collecting invoices and receipts from email accounts, converting attachments to PDF, keeping a private archive, and preparing DATEV-style CSV exports.
 
-> **Deutsche Dokumentation:** [README-DE.md](README-DE.md)
+**[English](README.md)** | **[Deutsch](README-DE.md)**
+
+> [!NOTE]
+> **AI / LLM Discovery:** Machine-readable index and architecture context are available in [llms.txt](llms.txt).
 
 ![UniversalInvoiceMail Preview](README/screenshots/main.png)
+
+## System Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph Sources ["Mail Sources (Local-First)"]
+        IMAP["IMAP Mailboxes<br/>(Gmail, Outlook, GMX, Web.de)"]
+        GAPI["Gmail API<br/>(OAuth2 / Raw Queries)"]
+    end
+
+    subgraph Processing ["Processing Engine"]
+        Fetch["Attachment & Mail Fetcher"]
+        Conv["PDF Converter<br/>(Images, DOCX, XLSX, Legacy)"]
+        OCR["OCR Engine<br/>(Tesseract + pypdfium2)"]
+        Dedup["Hash Duplicate Detection"]
+    end
+
+    subgraph Storage ["Local Storage (%USERPROFILE%)"]
+        Config[".universal_invoice_mail/"]
+        Archive["Document Archive<br/>(Local PDF Folder)"]
+    end
+
+    subgraph Handoff ["Export & Review Workflows"]
+        DATEV["DATEV Export<br/>(cp1252 CSV Booking Batch)"]
+        BundleExp["Redacted Bundle Export<br/>(universalinvoicemail-invoicebundle-v1.json)"]
+        WebComp["Web Companion PWA<br/>(Local Browser Review)"]
+        BundleImp["Desktop Bundle Import<br/>(Amount/Status/Notes Sync)"]
+    end
+
+    IMAP --> Fetch
+    GAPI --> Fetch
+    Fetch --> Conv --> OCR --> Dedup
+    Dedup --> Config
+    Dedup --> Archive
+    Config --> DATEV
+    Config --> BundleExp
+    BundleExp --> WebComp
+    WebComp --> BundleImp
+    BundleImp --> Config
+```
 
 ## Start Here
 
