@@ -23,6 +23,15 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Maintainer verification (2026-08-10)
+- Fresh local readback: 114/114 Pytest, source-platform smoke, `py_compile` and
+  JavaScript syntax checks passed. Ruff reports 34 existing test/import findings.
+- The Node Web Companion suite is 9/10 only because the pre-existing uncommitted
+  `web_companion/manifest.webmanifest` change points to lowercase/root-relative
+  icons while the tracked assets use `./icons/Icon-*.png`. The foreign manifest
+  change was preserved and not staged or committed; the public 10/10 baseline was
+  not rewritten from this dirty working tree.
+
 ### Maintainer verification & Discoverability (2026-08-04)
 - Discoverability, README-Design & SEO Check (Pfad B) für `doc-bricks/UniversalInvoiceMail` durchgeführt.
 - Shields.io-Badges für doc-bricks Organisation, open-bricks Ökosystem, Pytest (114 passed), Web Companion (10 passed), Python 3.10+ und MIT-Lizenz in `README.md` & `README-DE.md` integriert.
