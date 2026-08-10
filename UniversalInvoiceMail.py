@@ -3399,6 +3399,11 @@ class MainWindow(QMainWindow):
 
         # === RECHTE SEITE: Tabs ===
         tabs = QTabWidget()
+        tabs.setObjectName("main_workspace_tabs")
+        tabs.setAccessibleName("Arbeitsbereiche")
+        tabs.setAccessibleDescription(
+            "Wechselt zwischen Rechnungen, Einstellungen, Protokoll und Informationen."
+        )
 
         # Tab: Rechnungen
         invoice_tab = QWidget()
@@ -3412,6 +3417,14 @@ class MainWindow(QMainWindow):
         self.invoice_table.setColumnWidth(1, 40)
         self.invoice_table.setColumnWidth(5, 90)  # Betrag-Spalte
         self.invoice_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.invoice_table.setObjectName("invoice_table")
+        self.invoice_table.setAccessibleName("Rechnungsliste")
+        self.invoice_table.setAccessibleDescription(
+            "Zeigt gefundene Rechnungen. Zeilen können für Export- oder Löschaktionen ausgewählt werden."
+        )
+        self.invoice_table.setToolTip(
+            "Rechnungen auswählen oder mit Doppelklick öffnen"
+        )
         self.invoice_table.cellDoubleClicked.connect(self.open_invoice)
         self.invoice_table.itemChanged.connect(self._on_invoice_amount_changed)
         invoice_layout.addWidget(self.invoice_table)
@@ -3651,6 +3664,14 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         self.log_output = QPlainTextEdit()
         self.log_output.setReadOnly(True)
+        self.log_output.setObjectName("activity_log")
+        self.log_output.setAccessibleName("Aktivitätsprotokoll")
+        self.log_output.setAccessibleDescription(
+            "Zeigt Fortschritt, gefundene Rechnungen und Fehlermeldungen des aktuellen Abrufs."
+        )
+        self.log_output.setToolTip(
+            "Fortschritt und Meldungen des Rechnungsabrufs"
+        )
         log_layout.addWidget(self.log_output)
 
         tabs.addTab(log_tab, "📝 Log")

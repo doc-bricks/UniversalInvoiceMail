@@ -50,7 +50,7 @@ for mod in [
         sys.modules[mod] = MagicMock()
 
 import pytest
-from PySide6.QtWidgets import QApplication, QPushButton
+from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTableWidget, QTabWidget
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -238,5 +238,38 @@ def test_invoice_action_buttons_expose_context(tmp_path, monkeypatch, qapp):
             assert button.accessibleName() == accessible_name
             assert button.accessibleDescription() == accessible_description
             assert button.toolTip() == tooltip
+    finally:
+        window.close()
+
+
+def test_primary_work_areas_expose_accessible_context(tmp_path, monkeypatch, qapp):
+    """The main work areas keep their purpose clear for screenreader users."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        tabs = window.findChild(QTabWidget, "main_workspace_tabs")
+        assert tabs is not None
+        assert tabs.accessibleName() == "Arbeitsbereiche"
+        assert tabs.accessibleDescription() == (
+            "Wechselt zwischen Rechnungen, Einstellungen, Protokoll und Informationen."
+        )
+
+        invoice_table = window.findChild(QTableWidget, "invoice_table")
+        assert invoice_table is not None
+        assert invoice_table.accessibleName() == "Rechnungsliste"
+        assert invoice_table.accessibleDescription() == (
+            "Zeigt gefundene Rechnungen. Zeilen können für Export- oder Löschaktionen ausgewählt werden."
+        )
+        assert invoice_table.toolTip() == "Rechnungen auswählen oder mit Doppelklick öffnen"
+
+        activity_log = window.findChild(QPlainTextEdit, "activity_log")
+        assert activity_log is not None
+        assert activity_log.accessibleName() == "Aktivitätsprotokoll"
+        assert activity_log.accessibleDescription() == (
+            "Zeigt Fortschritt, gefundene Rechnungen und Fehlermeldungen des aktuellen Abrufs."
+        )
+        assert activity_log.toolTip() == "Fortschritt und Meldungen des Rechnungsabrufs"
     finally:
         window.close()
