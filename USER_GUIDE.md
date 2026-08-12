@@ -1,6 +1,6 @@
 # UniversalInvoiceMail – User Guide
 
-Version 2.3.0 | Stand: 2026-05-13
+Version 2.3.0 | Stand: 2026-08-12
 
 ---
 
@@ -159,6 +159,23 @@ dass ein PDF-Anhang vorhanden ist.
 
 Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und nach dem Export gemeldet.
 Der Export wird als `cp1252`-CSV geschrieben, passend für DATEV-nahe Import-Workflows.
+
+### Konten-Mapping im DATEV-Einstellungsdialog
+
+Im selben Dialog lassen sich Absender- oder Schlüsselwort-Mappings für Kreditor- und
+Aufwandskonto pflegen:
+
+1. Eine vorhandene Zeile bearbeiten oder mit **Zeile hinzufügen** eine neue Zeile anlegen.
+2. Schlüsselwort/Absender sowie `Konto (Kreditor)` und `Gegenkonto (Aufwand)` eintragen.
+3. Mit **Zeile entfernen** die ausgewählte Zeile löschen oder mit **Standard wiederherstellen**
+   die Standard-Zuordnung laden.
+4. Mit **OK** speichern; die Werte werden über `DATEVConfig` geladen und gespeichert.
+
+Die formale Prüfung erlaubter Kontenbereiche, von Duplikaten/Konflikten und der zugehörigen
+Fehlermeldungen ist noch von einer fachlichen Accounting-Entscheidung abhängig und wird hier
+nicht vorweggenommen. Leere oder nicht numerische Kontenfelder verwenden derzeit die Defaults
+`70000/4900`; Mapping deshalb vor dem Export kontrollieren. Der bestehende 93-Spalten-
+Exportvertrag wird durch die UI-Scheibe nicht verändert.
 
 ---
 

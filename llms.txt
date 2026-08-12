@@ -25,7 +25,7 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-08-04
+## Last-checked: 2026-08-12
 
 Important files:
 
@@ -40,7 +40,8 @@ Important files:
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit and integration tests for desktop, bundle and Web Companion contracts (114 Pytest + 10 Node tests verified on 2026-08-04).
+- `tests/`: mocked unit and integration tests for desktop, bundle and Web Companion contracts (115 Pytest + 10 Node tests in the tracked baseline; read back on 2026-08-12).
+- `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset and `DATEVConfig` persistence; accounting range and duplicate/conflict rules remain deferred pending domain ownership.
 
 Safety boundary:
 
@@ -54,3 +55,4 @@ Verification:
 - Run `PYTHONIOENCODING=utf-8 python -m pytest -q`.
 - Run `cd web_companion && npm test`.
 - Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py`.
+- The current foreign uncommitted `web_companion/manifest.webmanifest` variant reads 9/10 in the Node smoke; it was not adopted, and Android/iOS device or emulator sign-off is separate.

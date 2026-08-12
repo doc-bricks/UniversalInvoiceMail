@@ -23,6 +23,12 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### TASKPLAN Steuerdokumente und DATEV-Readback (2026-08-12)
+- ROADMAP, AUFGABEN, README/README-DE, User Guide und `llms.txt` gegen den v2.3.0-/Companion-Stand sowie den frischen Plan-D-Readback abgeglichen.
+- `115/115` Pytest-Tests, Source-Platform-Smoke und `compileall` liefen grün. Die getrackte Node-Baseline bleibt `10/10`; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde nicht übernommen.
+- Die DATEV-Mapping-UI (Tabelle, Hinzufügen/Entfernen, Standard-Wiederherstellung, Laden/Speichern und Accessibility-Metadaten) ist dokumentiert. Kontenbereichs- und Duplikat-/Konfliktregeln bleiben bis zur Accounting-Entscheidung offen; der 93-Spalten-Exportvertrag wurde nicht verändert.
+- Keine kanonische OneDrive-Projektion: aktiver Cloud-Lock und fremde Arbeitsbaumänderungen wurden nicht überschrieben.
+
 ### Maintainer verification (2026-08-10)
 - Fresh local readback: 114/114 Pytest, source-platform smoke, `py_compile` and
   JavaScript syntax checks passed. Ruff reports 34 existing test/import findings.

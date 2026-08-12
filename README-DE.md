@@ -4,7 +4,7 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-114%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-115%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -85,6 +85,8 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 - Optionales OCR für bildbasierte PDFs mit Tesseract und `pypdfium2`
 - Editierbare Rechnungsbeträge direkt in der Tabelle für nachgelagerte Buchhaltung
 - Optionaler DATEV-Export mit konfigurierbarer Berater-/Mandantennummer und Konten-Mapping im SKR03-Stil
+- DATEV-Einstellungsdialog mit editierbarer Mapping-Tabelle, Hinzufügen/Entfernen,
+  Standard-Wiederherstellung und persistierter Konfiguration
 - Redigierter Export/Reimport von `universalinvoicemail-invoicebundle-v1.json` für Companion- und Prüf-Workflows
 - Statischer `web_companion/` als PWA für lokale Bundle-Prüfung, Betrags-/Status-/Notiznachtrag, Änderungsbundle-Export und committed Install-Icons/Manifest
 - Hash-basierte Duplikat-Erkennung über lokale Archivordner
@@ -144,6 +146,11 @@ Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht
 - Die Rechnungstabelle enthält eine editierbare Spalte `Betrag (€)`.
 - `DATEV exportieren` erzeugt einen DATEV-Buchungsstapel aus ausgewählten Rechnungen.
 - `berater_nr` und `mandant_nr` bleiben im Exportdialog konfigurierbar.
+- Der DATEV-Einstellungsdialog unterstützt Absender-/Schlüsselwort-Mappings, Zeilen-
+  Hinzufügen/Entfernen, Standard-Wiederherstellung und Speicherung über `DATEVConfig`.
+- Formale Kontenbereichs- sowie Duplikat-/Konfliktregeln bleiben bis zu einer
+  fachlichen Accounting-Entscheidung offen; Mapping vor dem Export prüfen. Der
+  bestehende 93-Spalten-Exportvertrag bleibt unverändert.
 - Rechnungen ohne eingetragenen Betrag werden bewusst übersprungen und danach ausgewiesen.
 - `Bundle Export` schreibt ein redigiertes JSON-Bundle mit Profilfiltern, DATEV-Basisdaten, Rechnungs-Hashes und optionalen Dateireferenzen.
 - `Bundle Import` akzeptiert aus einem Companion nur Betrag, Prüfflag und Notiz zurück und prüft vor dem Reimport ID und Datei-Hash.
@@ -161,6 +168,11 @@ npm --prefix web_companion test
 ```
 
 Vorhanden sind gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import und Barrierefreiheits-Metadaten sowie Node-Contract-Tests für den Web Companion.
+
+Plan-D-Readback vom 2026-08-12: `115/115` Pytest-Tests, Source-Platform-Smoke und
+`compileall` waren grün. Die getrackte Web-Companion-Baseline bleibt bei `10/10`
+Node-Tests; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde
+nicht übernommen. Die Android-/iOS-Geräte- bzw. Emulator-Abnahme bleibt separat offen.
 
 ## Datenschutz
 

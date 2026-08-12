@@ -4,7 +4,7 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-114%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-115%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -80,6 +80,7 @@ flowchart TD
 - Optional legacy conversion for `.doc` and `.xls` via Word/Excel-COM or LibreOffice
 - Optional OCR for image-based PDFs (Tesseract + `pypdfium2`)
 - Manual invoice amount column plus DATEV export for selected invoices
+- DATEV settings mapping table with add/remove/reset controls and persisted configuration
 - Redacted `universalinvoicemail-invoicebundle-v1.json` export/import for companion review workflows
 - Static `web_companion/` PWA for local redacted bundle review, amount/status/notes edits, change-bundle export, and committed install icons/manifest
 - Hash-based duplicate detection across local archive folders
@@ -139,6 +140,11 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 - The invoice table exposes an editable amount column in EUR.
 - `DATEV exportieren` creates DATEV booking batches from the selected invoices.
 - `berater_nr` and `mandant_nr` are configurable in the export dialog.
+- The DATEV settings dialog supports editable sender/keyword mappings, row add/remove,
+  default reset, and persistence through `DATEVConfig`.
+- Formal account-range and duplicate/conflict validation is intentionally deferred until
+  an accounting-domain decision; verify mappings before export. The existing 93-column
+  export contract is unchanged.
 - Invoices without an entered amount are skipped deliberately and called out after export.
 - `Bundle Export` writes a redacted JSON bundle with profile filters, DATEV base data, invoice hashes, and optional file references.
 - `Bundle Import` accepts only amount, review status, and notes back from a companion, guarded by invoice ID and file hash checks.
@@ -157,6 +163,11 @@ npm --prefix web_companion test
 ```
 
 The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, plus Node contract tests for the Web Companion.
+
+Plan-D readback on 2026-08-12: 115/115 Pytest tests, source-platform smoke, and
+`compileall` passed. The tracked Web Companion baseline is 10/10 Node tests; a
+pre-existing uncommitted foreign manifest variant is 9/10 and was not adopted.
+Android/iOS device or emulator sign-off remains a separate open task.
 
 For Linux, an additional headless smoke covers the desktop start path, missing-keyring handling, LibreOffice fallback detection and CSV export without requiring a visible session.
 
