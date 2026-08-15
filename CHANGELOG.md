@@ -23,6 +23,9 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Repo hygiene (2026-08-15)
+- Internal `TASKPLAN_STATUS_*.md` readbacks are now ignored and no longer intended for public Git tracking because they can contain local Plan-D evidence paths.
+
 ### TASKPLAN Steuerdokumente und DATEV-Readback (2026-08-12)
 - ROADMAP, AUFGABEN, README/README-DE, User Guide und `llms.txt` gegen den v2.3.0-/Companion-Stand sowie den frischen Plan-D-Readback abgeglichen.
 - `115/115` Pytest-Tests, Source-Platform-Smoke und `compileall` liefen grün. Die getrackte Node-Baseline bleibt `10/10`; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde nicht übernommen.
