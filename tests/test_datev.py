@@ -3,10 +3,9 @@ import csv
 import os
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import pytest
 from unittest.mock import MagicMock
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Optionale Abhaengigkeiten mocken die moeglicherweise nicht installiert sind
 for mod in ['xhtml2pdf', 'xhtml2pdf.pisa', 'pytesseract', 'pypdfium2',
@@ -27,7 +26,7 @@ for mod in ['xhtml2pdf', 'xhtml2pdf.pisa', 'pytesseract', 'pypdfium2',
 
 
 def test_datev_exporter_import():
-    from datev_exporter import DATEVConfig, DATEVExporter, export_invoices_datev
+    from datev_exporter import DATEVConfig
     cfg = DATEVConfig(berater_nr="12345", mandant_nr="67890")
     assert cfg.berater_nr == "12345"
 
@@ -53,7 +52,7 @@ def test_datev_export_one_invoice(tmp_path):
         "category": "Amazon",
     }]
     out = tmp_path / "test.csv"
-    result = exp.export(invoices, out)
+    exp.export(invoices, out)
     assert out.exists()
     content = out.read_text(encoding="cp1252")
     assert "119" in content or "119,00" in content
@@ -112,7 +111,7 @@ def test_datev_settings_dialog_table_operations():
     from datev_exporter import DATEVConfig, DEFAULT_KONTEN_MAPPING
     from UniversalInvoiceMail import DATEVSettingsDialog
 
-    app = QApplication.instance() or QApplication([])
+    _ = QApplication.instance() or QApplication([])
 
     cfg = DATEVConfig(berater_nr="99999", mandant_nr="11111", konten_mapping={"CustomShop": (70099, 4999)})
     dlg = DATEVSettingsDialog(cfg)
@@ -149,7 +148,7 @@ def test_datev_settings_dialog_accessibility():
     from datev_exporter import DATEVConfig
     from UniversalInvoiceMail import DATEVSettingsDialog
 
-    app = QApplication.instance() or QApplication([])
+    _ = QApplication.instance() or QApplication([])
 
     cfg = DATEVConfig()
     dlg = DATEVSettingsDialog(cfg)
@@ -202,5 +201,3 @@ def test_datev_export_none_provider():
     invoices = [{"provider": None, "category": None, "amount": 50.0}]
     csv_str = exp.export(invoices)
     assert "50,00" in csv_str
-
-

@@ -4,9 +4,11 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-115%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-120%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Privacy: Local-First](https://img.shields.io/badge/Privacy-Local--First-brightgreen.svg)](#privacy)
+[![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Local-first Windows desktop tool for collecting invoices and receipts from email accounts, converting attachments to PDF, keeping a private archive, and preparing DATEV-style CSV exports.
@@ -162,9 +164,9 @@ QT_QPA_PLATFORM=offscreen python tests/source_platform_smoke.py
 npm --prefix web_companion test
 ```
 
-The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, plus Node contract tests for the Web Companion.
+The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, metadata parity, plus Node contract tests for the Web Companion.
 
-Plan-D readback on 2026-08-12: 115/115 Pytest tests, source-platform smoke, and
+Plan-D readback on 2026-08-16: 120/120 Pytest tests, source-platform smoke, and
 `compileall` passed. The tracked Web Companion baseline is 10/10 Node tests; a
 pre-existing uncommitted foreign manifest variant is 9/10 and was not adopted.
 Android/iOS device or emulator sign-off remains a separate open task.
@@ -177,15 +179,23 @@ For Linux, an additional headless smoke covers the desktop start path, missing-k
 - `.gitignore` excludes `credentials.json`, `client_secret*.json`, `token.json`, local databases, sample output folders, and portable OCR bundles.
 - Real invoices, attachments, and generated release artifacts should remain local.
 
-## Related Tools
+## Ecosystem & Sibling Tools
 
-Part of the [doc-bricks](https://github.com/doc-bricks) mail suite:
+Part of the [doc-bricks](https://github.com/doc-bricks) document productivity suite and the [open-bricks](https://github.com/open-bricks) umbrella:
 
-| Tool | Description |
-|------|-------------|
-| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | System tray launcher for all Universal Mail Tools |
-| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | Rule-based IMAP mailbox cleaner with safe mode |
-| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | Download documents and attachments from IMAP mail |
+| Tool | Ecosystem | Description |
+|------|-----------|-------------|
+| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | doc-bricks | System tray launcher and orchestrator for Universal Mail Tools |
+| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | doc-bricks | Rule-based IMAP and Gmail mailbox cleaner with safe trash mode |
+| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | doc-bricks | Download documents and attachments from IMAP mail |
+| [DokuZen](https://github.com/doc-bricks/DokuZen) | doc-bricks | Minimalist markdown document viewer and structured reader |
+| [PDFtoPDFocr](https://github.com/doc-bricks/PDFtoPDFocr) | doc-bricks | High-fidelity OCR text layer generator for scanned PDFs |
+| [DokuReader](https://github.com/doc-bricks/DokuReader) | doc-bricks | Offline document reader and indexer for structured archives |
+| [MediaBrain](https://github.com/file-bricks/MediaBrain) | file-bricks | Local-first AI-assisted media categorization and tagger |
+| [TextBrain](https://github.com/file-bricks/TextBrain) | file-bricks | Intelligent semantic text search and local document extraction |
+| [ProFiler](https://github.com/file-bricks/ProFiler) | file-bricks | Advanced batch file organizer and rule-based rename engine |
+| [DevCenter](https://github.com/dev-bricks/DevCenter) | dev-bricks | Developer cockpit and repository telemetry hub |
+| [CodeBox](https://github.com/dev-bricks/CodeBox) | dev-bricks | Reusable code snippet repository with semantic lookup |
 
 ## License
 

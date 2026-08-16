@@ -23,6 +23,12 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Maintainer verification, Hygiene & Discoverability (2026-08-16)
+- **Ruff Linting**: Resolved all 34 pre-existing Ruff linting errors (`F401` unused imports, `E402` module-level imports, `F841` unused variables) across `test_helpers.py`, `tests/test_datev.py`, and `tests/test_integration.py`. Added `[tool.ruff]` and `[tool.ruff.lint]` configuration in `pyproject.toml`.
+- **Automated Metadata Parity Tests**: Added `tests/test_metadata.py` verifying version parity, documentation file presence, `llms.txt` integrity, web companion PWA assets and UTF-8 encoding.
+- **Discoverability & Badges**: Synchronized test badges to 120 Pytest passed (100% green) and 10 Node Web Companion passed across `README.md` and `README-DE.md`. Added doc-bricks and open-bricks ecosystem sibling tool grid.
+- **Testsuite Status**: 120/120 Pytest tests passing, 10/10 Node Web Companion tests passing, source-platform smoke passing, `ruff check .` 100% clean.
+
 ### Repo hygiene (2026-08-15)
 - Internal `TASKPLAN_STATUS_*.md` readbacks are now ignored and no longer intended for public Git tracking because they can contain local Plan-D evidence paths.
 

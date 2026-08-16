@@ -5,15 +5,12 @@ Run with: python -m pytest tests/test_integration.py
 """
 
 import sys
-import os
 import base64
 import email
-import hashlib
 import unittest
 from email.message import EmailMessage
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
-from dataclasses import dataclass
+from unittest.mock import MagicMock, patch
 
 # Add project root to sys.path so we can import UniversalInvoiceMail
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,9 +21,6 @@ sys.modules['PyQt6'] = _qt_mock
 sys.modules['PyQt6.QtWidgets'] = _qt_mock
 sys.modules['PyQt6.QtCore'] = _qt_mock
 sys.modules['PyQt6.QtGui'] = _qt_mock
-
-import importlib
-import types
 
 # Mock optional dependencies that might not be installed
 for mod in ['xhtml2pdf', 'xhtml2pdf.pisa', 'pytesseract', 'pypdfium2',

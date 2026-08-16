@@ -48,7 +48,6 @@ from UniversalInvoiceMail import (
     get_attachment_conversion_type,
     MailAccount,
     InvoiceProfile,
-    Invoice,
     InvoiceWorker,
     OCRProcessor,
 )
@@ -979,7 +978,7 @@ class TestMergePdfMergerClosed(unittest.TestCase):
             with patch("UniversalInvoiceMail.XHTML2PDF_AVAILABLE", True), \
                  patch.dict("sys.modules", {"PyPDF2": mock_pypdfs}), \
                  patch("UniversalInvoiceMail.html_to_pdf", return_value=True):
-                result = merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
+                merge_pdf_with_body(pdf_path, "<p>body</p>", {}, output_path)
 
         mock_merger.close.assert_called_once()
 
@@ -1030,7 +1029,9 @@ class TestOcrMsgVarShadowing(unittest.TestCase):
     """OCR-Rückgabewert darf den msg-Parameter nicht überschreiben."""
 
     def _check_no_msg_tuple_assign(self, method):
-        import ast, inspect, textwrap
+        import ast
+        import inspect
+        import textwrap
         src = textwrap.dedent(inspect.getsource(method))
         tree = ast.parse(src)
         for node in ast.walk(tree):
@@ -1161,7 +1162,6 @@ class TestEnhanceWithOcrFileHandleRelease(unittest.TestCase):
         fake_page = MagicMock()
         mock_writer = MagicMock()
         mock_writer.pages = [fake_page]
-
         mock_reader_instance = MagicMock()
         mock_reader_instance.pages = [fake_page]
 
@@ -1178,7 +1178,7 @@ class TestEnhanceWithOcrFileHandleRelease(unittest.TestCase):
                  patch("UniversalInvoiceMail.pisa") as mock_pisa, \
                  patch("UniversalInvoiceMail.PdfWriter") as mock_writer_cls, \
                  patch("UniversalInvoiceMail.PdfReader") as mock_reader_cls, \
-                 patch("UniversalInvoiceMail.shutil") as mock_shutil:
+                 patch("UniversalInvoiceMail.shutil"):
 
                 mock_tess.image_to_string.return_value = "Rechnungsbetrag 99,00 EUR"
                 mock_pisa.CreatePDF.side_effect = lambda html, dest, **kw: dest.write(b"%PDF-1.4 ocr")
@@ -1187,19 +1187,11 @@ class TestEnhanceWithOcrFileHandleRelease(unittest.TestCase):
 
                 proc.enhance_with_ocr(pdf_path)
 
-            # ocr_page_path soll durch den Aufruf gelöscht worden sein
-            # (entweder unlink() auf echtem Path oder durch den Mock-Pfad)
-            # Hauptsache: PdfReader wurde zweimal instanziiert (original + ocr)
             self.assertEqual(mock_reader_cls.call_count, 2)
 
 
 class TestLoadConfigTypeErrorRobustness(unittest.TestCase):
-    """load_config() darf bei korrupten JSON-Einträgen (fehlende Pflichtfelder) nicht crashen.
-
-    Bug #18: TypeError bei cls(**filtered) wenn Pflichtfelder fehlen wurde nicht
-    abgefangen — App-Start schlägt fehl bei OneDrive-Sync-Fehlern oder manuell
-    bearbeiteten JSON-Dateien.
-    """
+    """load_config() darf bei korrupten JSON-Einträgen (fehlende Pflichtfelder) nicht crashen."""
 
     def _make_window(self):
         from UniversalInvoiceMail import MainWindow
@@ -1213,8 +1205,6 @@ class TestLoadConfigTypeErrorRobustness(unittest.TestCase):
 
     def test_load_config_survives_corrupt_invoice_db(self):
         """Invoices-DB mit fehlendem Pflichtfeld 'id' darf keinen Startup-Crash verursachen."""
-        from UniversalInvoiceMail import MainWindow
-
         corrupt_invoices = [{"profile_name": "Test", "filename": "f.pdf",
                               "date": "2026-01-01", "path": "/tmp/f.pdf"}]
         # 'id' fehlt → Invoice(**filtered) wirft TypeError ohne den Fix
@@ -1234,7 +1224,6 @@ class TestLoadConfigTypeErrorRobustness(unittest.TestCase):
     def test_load_config_survives_corrupt_profile_config(self):
         """Config mit fehlendem Pflichtfeld in einem Profil darf keinen Startup-Crash verursachen."""
         import json
-        from UniversalInvoiceMail import MainWindow
 
         corrupt_config = {
             "settings": {},

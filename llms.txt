@@ -25,22 +25,22 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-08-12
+## Last-checked: 2026-08-16
 
 Important files:
 
-- `README.md`: English user-facing project overview.
-- `README-DE.md`: German project overview.
+- `README.md`: English user-facing project overview and ecosystem grid.
+- `README-DE.md`: German project overview and ecosystem grid.
 - `USER_GUIDE.md`: German setup and workflow guide.
 - `EXPORTFORMAT.md`: implemented `universalinvoicemail-invoicebundle-v1.json` exchange contract with desktop export/import.
-- `pyproject.toml`: PEP 621 metadata and Pytest configuration.
+- `pyproject.toml`: PEP 621 metadata, Pytest and Ruff configuration.
 - `UniversalInvoiceMail.py`: PySide6 desktop application.
 - `datev_exporter.py`: DATEV CSV export helper.
 - `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit and integration tests for desktop, bundle and Web Companion contracts (115 Pytest + 10 Node tests in the tracked baseline; read back on 2026-08-12).
+- `tests/`: mocked unit, integration and metadata parity tests for desktop, bundle and Web Companion contracts (120 Pytest + 10 Node tests in the tracked baseline; verified on 2026-08-16).
 - `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset and `DATEVConfig` persistence; accounting range and duplicate/conflict rules remain deferred pending domain ownership.
 
 Safety boundary:
@@ -54,5 +54,6 @@ Verification:
 
 - Run `PYTHONIOENCODING=utf-8 python -m pytest -q`.
 - Run `cd web_companion && npm test`.
-- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py`.
+- Run `ruff check .`.
+- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py tests/test_metadata.py`.
 - The current foreign uncommitted `web_companion/manifest.webmanifest` variant reads 9/10 in the Node smoke; it was not adopted, and Android/iOS device or emulator sign-off is separate.

@@ -4,10 +4,12 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-115%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-120%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Datenschutz: Local-First](https://img.shields.io/badge/Datenschutz-Local--First-brightgreen.svg)](#datenschutz)
+[![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
+[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow.svg)](LICENSE)
 
 Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
 
@@ -98,9 +100,9 @@ UniversalInvoiceMail verbindet klassische IMAP-Postfächer und optional die Gmai
 
 1. `start.bat` ausführen
 2. Mailkonto anlegen
-3. Profil oder Shop-Vorlage konfigurieren
-4. Zeitraum und Zielordner festlegen
-5. `Rechnungen abrufen` starten
+3. Profil oder Shop-Vorlage einrichten
+4. Zeitraum und Zielordner wählen
+5. „Rechnungen abrufen“ starten
 
 ### Manuell
 
@@ -111,16 +113,16 @@ python UniversalInvoiceMail.py
 
 ## Typischer Workflow
 
-1. Konto für IMAP oder Gmail API anlegen
-2. Suchprofil mit Filtern und Zielordner konfigurieren
-3. Optional OCR und PDF-Modus einstellen
-4. Scan auslösen
-5. Für buchungsrelevante Einträge Rechnungsbeträge ergänzen
-6. Ergebnisse im lokalen Rechnungsarchiv prüfen, als DATEV-CSV exportieren oder als redigiertes Bundle übergeben
+1. IMAP- oder Gmail-API-Konto hinzufügen
+2. Suchprofil mit Absender- oder Betreff-Filtern anlegen
+3. Optional OCR und PDF-Modus aktivieren
+4. Scan starten
+5. Rechnungsbeträge eintragen für Belege, die in die Buchhaltung sollen
+6. Ergebnisse im lokalen Archiv prüfen, als DATEV CSV exportieren oder als redigiertes Bundle weitergeben
 
-## Lokale Daten
+## Lokale Datenhaltung
 
-Konfigurations- und Laufzeitdaten werden unter `%USERPROFILE%\.universal_invoice_mail\` gespeichert:
+Laufzeitdaten liegen unter `%USERPROFILE%\.universal_invoice_mail\`:
 
 ```text
 %USERPROFILE%\.universal_invoice_mail\
@@ -130,23 +132,23 @@ Konfigurations- und Laufzeitdaten werden unter `%USERPROFILE%\.universal_invoice
 └── token.json
 ```
 
-Standardmäßig landen archivierte Dateien unter `%USERPROFILE%\Documents\Rechnungen\`.
+Das Standard-Archiv wird unter `%USERPROFILE%\Documents\Rechnungen\` angelegt.
 
 ## Optionale Komponenten
 
 - Gmail API: `google-api-python-client`, `google-auth`, `google-auth-oauthlib`
 - OCR: `pytesseract`, `pypdfium2`, `pypdf`, Tesseract OCR
-- Legacy Office: `pywin32` oder ein lokales LibreOffice mit `soffice.exe`
-- DATEV-Export nutzt das mitgelieferte `datev_exporter.py` und schreibt `cp1252`-CSV-Dateien
+- Legacy-Office: `pywin32` oder ein lokales LibreOffice mit `soffice.exe`
+- DATEV-Export nutzt den integrierten `datev_exporter.py` und schreibt `cp1252`-CSV-Dateien
 
-Wenn kein OCR- oder Office-Backend verfügbar ist, bleibt der Lauf robust; nicht unterstützte Schritte werden protokolliert und übersprungen.
+Fehlen OCR- oder Office-Pakete, überspringt die App nicht unterstützte Schritte sauber und protokolliert dies im Log.
 
 ## Buchhaltungs-Export
 
-- Die Rechnungstabelle enthält eine editierbare Spalte `Betrag (€)`.
-- `DATEV exportieren` erzeugt einen DATEV-Buchungsstapel aus ausgewählten Rechnungen.
-- `berater_nr` und `mandant_nr` bleiben im Exportdialog konfigurierbar.
-- Der DATEV-Einstellungsdialog unterstützt Absender-/Schlüsselwort-Mappings, Zeilen-
+- Die Rechnungstabelle bietet eine editierbare Betragsspalte in EUR.
+- `DATEV exportieren` erzeugt DATEV-Buchungsstapel für die selektierten Rechnungen.
+- `berater_nr` und `mandant_nr` sind im Exportdialog einstellbar.
+- Der DATEV-Einstellungsdialog unterstützt editierbare Absender-/Schlüsselwort-Mappings,
   Hinzufügen/Entfernen, Standard-Wiederherstellung und Speicherung über `DATEVConfig`.
 - Formale Kontenbereichs- sowie Duplikat-/Konfliktregeln bleiben bis zu einer
   fachlichen Accounting-Entscheidung offen; Mapping vor dem Export prüfen. Der
@@ -164,12 +166,13 @@ UniversalInvoiceMail passt zu Suchanfragen wie `lokales Rechnungsarchiv aus E-Ma
 
 ```bash
 PYTHONIOENCODING=utf-8 python -m pytest -q
+QT_QPA_PLATFORM=offscreen python tests/source_platform_smoke.py
 npm --prefix web_companion test
 ```
 
-Vorhanden sind gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import und Barrierefreiheits-Metadaten sowie Node-Contract-Tests für den Web Companion.
+Vorhanden sind gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-nahe Abläufe, Bundle-Export/-Import, Metadaten-Parität und Barrierefreiheits-Metadaten sowie Node-Contract-Tests für den Web Companion.
 
-Plan-D-Readback vom 2026-08-12: `115/115` Pytest-Tests, Source-Platform-Smoke und
+Plan-D-Readback vom 2026-08-16: `120/120` Pytest-Tests, Source-Platform-Smoke und
 `compileall` waren grün. Die getrackte Web-Companion-Baseline bleibt bei `10/10`
 Node-Tests; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde
 nicht übernommen. Die Android-/iOS-Geräte- bzw. Emulator-Abnahme bleibt separat offen.
@@ -180,15 +183,23 @@ nicht übernommen. Die Android-/iOS-Geräte- bzw. Emulator-Abnahme bleibt separa
 - `.gitignore` schließt `credentials.json`, `client_secret*.json`, `token.json`, lokale Datenbanken, Beispielausgaben und portable OCR-Bundles aus.
 - Echte Rechnungen, Anhänge und erzeugte Release-Artefakte bleiben lokal.
 
-## Verwandte Tools
+## Ökosystem & Geschwisterwerkzeuge
 
-Teil der [doc-bricks](https://github.com/doc-bricks) Mail-Suite:
+Teil der [doc-bricks](https://github.com/doc-bricks) Dokumenten-Produktivitäts-Suite und des [open-bricks](https://github.com/open-bricks) Dachs:
 
-| Tool | Beschreibung |
-|------|--------------|
-| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | System-Tray-Launcher für alle Universal Mail Tools |
-| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | Regelbasierter IMAP-Cleaner mit Safe-Mode |
-| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | Dokumente und Anhänge aus IMAP-Mails herunterladen |
+| Werkzeug | Ökosystem | Beschreibung |
+|----------|-----------|--------------|
+| [MailProcessor](https://github.com/doc-bricks/MailProcessor) | doc-bricks | System-Tray-Launcher und Orchestrator für alle Universal Mail Tools |
+| [UniversalMailCleaner](https://github.com/doc-bricks/UniversalMailCleaner) | doc-bricks | Regelbasierter IMAP- und Gmail-Cleaner mit Safe-Trash-Modus |
+| [UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber) | doc-bricks | Dokumente und Anhänge automatisiert aus IMAP-Mails herunterladen |
+| [DokuZen](https://github.com/doc-bricks/DokuZen) | doc-bricks | Minimalistischer Markdown-Dokumentenbetrachter und strukturierter Reader |
+| [PDFtoPDFocr](https://github.com/doc-bricks/PDFtoPDFocr) | doc-bricks | Präzise OCR-Textebene für gescannte PDF-Dokumente |
+| [DokuReader](https://github.com/doc-bricks/DokuReader) | doc-bricks | Offline-Dokumentenbetrachter und Indexer für strukturierte Archive |
+| [MediaBrain](https://github.com/file-bricks/MediaBrain) | file-bricks | Lokale KI-gestützte Medien-Kategorisierung und Verschlagwortung |
+| [TextBrain](https://github.com/file-bricks/TextBrain) | file-bricks | Semantische Textsuche und lokale Dokumenten-Extraktion |
+| [ProFiler](https://github.com/file-bricks/ProFiler) | file-bricks | Erweiterte Datei-Organisation und regelbasierte Massen-Umbenennung |
+| [DevCenter](https://github.com/dev-bricks/DevCenter) | dev-bricks | Entwickler-Cockpit und Repository-Telemetrie-Hub |
+| [CodeBox](https://github.com/dev-bricks/CodeBox) | dev-bricks | Wiederverwendbare Code-Snippet-Ablage mit semantischer Suche |
 
 ## Lizenz
 
