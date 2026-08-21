@@ -155,7 +155,10 @@ except ImportError:
 
 # DATEV-Export (optional, gleicher Ordner wie UniversalInvoiceMail.py)
 try:
-    from datev_exporter import DATEVConfig, DATEVExporter, DEFAULT_KONTEN_MAPPING
+    from datev_exporter import (
+        DATEVConfig, DATEVExporter, DEFAULT_KONTEN_MAPPING,
+        validate_datev_config
+    )
     DATEV_AVAILABLE = True
 except ImportError:
     DATEV_AVAILABLE = False
@@ -3136,6 +3139,31 @@ class DATEVSettingsDialog(QDialog):
                 gk = 4900
             mapping[key] = (k, gk)
         return mapping
+
+    def validate_inputs(self) -> Tuple[bool, List[str]]:
+        """Validiert die aktuellen Eingaben im Dialog vor dem Schließen."""
+        cfg = self.get_config()
+        if DATEV_AVAILABLE:
+            return validate_datev_config(cfg)
+        errors = []
+        if not self.inp_berater.text().strip().isdigit():
+            errors.append("Beraternummer muss numerisch sein.")
+        if not self.inp_mandant.text().strip().isdigit():
+            errors.append("Mandantennummer muss numerisch sein.")
+        return (len(errors) == 0), errors
+
+    def accept(self):
+        """Überschreibt accept mit Prüfung der Validierung."""
+        is_valid, errors = self.validate_inputs()
+        if not is_valid:
+            error_msg = "\n• " + "\n• ".join(errors)
+            QMessageBox.warning(
+                self,
+                "Ungültige DATEV-Einstellungen",
+                f"Bitte korrigieren Sie die folgenden Fehler:{error_msg}"
+            )
+            return
+        super().accept()
 
     def get_config(self) -> DATEVConfig:
         """Gibt die aktuell eingestellte DATEVConfig zurück."""

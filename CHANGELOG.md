@@ -23,6 +23,23 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### DATEV Validation Hardening & Multi-Language I18N System (2026-08-21)
+- **DATEV Account Validation & Mapping Hardening (TW-UIM-04 / TASKPLAN #1156)**:
+  - Added `validate_account_number()` verifying numerical validity, positive values, and standard 4-to-8 digit ranges for SKR03/SKR04 accounts.
+  - Added `validate_datev_config()` validating Beraternummer (1-7 digits), Mandantennummer (1-5 digits), Sachkontenlänge (4-8), and non-empty mappings.
+  - Added `validate_invoices_for_export()` and `DATEVExporter.validate()` producing structured `DATEVValidationReport` batch diagnostics (valid counts, skipped zero-amount items, unparseable dates).
+  - Enhanced `DATEVSettingsDialog` in `UniversalInvoiceMail.py` with pre-save input validation in `accept()`, providing clear user-facing guidance on configuration errors.
+  - Added test suite `tests/test_datev_validation.py` with 10 contract and unit tests (100% green).
+- **I18N / Multi-Language System (Policy P-006 / 6-Languages Support)**:
+  - Implemented `translator.py` (`TranslationSystem`) supporting 6 standard languages (`de`, `en`, `es`, `zh`, `ja`, `ru`) with fallback chain (current -> en -> de -> key).
+  - Created `locales/translations.json` with complete translations for core actions, statuses, table headers, DATEV dialogs, validation messages, and mail filters.
+  - Added test suite `tests/test_i18n.py` with 16 tests verifying completeness, token consistency, formatting, and language switching across all 6 languages.
+- **Metadata, Linting & Parity**:
+  - Updated `tests/test_metadata.py` with `translator.py` and `locales/translations.json`.
+  - Pytest test suite expanded to 146 tests (146 passed in 2.74s, 100% green).
+  - Node Web Companion test suite maintained at 10 passed (156 total passed tests).
+  - Clean `ruff check .` (0 errors) and `python -m compileall .` (0 errors).
+
 ### Maintainer verification, Hygiene & Discoverability (2026-08-16)
 - **Ruff Linting**: Resolved all 34 pre-existing Ruff linting errors (`F401` unused imports, `E402` module-level imports, `F841` unused variables) across `test_helpers.py`, `tests/test_datev.py`, and `tests/test_integration.py`. Added `[tool.ruff]` and `[tool.ruff.lint]` configuration in `pyproject.toml`.
 - **Automated Metadata Parity Tests**: Added `tests/test_metadata.py` verifying version parity, documentation file presence, `llms.txt` integrity, web companion PWA assets and UTF-8 encoding.

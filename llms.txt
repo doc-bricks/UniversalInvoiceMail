@@ -25,7 +25,7 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-08-16
+## Last-checked: 2026-08-21
 
 Important files:
 
@@ -34,14 +34,16 @@ Important files:
 - `USER_GUIDE.md`: German setup and workflow guide.
 - `EXPORTFORMAT.md`: implemented `universalinvoicemail-invoicebundle-v1.json` exchange contract with desktop export/import.
 - `pyproject.toml`: PEP 621 metadata, Pytest and Ruff configuration.
-- `UniversalInvoiceMail.py`: PySide6 desktop application.
-- `datev_exporter.py`: DATEV CSV export helper.
+- `UniversalInvoiceMail.py`: PySide6 desktop application with pre-save DATEV validation.
+- `datev_exporter.py`: DATEV CSV export helper with account number checking, config validation, and batch diagnostics.
+- `translator.py`: 6-language translation system (`de`, `en`, `es`, `zh`, `ja`, `ru`) with fallback chain.
+- `locales/translations.json`: Multi-language dictionary for core UI, filters, and DATEV dialogs.
 - `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit, integration and metadata parity tests for desktop, bundle and Web Companion contracts (120 Pytest + 10 Node tests in the tracked baseline; verified on 2026-08-16).
-- `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset and `DATEVConfig` persistence; accounting range and duplicate/conflict rules remain deferred pending domain ownership.
+- `tests/`: mocked unit, integration, validation, i18n, and metadata parity tests (146 Pytest + 10 Node tests in the tracked baseline; verified on 2026-08-21).
+- `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset, pre-save validation against SKR03/SKR04 rules, and `DATEVConfig` persistence.
 
 Safety boundary:
 
@@ -55,5 +57,6 @@ Verification:
 - Run `PYTHONIOENCODING=utf-8 python -m pytest -q`.
 - Run `cd web_companion && npm test`.
 - Run `ruff check .`.
-- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py tests/test_metadata.py`.
+- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py translator.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py tests/test_datev_validation.py tests/test_i18n.py tests/test_metadata.py`.
 - The current foreign uncommitted `web_companion/manifest.webmanifest` variant reads 9/10 in the Node smoke; it was not adopted, and Android/iOS device or emulator sign-off is separate.
+

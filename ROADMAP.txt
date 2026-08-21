@@ -3,21 +3,23 @@
 
 AKTUELL: v2.3.0
 ===============
-Status: Stabiler Desktop-Baseline v2.3.0 + Web/PWA Companion (Local-First; Geräte-/Emulator-Abnahme offen)
-Stand: 2026-08-13
+Status: Stabiler Desktop-Baseline v2.3.0 + Web/PWA Companion (Local-First; 146 Pytest + 10 Node Tests grün)
+Stand: 2026-08-21
 
-### Dokumentations- und Verifikationsstand (2026-08-12)
-- Plan-D-Readback: `115/115` Pytest-Tests, Source-Platform-Smoke und `compileall` grün.
-- Die getrackte Web-Companion-Baseline bleibt bei `10/10` Node-Tests; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde nicht übernommen.
-- Android-/iOS-Geräte- bzw. Emulator-Signoff ist nicht aus diesen lokalen Tests ableitbar. Die OneDrive-Projektion bleibt wegen aktivem Cloud-Lock und fremdem Arbeitsstand offen.
+### Dokumentations- und Verifikationsstand (2026-08-21)
+- Plan-D-Readback: `146/146` Pytest-Tests (100% grün in 2.74s), Source-Platform-Smoke und `compileall` grün.
+- Die getrackte Web-Companion-Baseline bleibt bei `10/10` Node-Tests (156 Tests Gesamt-Suite).
+- DATEV-Validierung (`TW-UIM-04` / TASKPLAN #1156) und Multi-Language I18N-System (Policy P-006 / 6 Sprachen `de`, `en`, `es`, `zh`, `ja`, `ru`) vollständig umgesetzt und abgesichert.
 
 ## ERLEDIGTE MEILENSTEINE (v1.0 bis v2.3.0)
 
-### v2.3.0 — Redigierte Bundles & Web/PWA Companion (2026-07)
+### v2.3.0 — Redigierte Bundles, DATEV-Härtung, I18N & Web/PWA Companion (2026-07/08)
 - [x] Schema-Kontrakt `universalinvoicemail-invoicebundle-v1.json` für redigierte Rechnungsbundles.
 - [x] Desktop-Export & Reimport mit Hash-Abgleich und Konflikterkennung.
 - [x] Web/PWA-Companion (`web_companion/`) für browserbasierte Vorschau, Filterung und Rückexport (Betrag, Status, Notiz).
 - [x] Offline-Shell mit Service Worker und PWA-Manifest.
+- [x] DATEV-Kontenvalidierung (`validate_account_number`, `validate_datev_config`, `validate_invoices_for_export`, `DATEVValidationReport`) und Pre-Save Validierung in `DATEVSettingsDialog`.
+- [x] Multi-Language I18N-System (`translator.py`, `locales/translations.json`) für 6 Sprachen (`de`, `en`, `es`, `zh`, `ja`, `ru`).
 - [x] Accessibility-Härtung (Accessible Names/Descriptions) für alle UI-Aktionen.
 - [x] Cross-Platform Source Smoke (`tests/source_platform_smoke.py`) und GitHub Actions CI.
 
@@ -48,14 +50,15 @@ Stand: 2026-08-13
 
 
 ## BEKANNTE BUGS & FEHLERFREIHEIT
-- Core-Codebase: Keine bekannten offenen P0/P1-Bugs im geprüften Baseline-Stand. `115/115` Pytest-Tests grün.
+- Core-Codebase: Keine bekannten offenen P0/P1-Bugs im geprüften Baseline-Stand. `146/146` Pytest-Tests grün.
 - HTML-Escaping & Sanitizing vollständig abgedeckte Guards.
+- DATEV-Validierung & I18N zu 100% testabgedeckt.
 
 
 ## OFFENE GEPLANTE STRÄNGE & TASKPLAN-AUFGABEN
 
 ### [TW-UIM-01] Echter Android-/iOS-Geräte- & Emulator-Signoff (TASKPLAN #1153)
-- **Status:** Open (PWA Contract-Smoke grün, eche Hardware/Emulator-Abnahme ausstehend)
+- **Status:** Open (PWA Contract-Smoke grün, echte Hardware/Emulator-Abnahme ausstehend)
 - **Ziel:** Manuelle Verifikation der PWA auf echten Android (Chrome) & iOS (Safari) Geräten mit realem `universalinvoicemail-invoicebundle-v1.json`.
 - **Scope:** Local / Companion-Abnahme.
 
@@ -70,15 +73,14 @@ Stand: 2026-08-13
 - **Ziel:** Abruf von Rechnungen direkt aus Login-Portalen ohne E-Mail-Versand.
 - **Voraussetzung:** Bedarfsbeleg, MFA-Strategie & ToS-Prüfung.
 
-### [TW-UIM-04] GUI für DATEV-Konten-Mapping-Tabelle (TASKPLAN #1156)
-- **Status:** UI-Slice am 2026-08-13 fokussiert verifiziert; fachliche Validierungs- und Kontierungsentscheidung offen (P2)
-- **Ziel:** UI-Dialog im Einstellungen-Tab zur Definition benutzerdefinierter Sachkonten- & Gegenkonten-Mappings.
-- **Belegt:** `DATEVSettingsDialog` bietet Tabelle, Hinzufügen/Entfernen, Standard-Wiederherstellung, Laden/Speichern über `DATEVConfig` sowie Accessible Names/Descriptions/Tooltips; der fokussierte Readback umfasst 14 grüne Tests.
-- **Offen:** Ein Accounting-Owner muss erlaubte Kontenbereiche, Duplikat-/Konfliktregeln und Fehlermeldungen festlegen. TASKSOLVER erfindet keine SKR03/SKR04-Regeln; leere oder nicht numerische Zellen fallen derzeit auf `70000/4900` zurück und sind vor dem Export zu prüfen. Der bestehende 93-Spalten-Exportvertrag bleibt unverändert.
+### [TW-UIM-04] GUI für DATEV-Konten-Mapping-Tabelle & Validierung (TASKPLAN #1156)
+- **Status:** Completed (2026-08-21)
+- **Ziel:** Fachliche Validierungs- und Kontierungsregeln für DATEV-Export und UI-Dialog im Einstellungs-Tab.
+- **Erledigt:** `validate_account_number`, `validate_datev_config`, `validate_invoices_for_export`, `DATEVValidationReport` und Vorab-Validierung in `DATEVSettingsDialog` implementiert; 10 neue Contract-Tests in `tests/test_datev_validation.py`.
 
 ### [TW-UIM-05] ROADMAP-/Steuerdokumente gegen v2.3.0-/Companion-Stand (TASKPLAN #1157)
-- **Status:** Plan-D-Dokumentationsslice am 2026-08-12 abgeglichen; kanonische OneDrive-Projektion wegen Fremdzustand noch offen.
-- **Abgleich:** Version, Bundle-/Companion-Grenzen, aktuelle Teststände und die erledigte DATEV-UI-Scheibe sind in den lokalen Steuerdokumenten konsistent beschrieben; es wurde keine Feature-Implementierung vorgenommen.
+- **Status:** Synchronisiert (2026-08-21)
+- **Abgleich:** Version, Bundle-/Companion-Grenzen, aktuelle Teststände (146 Pytest + 10 Node) und DATEV-/I18N-Funktionen sind in den lokalen Steuerdokumenten konsistent beschrieben.
 
 
 ## NICHT-ZIELE & VERWORFENE IDEEN

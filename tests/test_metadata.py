@@ -44,6 +44,8 @@ def test_core_documentation_files():
         "pyproject.toml",
         "EXPORTFORMAT.md",
         "USER_GUIDE.md",
+        "translator.py",
+        "locales/translations.json",
         "web_companion/package.json",
         "web_companion/index.html",
         "web_companion/manifest.webmanifest",

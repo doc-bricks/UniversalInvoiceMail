@@ -4,16 +4,19 @@ DATEV-Export Modul für UniversalInvoiceMail
 ============================================
 
 Exportiert Rechnungen als DATEV-Buchungsstapel (CSV-Format).
+Enthält fachliche Validierung von Beraternummer, Mandantennummer,
+Konten-Mappings und Buchungsstapeln.
 
 Erstellt: 2026-01-12
-Version: 1.0.0
+Aktualisiert: 2026-08-21 (Validierungshärtung & Taskplan #1156)
+Version: 2.0.0
 """
 
 import io
 from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional
+from dataclasses import dataclass, field
+from typing import List, Dict, Tuple, Optional, Union
 
 # ==================== KONFIGURATION ====================
 
@@ -38,6 +41,35 @@ DEFAULT_KONTEN_MAPPING: Dict[str, Tuple[int, int]] = {
 }
 
 
+def validate_account_number(account: Union[int, str], min_digits: int = 4, max_digits: int = 8) -> Tuple[bool, Optional[str]]:
+    """
+    Validiert eine DATEV-Kontonummer (Sachkonto, Kreditor oder Debitor).
+
+    Regeln:
+    - Muss numerisch sein (nur Ziffern, keine Buchstaben oder Sonderzeichen)
+    - Wert > 0
+    - Länge zwischen min_digits und max_digits (standardmäßig 4 bis 8 Ziffern)
+    """
+    if account is None:
+        return False, "Kontonummer darf nicht leer sein"
+
+    s_acc = str(account).strip()
+    if not s_acc:
+        return False, "Kontonummer darf nicht leer sein"
+
+    if not s_acc.isdigit():
+        return False, f"Kontonummer '{s_acc}' darf nur Ziffern enthalten"
+
+    if len(s_acc) < min_digits or len(s_acc) > max_digits:
+        return False, f"Kontonummer '{s_acc}' hat unzulässige Länge {len(s_acc)} (erlaubt: {min_digits} bis {max_digits} Ziffern)"
+
+    int_val = int(s_acc)
+    if int_val <= 0:
+        return False, f"Kontonummer muss positiv sein (Wert: {int_val})"
+
+    return True, None
+
+
 @dataclass
 class DATEVConfig:
     """Konfiguration für DATEV-Export."""
@@ -53,6 +85,54 @@ class DATEVConfig:
             self.konten_mapping = DEFAULT_KONTEN_MAPPING.copy()
         if not self.wj_beginn:
             self.wj_beginn = f"{datetime.now().year}0101"
+
+
+def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
+    """
+    Validiert eine DATEVConfig auf formale und fachliche Korrektheit.
+
+    Returns:
+        Tuple[bool, List[str]]: (is_valid, list_of_error_messages)
+    """
+    errors: List[str] = []
+
+    # Beraternummer (1-7 Ziffern, standard 1001 bis 9999999)
+    b_nr = str(config.berater_nr).strip()
+    if not b_nr or not b_nr.isdigit() or len(b_nr) > 7:
+        errors.append(f"Ungültige Beraternummer '{b_nr}': Erwartet werden 1 bis 7 Ziffern.")
+
+    # Mandantennummer (1-5 Ziffern, standard 1 bis 99999)
+    m_nr = str(config.mandant_nr).strip()
+    if not m_nr or not m_nr.isdigit() or len(m_nr) > 5:
+        errors.append(f"Ungültige Mandantennummer '{m_nr}': Erwartet werden 1 bis 5 Ziffern.")
+
+    # Sachkontenlänge (4-8)
+    if config.sachkontenlänge < 4 or config.sachkontenlänge > 8:
+        errors.append(f"Sachkontenlänge {config.sachkontenlänge} ungültig (erlaubt: 4 bis 8).")
+
+    # Konten-Mapping
+    if not isinstance(config.konten_mapping, dict):
+        errors.append("Konten-Mapping muss ein Wörterbuch sein.")
+    else:
+        for provider, accounts in config.konten_mapping.items():
+            if not str(provider).strip():
+                errors.append("Absender / Schlüsselwort im Konten-Mapping darf nicht leer sein.")
+                continue
+
+            if not isinstance(accounts, (tuple, list)) or len(accounts) != 2:
+                errors.append(f"Mapping für '{provider}' muss aus (Konto, Gegenkonto) bestehen.")
+                continue
+
+            konto, gegenkonto = accounts
+            ok_k, err_k = validate_account_number(konto, min_digits=4, max_digits=8)
+            if not ok_k:
+                errors.append(f"Mapping '{provider}' Kreditor-Konto: {err_k}")
+
+            ok_gk, err_gk = validate_account_number(gegenkonto, min_digits=4, max_digits=8)
+            if not ok_gk:
+                errors.append(f"Mapping '{provider}' Aufwands-Gegenkonto: {err_gk}")
+
+    return (len(errors) == 0), errors
 
 
 @dataclass
@@ -88,14 +168,77 @@ class DATEVBuchung:
         return row
 
 
+@dataclass
+class DATEVValidationReport:
+    """Diagnose- und Validierungsbericht für einen DATEV-Exportlauf."""
+    total_invoices: int = 0
+    valid_invoices: int = 0
+    skipped_zero_amount: int = 0
+    invalid_date_count: int = 0
+    warnings: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    is_valid: bool = True
+
+
+def validate_invoices_for_export(invoices: List[dict], config: Optional[DATEVConfig] = None) -> DATEVValidationReport:
+    """
+    Validiert eine Liste von Rechnungs-Dicts vor dem DATEV-Export.
+
+    Prüft:
+    - Konfiguration (Berater, Mandant, Konten)
+    - Rechnungsbeträge (Erkennung von Null-/Fehlbeträgen)
+    - Datumsformate
+    """
+    report = DATEVValidationReport(total_invoices=len(invoices))
+
+    cfg = config or DATEVConfig()
+    cfg_valid, cfg_errors = validate_datev_config(cfg)
+    if not cfg_valid:
+        report.errors.extend(cfg_errors)
+        report.is_valid = False
+
+    if not invoices:
+        report.warnings.append("Keine Rechnungen zur Validierung übergeben.")
+        return report
+
+    for idx, inv in enumerate(invoices, start=1):
+        amount = inv.get("amount", None)
+        filename = inv.get("filename", f"Rechnung #{idx}")
+
+        # Betragsprüfung
+        if amount is None or amount <= 0:
+            report.skipped_zero_amount += 1
+            report.warnings.append(f"'{filename}': Kein oder negativer/null Betrag ({amount}) - wird beim Export übersprungen.")
+        else:
+            report.valid_invoices += 1
+
+        # Datumsprüfung
+        date_str = inv.get("date", "")
+        parsed = None
+        for fmt in ["%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"]:
+            try:
+                parsed = datetime.strptime(date_str, fmt)
+                break
+            except (ValueError, TypeError):
+                continue
+        if parsed is None and date_str:
+            report.invalid_date_count += 1
+            report.warnings.append(f"'{filename}': Unbekanntes Datumsformat '{date_str}', Fallback auf aktuelles Datum.")
+
+    if report.valid_invoices == 0 and report.total_invoices > 0:
+        report.warnings.append("Keine der übergebenen Rechnungen hat einen gültigen Betrag > 0. DATEV-Exportdatei wird keine Buchungszeilen enthalten.")
+
+    return report
+
+
 class DATEVExporter:
     """
     Exportiert Rechnungen im DATEV-Buchungsstapel Format.
 
-    Format: CSV mit Semikolon-Trennung, Windows ANSI
+    Format: CSV mit Semikolon-Trennung, Windows ANSI (cp1252)
     """
 
-    # Spaltenüberschriften für Zeile 2
+    # Spaltenüberschriften für Zeile 2 (93 Spalten)
     HEADER_COLS = [
         "Umsatz (ohne Soll/Haben-Kz)", "Soll/Haben-Kennzeichen", "WKZ Umsatz",
         "Kurs", "Basisumsatz", "WKZ Basisumsatz", "Konto",
@@ -131,6 +274,10 @@ class DATEVExporter:
     def __init__(self, config: Optional[DATEVConfig] = None):
         self.config = config or DATEVConfig()
 
+    def validate(self, invoices: List[dict]) -> DATEVValidationReport:
+        """Führt eine Vorab-Validierung der Rechnungsliste durch."""
+        return validate_invoices_for_export(invoices, self.config)
+
     def _build_header(self, datum_von: str, datum_bis: str) -> str:
         """Erstellt die DATEV-Header-Zeile (Zeile 1)."""
         now = datetime.now()
@@ -164,7 +311,6 @@ class DATEVExporter:
             '',                 # 24-33 (reserviert)
         ]
 
-        # Auffüllen auf ca. 33 Felder
         while len(header) < 33:
             header.append('')
 
@@ -315,41 +461,3 @@ def export_invoices_datev(
     )
     exporter = DATEVExporter(config)
     return exporter.export(invoices, Path(output_path))
-
-
-# ==================== TEST ====================
-
-if __name__ == "__main__":
-    # Beispiel-Rechnungen
-    test_invoices = [
-        {
-            "provider": "Amazon",
-            "filename": "AMZ-2026-001.pdf",
-            "date": "2026-01-05",
-            "path": "/tmp/AMZ-2026-001.pdf",
-            "amount": 119.00,
-            "category": "Amazon"
-        },
-        {
-            "provider": "Vodafone",
-            "filename": "VOD-2026-001.pdf",
-            "date": "2026-01-15",
-            "path": "/tmp/VOD-2026-001.pdf",
-            "amount": 45.99,
-            "category": "Vodafone"
-        },
-        {
-            "provider": "Temu",
-            "filename": "TEMU-2026-001.pdf",
-            "date": "2026-01-10",
-            "path": "/tmp/TEMU-2026-001.pdf",
-            "amount": 23.50,
-            "category": "Temu"
-        }
-    ]
-
-    # Export testen
-    exporter = DATEVExporter()
-    result = exporter.export(test_invoices)
-    print("=== DATEV Export Test ===")
-    print(result)
