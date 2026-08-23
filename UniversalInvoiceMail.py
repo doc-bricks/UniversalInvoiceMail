@@ -181,6 +181,7 @@ except ImportError:
     }
 
 from invoice_bundle import (
+    _normalize_amount,
     apply_invoice_bundle_changes,
     build_invoice_bundle,
     load_invoice_bundle,
@@ -4392,17 +4393,18 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         if not path_item:
             return
         path = path_item.text()
-        text = item.text().strip().replace(",", ".")
+        text = item.text().strip()
         amount: Optional[float] = None
         if text:
             try:
-                amount = float(text)
+                amount = _normalize_amount(text)
             except ValueError:
                 return
         for inv in self.invoices:
             if inv.path == path:
-                inv.amount = amount
-                self.save_invoices_db()
+                if inv.amount != amount:
+                    inv.amount = amount
+                    self.save_invoices_db()
                 break
 
     def _get_selected_invoice_paths(self) -> set[str]:

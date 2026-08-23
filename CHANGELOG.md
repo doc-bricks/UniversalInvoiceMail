@@ -23,6 +23,16 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Bugfix & Hardening: Amount Normalization & Companion Exchange Bundle (2026-08-23)
+- **Amount Normalization & Parsing Hardening (`invoice_bundle.py` / `UniversalInvoiceMail.py`)**:
+  - Hardened `_normalize_amount()` against formatted European numbers with thousand-separators (`1.234,56`), US format (`1,234.56`), currency symbols (`€`, `$`, `£`, `¥`, `₹`), ISO currency codes (`EUR`, `USD`, `CHF`, `GBP`), whitespace-only strings, and negative credit amounts (`-15,50`).
+  - Switched `build_invoice_bundle()` to use `_normalize_amount()` instead of raw `float(amount)` to prevent unhandled `ValueError` crashes during bundle export.
+  - Added safe integer fallback parsing `_safe_int()` for Sachkontenlänge in DATEV bundle configurations.
+  - Preserved fallback `profile_id` on invoices when profile collections do not contain matching profile name/id entries.
+  - Added support for `collections.abc.MutableMapping` (e.g. `UserDict`) in `apply_invoice_bundle_changes()`.
+  - Hardened GUI amount input handler `_on_invoice_amount_changed()` in `UniversalInvoiceMail.py` using `_normalize_amount()`.
+  - Added comprehensive regression test suite in `tests/test_invoice_bundle.py` (3 new tests, 149/149 passed).
+
 ### DATEV Validation Hardening & Multi-Language I18N System (2026-08-21)
 - **DATEV Account Validation & Mapping Hardening (TW-UIM-04 / TASKPLAN #1156)**:
   - Added `validate_account_number()` verifying numerical validity, positive values, and standard 4-to-8 digit ranges for SKR03/SKR04 accounts.

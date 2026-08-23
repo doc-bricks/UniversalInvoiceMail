@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Iterable, Mapping, MutableMapping, Optional
 
 BUNDLE_SCHEMA = "universalinvoicemail-invoicebundle-v1"
 ALLOWED_COMPANION_FIELDS = ("amount", "review_status", "notes")
@@ -26,11 +27,38 @@ def _normalize_text(value: Any, *, limit: int = 1000) -> str:
 
 
 def _normalize_amount(value: Any) -> Optional[float]:
-    if value in (None, ""):
+    if value is None:
         return None
-    if isinstance(value, str):
-        value = value.strip().replace(",", ".")
-    return round(float(value), 2)
+    if isinstance(value, (int, float)):
+        return round(float(value), 2)
+    if not isinstance(value, str):
+        value = str(value)
+
+    text = value.strip()
+    if not text:
+        return None
+
+    # Remove currency symbols and common currency codes (€, $, £, ¥, ₹, EUR, USD, CHF, GBP)
+    text = re.sub(r"[€$£¥₹\s]|(?i:\b(eur|usd|chf|gbp)\b)", "", text).strip()
+    if not text:
+        return None
+
+    # Handle European vs US number formats:
+    # "1.234,56" -> "1234.56"
+    # "1,234.56" -> "1234.56"
+    # "12,50" -> "12.50"
+    if "," in text and "." in text:
+        if text.rfind(",") > text.rfind("."):
+            text = text.replace(".", "").replace(",", ".")
+        else:
+            text = text.replace(",", "")
+    elif "," in text:
+        text = text.replace(",", ".")
+
+    try:
+        return round(float(text), 2)
+    except ValueError:
+        raise ValueError(f"could not convert string to float: {value!r}")
 
 
 def _normalize_review_status(value: Any) -> str:
@@ -49,6 +77,15 @@ def _safe_relative_path(path: Path, base_dir: Path) -> Optional[str]:
         return str(path.resolve().relative_to(base_dir.resolve()))
     except ValueError:
         return None
+
+
+def _safe_int(value: Any, default: int = 4) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(value)
+    except (ValueError, TypeError):
+        return default
 
 
 def _build_file_reference(invoice: Any, download_root: Path) -> list[dict[str, Any]]:
@@ -85,9 +122,9 @@ def _resolve_profile_id(invoice: Any, profiles_by_id: dict[str, Any], profiles_b
 
     profile_name = _normalize_text(_get_value(invoice, "profile_name", ""), limit=120)
     profile = profiles_by_name.get(profile_name)
-    if profile is None:
-        return ""
-    return _normalize_text(_get_value(profile, "id", ""), limit=120)
+    if profile is not None:
+        return _normalize_text(_get_value(profile, "id", ""), limit=120)
+    return profile_id
 
 
 def build_invoice_bundle(
@@ -131,9 +168,7 @@ def build_invoice_bundle(
         else:
             file_hash = _normalize_text(_get_value(invoice, "hash", ""), limit=128)
 
-        amount = _get_value(invoice, "amount", None)
-        if amount is not None:
-            amount = round(float(amount), 2)
+        amount = _normalize_amount(_get_value(invoice, "amount", None))
 
         invoice_rows.append({
             "id": _normalize_text(_get_value(invoice, "id", ""), limit=120),
@@ -147,7 +182,7 @@ def build_invoice_bundle(
             "currency": _normalize_text(_get_value(invoice, "currency", "EUR"), limit=16) or "EUR",
             "review_status": _normalize_review_status(_get_value(invoice, "review_status", "unchecked")),
             "notes": _normalize_text(_get_value(invoice, "notes", ""), limit=4000),
-            "datev_status": "ready" if amount and amount > 0 else "missing_amount",
+            "datev_status": "ready" if amount is not None and amount > 0 else "missing_amount",
             "files": file_refs,
             "mail_reference": {
                 "account_label": _normalize_text(_get_value(invoice, "account_name", ""), limit=200),
@@ -184,7 +219,7 @@ def build_invoice_bundle(
             "waehrung": _normalize_text(_get_value(datev_config, "währung", "EUR"), limit=16)
             or _normalize_text(_get_value(datev_config, "waehrung", "EUR"), limit=16)
             or "EUR",
-            "sachkontenlaenge": int(_get_value(datev_config, "sachkontenlänge", 4) or _get_value(datev_config, "sachkontenlaenge", 4) or 4),
+            "sachkontenlaenge": _safe_int(_get_value(datev_config, "sachkontenlänge", 4) or _get_value(datev_config, "sachkontenlaenge", 4), default=4),
             "konten_mapping": {
                 str(key): list(value) if isinstance(value, tuple) else value
                 for key, value in konten_mapping.items()
@@ -314,7 +349,7 @@ def apply_invoice_bundle_changes(invoices: Iterable[Any], bundle: Mapping[str, A
 
             current_val = local_invoice[field_name] if isinstance(local_invoice, Mapping) else getattr(local_invoice, field_name, None)
             if current_val != new_value:
-                if isinstance(local_invoice, dict):
+                if isinstance(local_invoice, (dict, MutableMapping)):
                     local_invoice[field_name] = new_value
                 else:
                     setattr(local_invoice, field_name, new_value)

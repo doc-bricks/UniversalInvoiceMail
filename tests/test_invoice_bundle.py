@@ -290,3 +290,105 @@ def test_apply_invoice_bundle_changes_supports_dict(tmp_path):
     assert res["updated"] == 1
     assert local_inv["amount"] == 15.0
 
+
+def test_normalize_amount_various_formats_and_edge_cases():
+    from invoice_bundle import _normalize_amount
+
+    assert _normalize_amount(None) is None
+    assert _normalize_amount("") is None
+    assert _normalize_amount("   ") is None
+    assert _normalize_amount(0) == 0.0
+    assert _normalize_amount("0") == 0.0
+    assert _normalize_amount("0.00") == 0.0
+    assert _normalize_amount(19.99) == 19.99
+    assert _normalize_amount("19.99") == 19.99
+    assert _normalize_amount("19,99") == 19.99
+    assert _normalize_amount("1.234,56") == 1234.56
+    assert _normalize_amount("1,234.56") == 1234.56
+    assert _normalize_amount(" 19.99 € ") == 19.99
+    assert _normalize_amount("19,99 EUR") == 19.99
+    assert _normalize_amount("1.234,56 €") == 1234.56
+    assert _normalize_amount(" -15,50 ") == -15.50
+
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        _normalize_amount("ungültiger_betrag")
+
+
+def test_build_invoice_bundle_with_string_amounts_and_preserved_profile_id(tmp_path):
+    download_root = tmp_path / "downloads"
+    inv_file = download_root / "inv.pdf"
+    inv_file.parent.mkdir(parents=True)
+    inv_file.write_bytes(b"dummy pdf")
+
+    invoice1 = uim.Invoice(
+        id="inv-str-1",
+        profile_id="custom-profile-id",
+        profile_name="UnbekanntesProfil",
+        filename=inv_file.name,
+        date="2026-08-20",
+        path=str(inv_file),
+        amount="1.234,56 €",
+    )
+    invoice2 = uim.Invoice(
+        id="inv-str-2",
+        profile_id="custom-profile-2",
+        profile_name="",
+        filename=inv_file.name,
+        date="2026-08-20",
+        path=str(inv_file),
+        amount="   ",
+    )
+
+    bundle = build_invoice_bundle(
+        app_name="TestApp",
+        app_version="1.0.0",
+        accounts=[],
+        profiles=[],
+        invoices=[invoice1, invoice2],
+        download_path=str(download_root),
+    )
+
+    assert bundle["invoices"][0]["amount"] == 1234.56
+    assert bundle["invoices"][0]["profile_id"] == "custom-profile-id"
+    assert bundle["invoices"][0]["datev_status"] == "ready"
+
+    assert bundle["invoices"][1]["amount"] is None
+    assert bundle["invoices"][1]["profile_id"] == "custom-profile-2"
+    assert bundle["invoices"][1]["datev_status"] == "missing_amount"
+
+
+def test_apply_invoice_bundle_changes_supports_userdict_and_formatted_amounts(tmp_path):
+    from collections import UserDict
+    import hashlib
+
+    pdf = tmp_path / "userdict.pdf"
+    pdf.write_bytes(b"userdict pdf")
+    file_hash = hashlib.sha256(b"userdict pdf").hexdigest()
+
+    local_inv = UserDict({
+        "id": "inv-userdict-1",
+        "path": str(pdf),
+        "amount": 10.0,
+        "review_status": "unchecked",
+        "notes": "",
+    })
+
+    bundle = {
+        "schema": BUNDLE_SCHEMA,
+        "companion_changes": {"allowed_fields": ["amount", "review_status", "notes"]},
+        "invoices": [{
+            "id": "inv-userdict-1",
+            "amount": "1.499,95 €",
+            "review_status": "ready",
+            "notes": "Freigegeben",
+            "files": [{"sha256": file_hash}],
+        }],
+    }
+
+    res = apply_invoice_bundle_changes([local_inv], bundle)
+    assert res["updated"] == 1
+    assert local_inv["amount"] == 1499.95
+    assert local_inv["review_status"] == "ready"
+    assert local_inv["notes"] == "Freigegeben"
+
+
