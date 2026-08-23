@@ -4393,19 +4393,33 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         if not path_item:
             return
         path = path_item.text()
+        invoice = next((inv for inv in self.invoices if inv.path == path), None)
+        if invoice is None:
+            return
         text = item.text().strip()
         amount: Optional[float] = None
         if text:
             try:
                 amount = _normalize_amount(text)
             except ValueError:
+                previous_text = f"{invoice.amount:.2f}" if invoice.amount is not None else ""
+                message = (
+                    f"Der eingegebene Betrag „{text}“ ist ungültig und wurde nicht gespeichert. "
+                    "Bitte verwenden Sie zum Beispiel 19,99 oder 1.234,56 €."
+                )
+                self.invoice_table.blockSignals(True)
+                try:
+                    item.setText(previous_text)
+                    item.setToolTip(message)
+                finally:
+                    self.invoice_table.blockSignals(False)
+                self.log_output.appendPlainText(f"[WARN] {message}")
+                QMessageBox.warning(self, "Ungültiger Betrag", message)
                 return
-        for inv in self.invoices:
-            if inv.path == path:
-                if inv.amount != amount:
-                    inv.amount = amount
-                    self.save_invoices_db()
-                break
+        item.setToolTip("Rechnungsbetrag in EUR (zum Beispiel 19,99 oder 1.234,56 €)")
+        if invoice.amount != amount:
+            invoice.amount = amount
+            self.save_invoices_db()
 
     def _get_selected_invoice_paths(self) -> set[str]:
         """Returns invoice paths that are checked in the invoice table."""

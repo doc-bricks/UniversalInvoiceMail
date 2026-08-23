@@ -273,3 +273,45 @@ def test_primary_work_areas_expose_accessible_context(tmp_path, monkeypatch, qap
         assert activity_log.toolTip() == "Fortschritt und Meldungen des Rechnungsabrufs"
     finally:
         window.close()
+
+
+def test_invalid_manual_invoice_amount_is_restored_and_announced(tmp_path, monkeypatch, qapp):
+    """Invalid amount edits must keep the prior value and give clear user feedback."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        invoice_path = tmp_path / "rechnung.pdf"
+        invoice_path.write_bytes(b"test invoice")
+        invoice = uim.Invoice(
+            id="inv-1",
+            profile_name="Test-Shop",
+            filename="rechnung.pdf",
+            date="2026-08-23",
+            path=str(invoice_path),
+            amount=19.99,
+        )
+        window.invoices = [invoice]
+        window.refresh_invoice_table()
+
+        warnings = []
+        save_calls = []
+        monkeypatch.setattr(
+            uim.QMessageBox,
+            "warning",
+            lambda *args, **kwargs: warnings.append((args, kwargs)) or 0,
+        )
+        monkeypatch.setattr(window, "save_invoices_db", lambda: save_calls.append(True))
+
+        amount_item = window.invoice_table.item(0, 5)
+        amount_item.setText("nicht lesbar")
+
+        assert invoice.amount == 19.99
+        assert amount_item.text() == "19.99"
+        assert "ungültig" in amount_item.toolTip()
+        assert "ungültig" in window.log_output.toPlainText()
+        assert warnings and warnings[0][0][1] == "Ungültiger Betrag"
+        assert not save_calls
+    finally:
+        window.close()

@@ -23,6 +23,10 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### UX & Accessibility: Manual Amount Validation (2026-08-23)
+- Ungültige manuelle Betragseingaben werden nicht mehr stillschweigend verworfen: Die Tabelle stellt den zuletzt gespeicherten Betrag wieder her und erläutert den Fehler in einem zugänglichen Warnhinweis sowie im Aktivitätsprotokoll.
+- Neuer Offscreen-Regressionstest stellt sicher, dass ungültige Eingaben keinen gespeicherten Betrag überschreiben.
+
 ### Bugfix & Hardening: Amount Normalization & Companion Exchange Bundle (2026-08-23)
 - **Amount Normalization & Parsing Hardening (`invoice_bundle.py` / `UniversalInvoiceMail.py`)**:
   - Hardened `_normalize_amount()` against formatted European numbers with thousand-separators (`1.234,56`), US format (`1,234.56`), currency symbols (`€`, `$`, `£`, `¥`, `₹`), ISO currency codes (`EUR`, `USD`, `CHF`, `GBP`), whitespace-only strings, and negative credit amounts (`-15,50`).
