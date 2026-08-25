@@ -201,3 +201,96 @@ def test_datev_export_none_provider():
     invoices = [{"provider": None, "category": None, "amount": 50.0}]
     csv_str = exp.export(invoices)
     assert "50,00" in csv_str
+
+
+def test_datev_export_semicolons_quotes_and_newlines_escaping():
+    """Semicolons, Anführungszeichen und Zeilenumbrüche dürfen die 93-Spalten-Struktur nicht verfälschen."""
+    from datev_exporter import DATEVConfig, DATEVExporter, DATEVBuchung
+
+    # 1. DATEVBuchung to_row sanitization
+    buchung = DATEVBuchung(
+        umsatz=123.45,
+        soll_haben="S",
+        wkz="EUR",
+        konto=70001,
+        gegenkonto=4930,
+        belegdatum="1501",
+        belegfeld1="INV;2026/001\n.pdf\r\t",
+        buchungstext="Bürobedarf; Amazon IT & \"Software\"\r\nService",
+    )
+    row = buchung.to_row()
+    assert len(row) == 93
+    assert "\n" not in row[10]
+    assert "\r" not in row[10]
+    assert "\n" not in row[13]
+    assert "\r" not in row[13]
+    assert row[10] == "INV;2026/001 .pdf"
+
+    # 2. End-to-end export parsing
+    cfg = DATEVConfig()
+    exp = DATEVExporter(cfg)
+    invoices = [
+        {
+            "provider": "Amazon; EU S.a.r.l.",
+            "filename": "Rechnung;2026-01-15_Amazon.pdf",
+            "date": "2026-01-15",
+            "amount": 149.99,
+            "category": "Bürobedarf; IT",
+        },
+        {
+            "provider": 'Adobe "Creative" Cloud',
+            "filename": 'Adobe"Invoice"2026.pdf',
+            "date": "2026-02-20",
+            "amount": 79.50,
+            "category": "Software",
+        },
+    ]
+
+    csv_output = exp.export(invoices)
+    lines = csv_output.strip().splitlines()
+    assert len(lines) == 4  # Header, Column names, 2 Buchungszeilen
+
+    parsed_rows = list(csv.reader(lines, delimiter=";"))
+    assert len(parsed_rows) == 4
+
+    # Zeile 1: Header (33 Spalten)
+    assert len(parsed_rows[0]) == 33
+
+    # Zeile 2: Column Names (93 Spalten)
+    assert len(parsed_rows[1]) == 93
+
+    # Zeile 3: Buchung 1 (93 Spalten, unzerstört durch Semikolons)
+    assert len(parsed_rows[2]) == 93
+    assert parsed_rows[2][0] == "149,99"
+    assert parsed_rows[2][10] == "Rechnung;2026-01-15_Amazon.pdf"
+    assert "Amazon" in parsed_rows[2][13]
+
+    # Zeile 4: Buchung 2 (93 Spalten, unzerstört durch Quotes)
+    assert len(parsed_rows[3]) == 93
+    assert parsed_rows[3][0] == "79,50"
+    assert 'Adobe"Invoice"2026.pdf' in parsed_rows[3][10]
+
+
+def test_datev_export_multi_format_date_support():
+    """DATEVExporter muss verschiedene Datumsformate (ISO, Dotted, Timestamps) zuverlässig parsen."""
+    from datev_exporter import DATEVConfig, DATEVExporter, parse_datev_datetime
+
+    assert parse_datev_datetime("2026-01-15T10:30:00") is not None
+    assert parse_datev_datetime("2026-01-15 10:30:00") is not None
+    assert parse_datev_datetime("2026.01.15") is not None
+    assert parse_datev_datetime("15-01-2026") is not None
+    assert parse_datev_datetime("20260115") is not None
+
+    cfg = DATEVConfig()
+    exp = DATEVExporter(cfg)
+    invoices = [
+        {"provider": "Amazon", "filename": "inv1.pdf", "date": "2026-01-15T08:00:00", "amount": 10.0},
+        {"provider": "Telekom", "filename": "inv2.pdf", "date": "2026.02.20", "amount": 20.0},
+        {"provider": "Vodafone", "filename": "inv3.pdf", "date": "28-02-2026", "amount": 30.0},
+    ]
+    csv_str = exp.export(invoices)
+    rows = list(csv.reader(csv_str.strip().splitlines(), delimiter=";"))
+    assert len(rows) == 5
+    assert rows[2][9] == "1501"
+    assert rows[3][9] == "2002"
+    assert rows[4][9] == "2802"

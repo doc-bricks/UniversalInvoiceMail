@@ -167,3 +167,28 @@ def test_datev_buchung_row_length_and_fields():
     assert row[9] == "1201"
     assert row[10] == "INV-9999"
     assert row[13] == "Test Rechnung"
+
+
+def test_datev_header_wj_beginn_dynamic_fiscal_year():
+    """WJ-Beginn im DATEV-Header muss bei nicht gesetzter Konfiguration zum Buchungsjahr passen."""
+    from datev_exporter import parse_datev_datetime
+    import csv
+
+    # Test parse_datev_datetime variants
+    assert parse_datev_datetime("2024-11-05").year == 2024
+    assert parse_datev_datetime("05.11.2024").year == 2024
+    assert parse_datev_datetime("2024.11.05").year == 2024
+    assert parse_datev_datetime("05-11-2024").year == 2024
+    assert parse_datev_datetime("20241105").year == 2024
+    assert parse_datev_datetime("invalid_date") is None
+
+    # Test dynamic wj_beginn for 2024 invoices
+    cfg = DATEVConfig(wj_beginn="")
+    exp = DATEVExporter(cfg)
+    invoices = [
+        {"provider": "Amazon", "filename": "inv_2024.pdf", "date": "2024-05-10", "amount": 100.0}
+    ]
+    csv_str = exp.export(invoices)
+    header_cols = next(csv.reader([csv_str.splitlines()[0]], delimiter=";"))
+    assert header_cols[12] == "20240101"
+    assert header_cols[14] == "20240510"

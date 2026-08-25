@@ -12,6 +12,7 @@ Aktualisiert: 2026-08-21 (Validierungshärtung & Taskplan #1156)
 Version: 2.0.0
 """
 
+import csv
 import io
 from datetime import datetime
 from pathlib import Path
@@ -75,7 +76,7 @@ class DATEVConfig:
     """Konfiguration für DATEV-Export."""
     berater_nr: str = "12345"
     mandant_nr: str = "67890"
-    wj_beginn: str = ""  # YYYYMMDD, leer = aktuelles Jahr
+    wj_beginn: str = ""  # YYYYMMDD, leer = dynamisch nach Buchungsdatum (oder aktuelles Jahr)
     sachkontenlänge: int = 4
     währung: str = "EUR"
     konten_mapping: Dict[str, Tuple[int, int]] = None
@@ -83,8 +84,6 @@ class DATEVConfig:
     def __post_init__(self):
         if self.konten_mapping is None:
             self.konten_mapping = DEFAULT_KONTEN_MAPPING.copy()
-        if not self.wj_beginn:
-            self.wj_beginn = f"{datetime.now().year}0101"
 
 
 def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
@@ -135,6 +134,56 @@ def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
     return (len(errors) == 0), errors
 
 
+def parse_datev_datetime(date_str: Union[str, datetime]) -> Optional[datetime]:
+    """
+    Parst ein Rechnungsdatum aus verschiedenen Standard- und Zeitstempelformaten.
+
+    Unterstützt:
+    - ISO / RFC Formate: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS
+    - Deutsche Formate: DD.MM.YYYY, DD-MM-YYYY
+    - Englische / Slash Formate: DD/MM/YYYY, MM/DD/YYYY (mit Tag-Priorität)
+    - Kompakte Formate: YYYYMMDD
+    - Punktierte Formate: YYYY.MM.DD
+    """
+    if isinstance(date_str, datetime):
+        return date_str
+
+    if not date_str:
+        return None
+
+    s = str(date_str).strip()
+    if not s:
+        return None
+
+    # Falls Zeitzonen-Suffix oder Millisekunden vorhanden sind
+    s_clean = s.split("T")[0] if "T" in s else s.split(" ")[0]
+
+    formats = [
+        "%Y-%m-%d",
+        "%d.%m.%Y",
+        "%d/%m/%Y",
+        "%Y.%m.%d",
+        "%d-%m-%Y",
+        "%Y%m%d",
+    ]
+
+    # Erst sauberes Datum versuchen
+    for fmt in formats:
+        try:
+            return datetime.strptime(s_clean, fmt)
+        except (ValueError, TypeError):
+            continue
+
+    # Ganzen String mit Zeit versuchen
+    for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y %H:%M:%S"]:
+        try:
+            return datetime.strptime(s, fmt)
+        except (ValueError, TypeError):
+            continue
+
+    return None
+
+
 @dataclass
 class DATEVBuchung:
     """Eine einzelne DATEV-Buchung."""
@@ -159,11 +208,16 @@ class DATEVBuchung:
         row[6] = str(self.konto)
         row[7] = str(self.gegenkonto)
         # 8 BU-Schlüssel (leer)
-        row[9] = self.belegdatum  # TTMM
-        row[10] = self.belegfeld1[:36] if self.belegfeld1 else ""  # Max 36 Zeichen
+        row[9] = str(self.belegdatum).strip()  # TTMM
+
+        # Belegfeld 1 & Buchungstext bereinigen (keine Zeilenumbrüche / Steuerzeichen)
+        bf1 = str(self.belegfeld1).replace("\r", " ").replace("\n", " ").replace("\t", " ").strip() if self.belegfeld1 else ""
+        row[10] = bf1[:36]  # Max 36 Zeichen
+
         # 11 Belegfeld 2 (leer)
         # 12 Skonto (leer)
-        row[13] = self.buchungstext[:60] if self.buchungstext else ""  # Max 60 Zeichen
+        bt = str(self.buchungstext).replace("\r", " ").replace("\n", " ").replace("\t", " ").strip() if self.buchungstext else ""
+        row[13] = bt[:60]  # Max 60 Zeichen
 
         return row
 
@@ -212,15 +266,9 @@ def validate_invoices_for_export(invoices: List[dict], config: Optional[DATEVCon
         else:
             report.valid_invoices += 1
 
-        # Datumsprüfung
+        # Datumsprüfung mit robuster Multi-Format-Erkennung
         date_str = inv.get("date", "")
-        parsed = None
-        for fmt in ["%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"]:
-            try:
-                parsed = datetime.strptime(date_str, fmt)
-                break
-            except (ValueError, TypeError):
-                continue
+        parsed = parse_datev_datetime(date_str) if date_str else None
         if parsed is None and date_str:
             report.invalid_date_count += 1
             report.warnings.append(f"'{filename}': Unbekanntes Datumsformat '{date_str}', Fallback auf aktuelles Datum.")
@@ -283,6 +331,10 @@ class DATEVExporter:
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d%H%M%S") + "000"
 
+        wj_beginn = str(self.config.wj_beginn).strip()
+        if not wj_beginn and datum_von and len(datum_von) >= 4:
+            wj_beginn = f"{datum_von[:4]}0101"
+
         # Header-Felder (33 Felder)
         header = [
             '"EXTF"',           # 1 Format-Kennung
@@ -297,7 +349,7 @@ class DATEVExporter:
             '',                 # 10 (reserviert)
             self.config.berater_nr,   # 11 Beraternummer
             self.config.mandant_nr,   # 12 Mandantennummer
-            self.config.wj_beginn,    # 13 WJ-Beginn
+            wj_beginn,          # 13 WJ-Beginn
             str(self.config.sachkontenlänge), # 14 Sachkontenlänge
             datum_von,          # 15 Datum von
             datum_bis,          # 16 Datum bis
@@ -326,10 +378,16 @@ class DATEVExporter:
             return self.config.konten_mapping[provider]
 
         # Teilübereinstimmung (case-insensitive)
-        provider_lower = str(provider).lower()
-        for key, konten in self.config.konten_mapping.items():
-            if key.lower() in provider_lower or provider_lower in key.lower():
-                return konten
+        provider_clean = str(provider).strip()
+        provider_lower = provider_clean.lower()
+        if provider_lower:
+            for key, konten in self.config.konten_mapping.items():
+                key_clean = str(key).strip()
+                if not key_clean:
+                    continue
+                key_lower = key_clean.lower()
+                if key_lower in provider_lower or provider_lower in key_lower:
+                    return konten
 
         # Fallback
         return self.config.konten_mapping.get("Sonstige", (70000, 4900))
@@ -341,18 +399,9 @@ class DATEVExporter:
             return datetime.now().strftime("%d%m")
         return parsed.strftime("%d%m")
 
-    def _parse_invoice_datetime(self, date_str: str) -> Optional[datetime]:
+    def _parse_invoice_datetime(self, date_str: Union[str, datetime]) -> Optional[datetime]:
         """Parst unterstützte Rechnungsdatumsformate konsistent für Header und Buchung."""
-        if not date_str:
-            return None
-
-        for fmt in ["%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"]:
-            try:
-                return datetime.strptime(date_str, fmt)
-            except ValueError:
-                continue
-
-        return None
+        return parse_datev_datetime(date_str)
 
     def export(self, invoices: List[dict], output_path: Optional[Path] = None) -> str:
         """
@@ -392,12 +441,13 @@ class DATEVExporter:
 
         # CSV erstellen
         output = io.StringIO()
+        writer = csv.writer(output, delimiter=";", lineterminator="\n", quoting=csv.QUOTE_MINIMAL)
 
-        # Zeile 1: Header
+        # Zeile 1: Header (Header enthält bereits feste Anführungszeichen)
         output.write(self._build_header(datum_von, datum_bis) + "\n")
 
         # Zeile 2: Spaltenüberschriften
-        output.write(";".join(self.HEADER_COLS) + "\n")
+        writer.writerow(self.HEADER_COLS)
 
         # Ab Zeile 3: Buchungen
         for inv in invoices:
@@ -405,8 +455,8 @@ class DATEVExporter:
             if not amount or amount <= 0:
                 continue  # Überspringe Rechnungen ohne Betrag
 
-            provider = inv.get("provider", "Sonstige")
-            category = inv.get("category", provider)
+            provider = inv.get("provider", "Sonstige") or "Sonstige"
+            category = inv.get("category", provider) or provider
 
             konto, gegenkonto = self._get_konten(category or provider)
 
@@ -422,7 +472,7 @@ class DATEVExporter:
             )
 
             row = buchung.to_row()
-            output.write(";".join(row) + "\n")
+            writer.writerow(row)
 
         csv_content = output.getvalue()
 

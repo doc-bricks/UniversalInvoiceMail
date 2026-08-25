@@ -4553,16 +4553,17 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             source_invoices = list(self.invoices)
 
         # Invoice-Objekte in DATEV-dicts umwandeln
-        # Invoice.profile_name entspricht dem Provider/Shop-Namen
+        # Invoice.profile_name entspricht dem Provider/Shop-Namen (Fallback: sender)
         inv_dicts = []
         for inv in source_invoices:
+            provider = inv.profile_name or inv.sender or "Sonstige"
             inv_dicts.append({
-                "provider": inv.profile_name,
+                "provider": provider,
                 "filename": inv.filename,
                 "date": inv.date,
                 "path": inv.path,
                 "amount": getattr(inv, "amount", None),   # None wenn Feld fehlt
-                "category": inv.profile_name,
+                "category": inv.profile_name or provider,
             })
 
         # DATEV-Einstellungen aus Attribut laden und Dialog zeigen

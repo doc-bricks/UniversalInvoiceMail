@@ -23,6 +23,20 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Bugfix & Hardening: DATEV CSV Quoting, Multi-Format Date Parsing & Dynamic Fiscal Year (2026-08-25)
+- **DATEV EXTF CSV Escaping & Delimiter Injection Protection (`datev_exporter.py` / `DATEVBuchung`)**:
+  - Replaced naive string concatenation with standard `csv.writer(..., delimiter=";", quoting=csv.QUOTE_MINIMAL)` in `DATEVExporter.export()`, preventing CSV column shifts and parser failures when invoice filenames (`belegfeld1`), provider names, or descriptions (`buchungstext`) contain semicolons `;` or quotation marks `"`.
+  - Added whitespace and control character sanitation (stripping `\r`, `\n`, `\t` and boundary whitespace) in `DATEVBuchung.to_row()`.
+  - Guaranteed invariant: Exported booking rows always parse to exactly 93 EXTF columns under RFC 4180 / DATEV CSV specifications.
+- **Robust Multi-Format Date Parsing (`datev_exporter.py` / `parse_datev_datetime`)**:
+  - Implemented unified `parse_datev_datetime()` supporting ISO dates, timestamps (`YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DD HH:MM:SS`), German dates (`DD.MM.YYYY`, `DD-MM-YYYY`), dotted dates (`YYYY.MM.DD`), and compact formats (`YYYYMMDD`).
+  - Unified date parsing across `validate_invoices_for_export()` and `DATEVExporter` to prevent false invalid date fallback warnings.
+  - Enabled dynamic `wj_beginn` fiscal year alignment in `DATEVExporter._build_header()` when exporting historical invoices across multiple tax years.
+- **Provider Resolution Fallback (`UniversalInvoiceMail.py`)**:
+  - Added fallback from `inv.profile_name` to `inv.sender` in `_export_datev()` to preserve provider-based SKR03/SKR04 account mapping when profile names are generic.
+- **Test Coverage Expansion**:
+  - Added comprehensive unit and regression tests in `tests/test_datev.py` and `tests/test_datev_validation.py` (3 new tests, 153/153 Pytest passed, 10/10 Node Web Companion passed, 100% green).
+
 ### UX & Accessibility: Manual Amount Validation (2026-08-23)
 - Ungültige manuelle Betragseingaben werden nicht mehr stillschweigend verworfen: Die Tabelle stellt den zuletzt gespeicherten Betrag wieder her und erläutert den Fehler in einem zugänglichen Warnhinweis sowie im Aktivitätsprotokoll.
 - Neuer Offscreen-Regressionstest stellt sicher, dass ungültige Eingaben keinen gespeicherten Betrag überschreiben.
