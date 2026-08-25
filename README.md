@@ -144,8 +144,9 @@ When no OCR or Office backend is available, unsupported steps are logged and ski
 - `berater_nr` and `mandant_nr` are configurable in the export dialog.
 - The DATEV settings dialog supports editable sender/keyword mappings, row add/remove,
   default reset, and persistence through `DATEVConfig`.
-- Formal account-range and duplicate/conflict validation is intentionally deferred until
-  an accounting-domain decision; verify mappings before export. The existing 93-column
+- The settings dialog validates adviser and client numbers, account length, and non-empty
+  numeric account mappings before saving, and reports errors directly. This technical check
+  does not replace an accountant's review of the account assignment; the existing 93-column
   export contract is unchanged.
 - Invoices without an entered amount are skipped deliberately and called out after export.
 - `Bundle Export` writes a redacted JSON bundle with profile filters, DATEV base data, invoice hashes, and optional file references.

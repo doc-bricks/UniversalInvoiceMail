@@ -106,3 +106,17 @@ def test_utf8_encoding_and_no_mojibake():
                 assert False, f"File {p} failed UTF-8 decoding"
             for pat in suspect_patterns:
                 assert pat not in content, f"Mojibake pattern '{pat}' found in {p.relative_to(REPO_ROOT)}"
+
+
+def test_datev_validation_guidance_matches_the_dialog_contract():
+    """User-facing DATEV guidance must not describe the pre-save validation as deferred."""
+    german_readme = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
+    english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    user_guide = (REPO_ROOT / "USER_GUIDE.md").read_text(encoding="utf-8")
+
+    assert "Der Dialog prüft vor dem Speichern" in german_readme
+    assert "The settings dialog validates" in english_readme
+    assert "Der Dialog prüft beim Speichern" in user_guide
+    assert "Formale Kontenbereichs- sowie Duplikat-/Konfliktregeln bleiben" not in german_readme
+    assert "Formal account-range and duplicate/conflict validation is intentionally deferred" not in english_readme
+    assert "Die formale Prüfung erlaubter Kontenbereiche" not in user_guide

@@ -171,10 +171,10 @@ Aufwandskonto pflegen:
    die Standard-Zuordnung laden.
 4. Mit **OK** speichern; die Werte werden über `DATEVConfig` geladen und gespeichert.
 
-Die formale Prüfung erlaubter Kontenbereiche, von Duplikaten/Konflikten und der zugehörigen
-Fehlermeldungen ist noch von einer fachlichen Accounting-Entscheidung abhängig und wird hier
-nicht vorweggenommen. Leere oder nicht numerische Kontenfelder verwenden derzeit die Defaults
-`70000/4900`; Mapping deshalb vor dem Export kontrollieren. Der bestehende 93-Spalten-
+Der Dialog prüft beim Speichern Berater- und Mandantennummer, die Sachkontenlänge sowie
+nicht leere, numerische Konten-Zuordnungen. Bei einer ungültigen Eingabe bleibt der Dialog
+geöffnet und nennt die zu korrigierenden Felder. Diese technische Prüfung ersetzt keine
+fachliche Prüfung der Kontierung durch die Buchhaltung. Der bestehende 93-Spalten-
 Exportvertrag wird durch die UI-Scheibe nicht verändert.
 
 ---

@@ -23,6 +23,12 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### UX: Accurate DATEV validation guidance (2026-08-25)
+- Corrected the German and English user-facing DATEV documentation: the settings dialog
+  validates its technical inputs before saving and reports errors; it does not silently fall
+  back to default account values. The guide now distinguishes this check from an accountant's
+  professional review of the account assignment.
+
 ### Bugfix & Hardening: DATEV CSV Quoting, Multi-Format Date Parsing & Dynamic Fiscal Year (2026-08-25)
 - **DATEV EXTF CSV Escaping & Delimiter Injection Protection (`datev_exporter.py` / `DATEVBuchung`)**:
   - Replaced naive string concatenation with standard `csv.writer(..., delimiter=";", quoting=csv.QUOTE_MINIMAL)` in `DATEVExporter.export()`, preventing CSV column shifts and parser failures when invoice filenames (`belegfeld1`), provider names, or descriptions (`buchungstext`) contain semicolons `;` or quotation marks `"`.
