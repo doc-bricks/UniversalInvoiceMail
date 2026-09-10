@@ -1149,7 +1149,7 @@ a {{ word-wrap: break-word; overflow-wrap: anywhere; word-break: break-all; }}
 
         with open(output_path, "wb") as f:
             _ = pisa.CreatePDF(
-                src=full_html,
+                full_html,
                 dest=f,
                 link_callback=link_callback,
                 encoding='utf-8'
@@ -3857,13 +3857,12 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         # Liste aktualisieren wenn Dateien geloescht wurden
         if removed_count > 0:
             self.invoices = valid_invoices
-            if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText(f"[SYNC] {removed_count} gelöschte Einträge entfernt")
+            self._log(f"[SYNC] {removed_count} gelöschte Einträge entfernt")
 
         # PHASE 2: Neue PDFs finden
         new_count = self.scan_folders_for_new_files()
-        if new_count > 0 and hasattr(self, 'log_output'):
-            self.log_output.appendPlainText(f"[SCAN] {new_count} neue Dateien importiert")
+        if new_count > 0:
+            self._log(f"[SCAN] {new_count} neue Dateien importiert")
 
         # Speichern wenn Aenderungen
         if removed_count > 0 or new_count > 0:
@@ -3909,59 +3908,136 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         except (OSError, TypeError, ValueError) as e:
             print(f"Invoice DB save error: {e}")
 
+    def _log(self, text: str) -> None:
+        """Sichere Protokollausgabe in das UI-Textfeld und Python-Logger."""
+        widget = getattr(self, "log_output", None)
+        if widget is not None and hasattr(widget, "appendPlainText"):
+            try:
+                widget.appendPlainText(text)
+            except Exception:
+                pass
+        logger.info(text)
+
     def _convert_eml_to_pdf(self, eml_path: Path) -> Optional[Path]:
         """
         Konvertiert eine .eml-Datei zu PDF.
-        Extrahiert HTML-Body und Anhaenge, speichert als PDF.
+        Extrahiert Anhaenge (PDF, Bilder, etc.) und/oder HTML-/Text-Body.
         Returns: Pfad zur PDF oder None bei Fehler.
         """
         try:
             with open(eml_path, "rb") as f:
                 msg = email.message_from_bytes(f.read())
 
-            # Absender und Betreff extrahieren
-            subject = email.header.decode_header(msg.get("Subject", ""))[0]
-            if isinstance(subject[0], bytes):
-                _ = subject[0].decode(subject[1] or "utf-8", errors="replace")
-            else:
-                _ = str(subject[0])
+            # Absender, Betreff und Datum extrahieren
+            subject = decode_mail_header(msg.get("Subject", "")) or eml_path.stem
+            sender = decode_mail_header(msg.get("From", "")) or "Unbekannt"
+            date_str = msg.get("Date", "")
+            try:
+                mail_date = email.utils.parsedate_to_datetime(date_str)
+                fmt_date = mail_date.strftime("%Y-%m-%d")
+            except Exception:
+                fmt_date = datetime.fromtimestamp(eml_path.stat().st_mtime).strftime("%Y-%m-%d")
 
-            # HTML-Body extrahieren
+            mail_meta = {
+                "sender": sender,
+                "subject": subject,
+                "date": fmt_date,
+            }
+
+            # 1. Anhaenge pruefen und extrahieren
+            extracted_attachment_path: Optional[Path] = None
+            for part in msg.walk():
+                if part.get_content_maintype() == "multipart":
+                    continue
+                filename = part.get_filename()
+                if not filename:
+                    continue
+                filename = decode_mail_header(filename)
+                attachment_type = get_attachment_conversion_type(filename)
+                if not attachment_type:
+                    continue
+
+                file_data = part.get_payload(decode=True)
+                if not file_data:
+                    continue
+
+                safe_name = sanitize_filename(filename)
+                target_pdf = eml_path.with_name(safe_name)
+                if not target_pdf.suffix.lower() == ".pdf":
+                    target_pdf = target_pdf.with_suffix(".pdf")
+
+                if not (target_pdf.exists() and target_pdf.stat().st_size > 0):
+                    success, msg_info = convert_attachment_to_pdf(file_data, filename, target_pdf)
+                    if success and target_pdf.exists():
+                        self._log(f"[EML] Anhang extrahiert: {eml_path.name} -> {target_pdf.name} ({msg_info})")
+                        extracted_attachment_path = target_pdf
+                        break
+                else:
+                    extracted_attachment_path = target_pdf
+                    break
+
+            # 2. HTML-Body bzw. Plain-Text Body extrahieren mit sicherem Charset-Fallback
             html_body = ""
             for part in msg.walk():
+                if part.get_content_maintype() == "multipart":
+                    continue
                 if part.get_content_type() == "text/html":
+                    payload = part.get_payload(decode=True)
+                    if not payload:
+                        continue
                     charset = part.get_content_charset() or "utf-8"
-                    html_body = part.get_payload(decode=True).decode(charset, errors="replace")
+                    try:
+                        html_body = payload.decode(charset, errors="replace")
+                    except (LookupError, UnicodeDecodeError):
+                        html_body = payload.decode("utf-8", errors="replace")
                     break
 
             if not html_body:
-                # Fallback: Plain-Text Body
                 for part in msg.walk():
+                    if part.get_content_maintype() == "multipart":
+                        continue
                     if part.get_content_type() == "text/plain":
+                        payload = part.get_payload(decode=True)
+                        if not payload:
+                            continue
                         charset = part.get_content_charset() or "utf-8"
-                        text = part.get_payload(decode=True).decode(charset, errors="replace")
+                        try:
+                            text = payload.decode(charset, errors="replace")
+                        except (LookupError, UnicodeDecodeError):
+                            text = payload.decode("utf-8", errors="replace")
                         html_body = f"<html><body><pre>{escape(text)}</pre></body></html>"
                         break
 
+            settings = getattr(self, "settings", None)
+            mode = getattr(settings, "pdf_mode", "fast") if settings else "fast"
+
+            # 3. Wenn Anhang existiert:
+            if extracted_attachment_path and extracted_attachment_path.exists():
+                merge_enabled = getattr(settings, "merge_body_with_attachments", False) if settings else False
+                if merge_enabled and html_body:
+                    body_pdf_tmp = eml_path.with_suffix(".tmp_body.pdf")
+                    if html_to_pdf(html_body, body_pdf_tmp, mail_meta, mode=mode):
+                        merged = merge_pdf_with_body(extracted_attachment_path, body_pdf_tmp)
+                        if merged:
+                            self._log(f"[EML] Body an Anhang angehängt: {extracted_attachment_path.name}")
+                        if body_pdf_tmp.exists():
+                            body_pdf_tmp.unlink(missing_ok=True)
+                return extracted_attachment_path
+
+            # 4. Wenn kein Anhang vorhanden, Mail-Body als PDF speichern
             if not html_body:
                 return None
 
-            # PDF erstellen
             pdf_path = eml_path.with_suffix(".pdf")
-            if XHTML2PDF_AVAILABLE:
-                with open(pdf_path, "wb") as f:
-                    pisa.CreatePDF(html_body, dest=f)
-                if hasattr(self, 'log_output'):
-                    self.log_output.appendPlainText(f"[EML] Konvertiert: {eml_path.name} -> {pdf_path.name}")
+            if html_to_pdf(html_body, pdf_path, mail_meta, mode=mode):
+                self._log(f"[EML] Konvertiert: {eml_path.name} -> {pdf_path.name}")
                 return pdf_path
             else:
-                if hasattr(self, 'log_output'):
-                    self.log_output.appendPlainText(f"[EML] xhtml2pdf nicht verfügbar, kann {eml_path.name} nicht konvertieren")
+                self._log(f"[EML] PDF-Erstellung nicht möglich für {eml_path.name}")
                 return None
 
         except Exception as e:
-            if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText(f"[EML] Fehler bei {eml_path.name}: {e}")
+            self._log(f"[EML] Fehler bei {eml_path.name}: {e}")
             return None
 
     def _convert_msg_to_pdf(self, msg_path: Path) -> Optional[Path]:
@@ -3973,36 +4049,95 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         try:
             import extract_msg
         except ImportError:
-            if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText(
-                    "[MSG] extract-msg nicht installiert. Bitte: pip install extract-msg"
-                )
+            self._log("[MSG] extract-msg nicht installiert. Bitte: pip install extract-msg")
             return None
 
         msg = None
         try:
             msg = extract_msg.Message(str(msg_path))
+            subject = decode_mail_header(getattr(msg, "subject", "") or "") or msg_path.stem
+            sender = decode_mail_header(getattr(msg, "sender", "") or "") or "Unbekannt"
+            date_val = getattr(msg, "date", None)
+            if isinstance(date_val, datetime):
+                fmt_date = date_val.strftime("%Y-%m-%d")
+            else:
+                fmt_date = datetime.fromtimestamp(msg_path.stat().st_mtime).strftime("%Y-%m-%d")
+
+            mail_meta = {
+                "sender": sender,
+                "subject": subject,
+                "date": fmt_date,
+            }
+
+            # 1. Anhaenge in .msg pruefen und extrahieren
+            extracted_attachment_path: Optional[Path] = None
+            msg_attachments = getattr(msg, "attachments", []) or []
+            for att in msg_attachments:
+                att_name = getattr(att, "longFilename", None) or getattr(att, "shortFilename", None)
+                if not att_name:
+                    continue
+                att_name = decode_mail_header(str(att_name))
+                attachment_type = get_attachment_conversion_type(att_name)
+                if not attachment_type:
+                    continue
+                file_data = getattr(att, "data", None)
+                if not file_data:
+                    continue
+
+                safe_name = sanitize_filename(att_name)
+                target_pdf = msg_path.with_name(safe_name)
+                if not target_pdf.suffix.lower() == ".pdf":
+                    target_pdf = target_pdf.with_suffix(".pdf")
+
+                if not (target_pdf.exists() and target_pdf.stat().st_size > 0):
+                    success, msg_info = convert_attachment_to_pdf(file_data, att_name, target_pdf)
+                    if success and target_pdf.exists():
+                        self._log(f"[MSG] Anhang extrahiert: {msg_path.name} -> {target_pdf.name} ({msg_info})")
+                        extracted_attachment_path = target_pdf
+                        break
+                else:
+                    extracted_attachment_path = target_pdf
+                    break
+
+            # 2. HTML-/Plain-Text Body extrahieren
             html_body = msg.htmlBody
             if not html_body and msg.body:
                 html_body = f"<html><body><pre>{escape(msg.body)}</pre></body></html>"
             elif html_body and isinstance(html_body, bytes):
-                html_body = html_body.decode("utf-8", errors="replace")
+                try:
+                    html_body = html_body.decode("utf-8", errors="replace")
+                except Exception:
+                    html_body = str(html_body)
+
+            settings = getattr(self, "settings", None)
+            mode = getattr(settings, "pdf_mode", "fast") if settings else "fast"
+
+            # 3. Wenn Anhang existiert:
+            if extracted_attachment_path and extracted_attachment_path.exists():
+                merge_enabled = getattr(settings, "merge_body_with_attachments", False) if settings else False
+                if merge_enabled and html_body:
+                    body_pdf_tmp = msg_path.with_suffix(".tmp_body.pdf")
+                    if html_to_pdf(html_body, body_pdf_tmp, mail_meta, mode=mode):
+                        merged = merge_pdf_with_body(extracted_attachment_path, body_pdf_tmp)
+                        if merged:
+                            self._log(f"[MSG] Body an Anhang angehängt: {extracted_attachment_path.name}")
+                        if body_pdf_tmp.exists():
+                            body_pdf_tmp.unlink(missing_ok=True)
+                return extracted_attachment_path
 
             if not html_body:
                 return None
 
             pdf_path = msg_path.with_suffix(".pdf")
-            if XHTML2PDF_AVAILABLE:
-                with open(pdf_path, "wb") as f:
-                    pisa.CreatePDF(html_body, dest=f)
-                if hasattr(self, 'log_output'):
-                    self.log_output.appendPlainText(f"[MSG] Konvertiert: {msg_path.name} -> {pdf_path.name}")
+            if html_to_pdf(html_body, pdf_path, mail_meta, mode=mode):
+                self._log(f"[MSG] Konvertiert: {msg_path.name} -> {pdf_path.name}")
                 return pdf_path
-            return None
+            else:
+                self._log(f"[MSG] PDF-Erstellung nicht möglich für {msg_path.name}")
+                return None
 
         except Exception as e:
-            if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText(f"[MSG] Fehler bei {msg_path.name}: {e}")
+            self._log(f"[MSG] Fehler bei {msg_path.name}: {e}")
             return None
         finally:
             if msg is not None:
@@ -4039,13 +4174,31 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             if not folder.exists():
                 continue
 
-            # .eml und .msg Dateien zuerst konvertieren
-            for eml_path in folder.glob("*.eml"):
+            # .eml und .msg Dateien zuerst konvertieren (Gross-/Kleinschreibung beruecksichtigen)
+            eml_candidates = list(folder.glob("*.eml")) + list(folder.glob("*.EML")) + list(folder.glob("*.Eml"))
+            seen_emls = set()
+            for eml_path in eml_candidates:
+                try:
+                    norm = eml_path.resolve()
+                except Exception:
+                    norm = eml_path
+                if norm in seen_emls:
+                    continue
+                seen_emls.add(norm)
                 pdf_result = eml_path.with_suffix(".pdf")
                 if not pdf_result.exists():
                     self._convert_eml_to_pdf(eml_path)
 
-            for msg_path in folder.glob("*.msg"):
+            msg_candidates = list(folder.glob("*.msg")) + list(folder.glob("*.MSG")) + list(folder.glob("*.Msg"))
+            seen_msgs = set()
+            for msg_path in msg_candidates:
+                try:
+                    norm = msg_path.resolve()
+                except Exception:
+                    norm = msg_path
+                if norm in seen_msgs:
+                    continue
+                seen_msgs.add(norm)
                 pdf_result = msg_path.with_suffix(".pdf")
                 if not pdf_result.exists():
                     self._convert_msg_to_pdf(msg_path)
@@ -4074,8 +4227,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                 if file_hash and file_hash in known_hashes:
                     is_duplicate = True
                     # Wir loggen es nur, ueberspringen es aber nicht mehr
-                    if hasattr(self, 'log_output'):
-                        self.log_output.appendPlainText(f"[SCAN] Duplikat importiert: {pdf_path.name}")
+                    self._log(f"[SCAN] Duplikat importiert: {pdf_path.name}")
 
                 # Metadaten extrahieren
                 stat = pdf_path.stat()
@@ -4101,8 +4253,8 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
                     known_hashes.add(file_hash)
                 new_count += 1
 
-                if hasattr(self, 'log_output') and not is_duplicate:
-                    self.log_output.appendPlainText(f"[SCAN] Neu: {pdf_path.name} -> {profile.name}")
+                if not is_duplicate:
+                    self._log(f"[SCAN] Neu: {pdf_path.name} -> {profile.name}")
 
         return new_count
 
@@ -4307,8 +4459,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self.datev_config = dlg.get_config()
             self.save_config()
-            if hasattr(self, 'log_output'):
-                self.log_output.appendPlainText("[DATEV] Einstellungen und Konten-Mapping gespeichert.")
+            self._log("[DATEV] Einstellungen und Konten-Mapping gespeichert.")
             QMessageBox.information(self, "DATEV-Einstellungen", "DATEV-Konfiguration und Konten-Mapping gespeichert!")
 
     def start_grabbing(self):
