@@ -23,6 +23,21 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Security, Dependency Floor & Third-Party License Audit (2026-09-11)
+- **Dependency Floors & CVE Mitigation**:
+  - Hardened `Pillow>=12.3.0` in `requirements.txt` and `pyproject.toml` to protect against known CVEs/GHSAs (including `GHSA-4x4j-2g7c-83w6` and `GHSA-45hq-cxwh-f6vc`).
+  - Enforced `keyring>=25.0.0` for OS-level secure credential handling.
+  - Added dev dependencies with `pytest>=9.1.1` (mitigating CVE-2025-7117 / GHSA-6w46-j5rx-g56g) and `ruff>=0.9.0`.
+  - Added complete PEP 621 dependencies section with minimum version floors in `pyproject.toml`.
+- **Repository Hygiene & Multi-Host Hardening**:
+  - Hardened `.gitignore` with multi-host sync conflict patterns (`*-WORKSTATION-LG*`, `*-ASUS-GEI*`, `*.sync-conflict-*`, `*.conflict`), `.ruff_cache/`, `*.pfx`, `secrets.*`, and lock patterns (`LOCK.*`, `*.lock`).
+- **Security Policy (`SECURITY.md`)**:
+  - Upgraded bilingual security policy with explicit contacts (`security@doc-bricks.org`, `security@open-bricks.org`, `support@lukasgeiger.com`), a binding 48-hour response SLA, and local-first zero-egress guarantees.
+- **Third-Party Licenses Inventory (`THIRD_PARTY_LICENSES.txt`)**:
+  - Structured all direct, transitive, test, and build dependencies with licenses, SPDX identifiers, upstream URLs, and notice blocks.
+- **Security Contract Test Suite**:
+  - Added automated contract tests (`tests/test_security_license_contract.py`) covering vulnerability floors, third-party licenses, `.gitignore` multi-host patterns, zero hardcoded user paths, bilingual security policy SLA, and offline local-first invariants.
+
 ### DATEV mapping contract and roadmap readback (2026-08-26)
 - Prevented empty mapping keys, non-numeric account values, empty adviser/client
   numbers, and case-insensitive duplicate sender/keyword keys from being silently

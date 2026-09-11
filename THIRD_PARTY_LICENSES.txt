@@ -1,72 +1,143 @@
-UniversalInvoiceMail — Third-Party Software & Licenses Inventory
-===============================================================
+PySide6
+License: LGPL-3.0-only
+SPDX: LGPL-3.0-only
+URL: https://www.qt.io/qt-for-python
+Notice: Python-Bindings für Qt GUI und Desktop-Komponenten; dynamisch gelinkt gemäß LGPLv3 (>=6.5.0)
 
-This project incorporates open-source third-party components listed below.
+shiboken6
+License: LGPL-3.0-only
+SPDX: LGPL-3.0-only
+URL: https://www.qt.io/qt-for-python
+Notice: C++/Python-Binding-Generator und Laufzeit-Kern für PySide6
 
-1. Python GUI & Desktop Framework
----------------------------------
-- PySide6 (Qt for Python)
-  License: LGPL-3.0-only
-  Homepage: https://www.qt.io/qt-for-python
+keyring
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/keyring/
+Notice: Sichere Speicherung von IMAP- und E-Mail-Zugangsdaten im Betriebssystem-Schlüsselspeicher (>=25.0.0)
 
-2. Passwords & Credential Storage
----------------------------------
-- keyring
-  License: MIT
-  Homepage: https://github.com/jaraco/keyring
+jaraco.classes
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/jaraco.classes/
+Notice: Hilfsfunktionen und Metaklassen für keyring
 
-3. Document & PDF Processing
-----------------------------
-- reportlab
-  License: BSD-3-Clause
-  Homepage: https://www.reportlab.com/
+jaraco.context
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/jaraco.context/
+Notice: Kontextmanager-Hilfsfunktionen für keyring
 
-- pypdfium2
-  License: Apache-2.0 AND BSD-3-Clause
-  Homepage: https://github.com/pypdfium2-team/pypdfium2
+jaraco.functools
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/jaraco.functools/
+Notice: Funktionsdekoration und Caching für keyring
 
-- pypdf
-  License: BSD-3-Clause
-  Homepage: https://github.com/py-pdf/pypdf
+pywin32-ctypes
+License: BSD-3-Clause
+SPDX: BSD-3-Clause
+URL: https://pypi.org/project/pywin32-ctypes/
+Notice: Ctypes-basierter Zugriff auf Windows Credential Vault ohne native C-Compiler
 
-- docx2pdf
-  License: MIT
-  Homepage: https://github.com/cfhsu/docx2pdf
+Pillow
+License: HPND-sell-variant (Historical Permission Notice and Disclaimer)
+SPDX: HPND-sell-variant
+URL: https://pypi.org/project/Pillow/
+Notice: Bildverarbeitung, Icon-Rendering und PDF-Bildkonvertierung (>=12.3.0 gehärtet gegen GHSA-4x4j-2g7c-83w6 und GHSA-45hq-cxwh-f6vc)
 
-- xhtml2pdf
-  License: Apache-2.0
-  Homepage: https://github.com/xhtml2pdf/xhtml2pdf
+openpyxl
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/openpyxl/
+Notice: Excel-Tabellen-Verarbeitung und Tabellen-Konvertierung (>=3.1.0)
 
-- openpyxl
-  License: MIT
-  Homepage: https://openpyxl.readthedocs.io/
+python-docx
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/python-docx/
+Notice: DOCX-Dokumentenanalyse und Rechnungs-Anhangverarbeitung (>=1.1.0)
 
-- Pillow
-  License: HPND / Pillow License
-  Homepage: https://python-pillow.org/
+xhtml2pdf
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/xhtml2pdf/
+Notice: HTML-zu-PDF Konvertierung für Rechnungs-E-Mail-Bodies (>=0.2.17)
 
-- python-docx
-  License: MIT
-  Homepage: https://github.com/python-openxml/python-docx
+reportlab
+License: BSD-3-Clause
+SPDX: BSD-3-Clause
+URL: https://pypi.org/project/reportlab/
+Notice: PDF-Erzeugung und Layout-Engine für Dokumenten-Export (>=4.2.0)
 
-4. Optical Character Recognition (OCR)
---------------------------------------
-- pytesseract
-  License: Apache-2.0
-  Homepage: https://github.com/madmaze/pytesseract
+pypdfium2
+License: Apache-2.0 AND BSD-3-Clause
+SPDX: Apache-2.0 AND BSD-3-Clause
+URL: https://pypi.org/project/pypdfium2/
+Notice: PDFium-basierte Rasterung und Bildextraktion für OCR (>=4.26.0)
 
-5. Google API & Authentication (Optional)
------------------------------------------
-- google-api-python-client
-  License: Apache-2.0
-  Homepage: https://github.com/googleapis/google-api-python-client
+pypdf
+License: BSD-3-Clause
+SPDX: BSD-3-Clause
+URL: https://pypi.org/project/pypdf/
+Notice: PDF-Zusammenführung, Metadaten-Extraktion und Seiten-Splitting (>=5.0.0)
 
-- google-auth / google-auth-oauthlib
-  License: Apache-2.0
-  Homepage: https://github.com/googleapis/google-auth-library-python
+docx2pdf
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/docx2pdf/
+Notice: DOCX-zu-PDF Konvertierung über Office COM-Automation (>=0.1.8)
 
-6. Web Companion & Node.js Environment
---------------------------------------
-- Node.js Built-in Test Runner & Standard APIs
-  License: MIT
-  Homepage: https://nodejs.org/
+pytesseract
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/pytesseract/
+Notice: OCR-Erkennung für gescannte Rechnungen und Bildbelege (>=0.3.13)
+
+google-api-python-client
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/google-api-python-client/
+Notice: Optionale Google API Client-Bibliothek für Gmail-Integration (>=2.100.0)
+
+google-auth
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/google-auth/
+Notice: Authentifizierungsbibliothek für Google APIs (>=2.23.0)
+
+google-auth-oauthlib
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/google-auth-oauthlib/
+Notice: OAuth 2.0 Integration für Gmail API (>=1.1.0)
+
+pytest
+License: MIT
+SPDX: MIT
+URL: https://pytest.org/
+Notice: Testframework (>=9.1.1 gehärtet gegen CVE-2025-7117 / GHSA-6w46-j5rx-g56g)
+
+pluggy
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/pluggy/
+Notice: Plugin- und Hook-Management für pytest
+
+iniconfig
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/iniconfig/
+Notice: INI-Konfigurationsparser für pyproject.toml und pytest
+
+ruff
+License: MIT OR Apache-2.0
+SPDX: MIT OR Apache-2.0
+URL: https://github.com/astral-sh/ruff
+Notice: Statische Code-Analyse, Linting und Stilprüfungen (>=0.9.0)
+
+packaging
+License: Apache-2.0 OR BSD-2-Clause
+SPDX: Apache-2.0 OR BSD-2-Clause
+URL: https://pypi.org/project/packaging/
+Notice: PEP 440/508 Versionsparsing und Spezifikationsvalidierung

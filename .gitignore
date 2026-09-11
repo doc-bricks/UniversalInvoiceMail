@@ -1,13 +1,14 @@
 # ---- Python ----
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 *.egg-info/
 *.egg
 .eggs/
 dist/
 build/
 .pytest_cache/
+.ruff_cache/
 
 # ---- Virtuelle Umgebungen ----
 venv/
@@ -29,6 +30,8 @@ SKILL.md
 tmpclaude-*
 EXPERIMENT_BEFEHLSKETTE.txt
 LOCK*.txt
+LOCK.*
+*.lock
 
 # ---- Sensible Daten ----
 _USER/
@@ -39,6 +42,8 @@ client_secret*.json
 token.json
 *.pem
 *.key
+*.pfx
+secrets.*
 keyring/
 *.db
 *.sqlite
@@ -46,6 +51,13 @@ keyring/
 *.db-wal
 *.db-shm
 Outputbeispiele/
+
+# ---- Multi-Host Synchronisation & Konflikte ----
+*-WORKSTATION-LG*
+*-ASUS-GEI*
+*.sync-conflict-*
+*.conflict
+*.conflict.*
 
 # ---- Build-Artefakte ----
 releases/

@@ -4,7 +4,6 @@ and folder scanning in UniversalInvoiceMail.
 
 from __future__ import annotations
 
-import email
 from email.message import EmailMessage
 import os
 import sys
@@ -15,8 +14,6 @@ from unittest.mock import MagicMock, patch
 
 # Ensure project root is in sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
