@@ -50,7 +50,23 @@ for mod in [
         sys.modules[mod] = MagicMock()
 
 import pytest
-from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTableWidget, QTabWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDateEdit,
+    QDialogButtonBox,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QPlainTextEdit,
+    QPushButton,
+    QRadioButton,
+    QSpinBox,
+    QTableWidget,
+    QTabWidget,
+)
+from PySide6.QtGui import QKeySequence
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -315,3 +331,164 @@ def test_invalid_manual_invoice_amount_is_restored_and_announced(tmp_path, monke
         assert not save_calls
     finally:
         window.close()
+
+
+def test_mainwindow_keyboard_shortcuts_and_control_accessibility(tmp_path, monkeypatch, qapp):
+    """MainWindow registers keyboard shortcuts and exposes rich accessibility attributes."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        # Check shortcuts
+        assert window.shortcut_refresh_f5.key() == QKeySequence("F5")
+        assert window.shortcut_refresh_ctrl_r.key() == QKeySequence("Ctrl+R")
+        assert window.shortcut_start_ctrl_ret.key() == QKeySequence("Ctrl+Return")
+        assert window.shortcut_start_ctrl_ent.key() == QKeySequence("Ctrl+Enter")
+        assert window.shortcut_open_folder.key() == QKeySequence("Ctrl+O")
+        assert window.shortcut_select_all.key() == QKeySequence("Ctrl+A")
+        assert window.shortcut_select_none_esc.key() == QKeySequence("Escape")
+        assert window.shortcut_select_none_ctrl.key() == QKeySequence("Ctrl+Shift+A")
+        assert window.shortcut_delete_invoices.key() == QKeySequence("Delete")
+        assert window.shortcut_export_csv.key() == QKeySequence("Ctrl+E")
+        assert window.shortcut_save_settings.key() == QKeySequence("Ctrl+S")
+
+        # Check main controls accessibility
+        assert window.btn_start.accessibleName() == "Rechnungen abrufen"
+        assert "Strg+Eingabetaste" in window.btn_start.toolTip()
+
+        assert window.cb_timeframe.accessibleName() == "Zeitraum-Schnellauswahl"
+        assert window.date_from.accessibleName() == "Zeitraum Von"
+        assert window.date_to.accessibleName() == "Zeitraum Bis"
+
+        assert window.profile_list.accessibleName() == "Suchprofile"
+        assert window.account_list.accessibleName() == "E-Mail-Konten"
+
+        # Settings tab controls
+        assert window.inp_path.accessibleName() == "Speicherordner-Pfad"
+        assert window.ck_attachments.accessibleName() == "PDF-Anhänge herunterladen"
+        assert window.ck_body_pdf.accessibleName() == "Mail-Body als PDF speichern"
+        assert window.ck_merge_body.accessibleName() == "Mail-Body an PDF anhängen"
+        assert window.ck_hash.accessibleName() == "Duplikat-Erkennung"
+        assert window.ck_trash.accessibleName() == "Papierkorb durchsuchen"
+        assert window.cmb_pdf_mode.accessibleName() == "PDF-Erstellungsmodus"
+        assert window.ck_ocr.accessibleName() == "OCR-Texterkennung"
+        assert window.inp_max_mails.accessibleName() == "Maximale Mails pro Durchlauf"
+        assert window.findChild(QPushButton, "save_settings_button").accessibleName() == "Einstellungen speichern"
+    finally:
+        window.close()
+
+
+def test_account_dialog_accessibility_and_buddies(qapp):
+    """AccountDialog provides screenreader context and mnemonic keyboard buddies."""
+    dialog = uim.AccountDialog()
+    try:
+        assert dialog.windowTitle() == "E-Mail-Konto"
+
+        # Accessible names & descriptions
+        assert dialog.inp_name.accessibleName() == "Anzeigename"
+        assert "Identifizierung" in dialog.inp_name.accessibleDescription()
+
+        assert dialog.cb_provider.accessibleName() == "E-Mail-Anbieter"
+        assert dialog.ck_gmail_api.accessibleName() == "Gmail API nutzen"
+
+        assert dialog.inp_host.accessibleName() == "IMAP-Server"
+        assert dialog.inp_port.accessibleName() == "IMAP-Port"
+        assert dialog.inp_user.accessibleName() == "Benutzername"
+        assert dialog.inp_pass.accessibleName() == "Passwort"
+
+        # Check label buddies
+        labels = dialog.findChildren(QLabel)
+        buddies = {lbl.text(): lbl.buddy() for lbl in labels if lbl.buddy() is not None}
+
+        assert "&Anzeigename:" in buddies and buddies["&Anzeigename:"] == dialog.inp_name
+        assert "&Anbieter:" in buddies and buddies["&Anbieter:"] == dialog.cb_provider
+        assert "&Server:" in buddies and buddies["&Server:"] == dialog.inp_host
+        assert "&Port:" in buddies and buddies["&Port:"] == dialog.inp_port
+        assert "&Benutzername:" in buddies and buddies["&Benutzername:"] == dialog.inp_user
+        assert "&Passwort:" in buddies and buddies["&Passwort:"] == dialog.inp_pass
+
+        # Buttons
+        assert dialog.findChild(QPushButton, "account_dialog_ok_button").accessibleName() == "Konto speichern"
+        assert dialog.findChild(QPushButton, "account_dialog_cancel_button").accessibleName() == "Abbrechen"
+    finally:
+        dialog.close()
+
+
+def test_profile_dialog_accessibility_and_buddies(qapp):
+    """ProfileDialog provides screenreader context and mnemonic keyboard buddies."""
+    acc = uim.MailAccount(
+        id="acc_test",
+        name="Test Mail",
+        provider="IMAP",
+        host="imap.test.de",
+        port=993,
+        username="user@test.de",
+    )
+    dialog = uim.ProfileDialog([acc])
+    try:
+        assert dialog.windowTitle() == "Suchprofil"
+
+        # Accessible names & descriptions
+        assert dialog.inp_name.accessibleName() == "Profilname"
+        assert dialog.cb_account.accessibleName() == "Zugeordnetes E-Mail-Konto"
+        assert dialog.cb_shop.accessibleName() == "Shop-Vorlage"
+        assert dialog.inp_sender.accessibleName() == "Absender-Filter"
+        assert dialog.inp_subject.accessibleName() == "Betreff-Filter"
+        assert dialog.inp_gmail_query.accessibleName() == "Gmail-Query-Filter"
+        assert dialog.findChild(QPushButton, "open_query_builder_button").accessibleName() == "Gmail-Query-Builder öffnen"
+        assert dialog.inp_blacklist.accessibleName() == "Ausschlussfilter"
+        assert dialog.inp_body_must.accessibleName() == "Erforderlicher Nachrichtentext"
+        assert dialog.inp_body_must_not.accessibleName() == "Ausgeschlossener Nachrichtentext"
+        assert dialog.inp_folder.accessibleName() == "Ziel-Unterordner"
+        assert dialog.ck_enabled.accessibleName() == "Suchprofil aktiviert"
+
+        # Label buddies
+        labels = dialog.findChildren(QLabel)
+        buddies = {lbl.text(): lbl.buddy() for lbl in labels if lbl.buddy() is not None}
+
+        assert "&Name:" in buddies and buddies["&Name:"] == dialog.inp_name
+        assert "&E-Mail-Konto:" in buddies and buddies["&E-Mail-Konto:"] == dialog.cb_account
+        assert "&Shop-Vorlage:" in buddies and buddies["&Shop-Vorlage:"] == dialog.cb_shop
+        assert "A&bsender enthält:" in buddies and buddies["A&bsender enthält:"] == dialog.inp_sender
+        assert "B&etreff enthält:" in buddies and buddies["B&etreff enthält:"] == dialog.inp_subject
+        assert "&Gmail-Query:" in buddies and buddies["&Gmail-Query:"] == dialog.inp_gmail_query
+        assert "&Darf NICHT enthalten:" in buddies and buddies["&Darf NICHT enthalten:"] == dialog.inp_blacklist
+        assert "Body &muss enthalten:" in buddies and buddies["Body &muss enthalten:"] == dialog.inp_body_must
+        assert "Body darf &nicht enthalten:" in buddies and buddies["Body darf &nicht enthalten:"] == dialog.inp_body_must_not
+        assert "&Unterordner:" in buddies and buddies["&Unterordner:"] == dialog.inp_folder
+
+        # Buttons
+        assert dialog.findChild(QPushButton, "profile_dialog_ok_button").accessibleName() == "Profil speichern"
+        assert dialog.findChild(QPushButton, "profile_dialog_cancel_button").accessibleName() == "Abbrechen"
+    finally:
+        dialog.close()
+
+
+def test_query_builder_dialog_accessibility(qapp):
+    """QueryBuilderDialog provides screenreader context and accessible radio buttons."""
+    dialog = uim.QueryBuilderDialog()
+    try:
+        assert dialog.windowTitle() == "Gmail-Suchabfrage erstellen"
+
+        # Radio buttons
+        assert dialog.rb_all.accessibleName() == "Suchbereich Überall außer Papierkorb"
+        assert dialog.rb_inbox.accessibleName() == "Suchbereich Nur Posteingang"
+        assert dialog.rb_sent.accessibleName() == "Suchbereich Gesendet"
+        assert dialog.rb_trash.accessibleName() == "Suchbereich Auch Papierkorb"
+
+        # Form controls
+        assert dialog.cb_time.accessibleName() == "Zeitraum-Vorlage"
+        assert dialog.de_from.accessibleName() == "Query-Datum Von"
+        assert dialog.de_to.accessibleName() == "Query-Datum Bis"
+        assert dialog.inp_from.accessibleName() == "Absender-Filter"
+        assert dialog.inp_subject.accessibleName() == "Betreff-Filter"
+        assert dialog.chk_attachment.accessibleName() == "Muss Anhänge haben"
+        assert dialog.result_query.accessibleName() == "Erzeugte Gmail-Query"
+
+        # Buttons
+        assert dialog.findChild(QPushButton, "query_generate_button").accessibleName() == "Query generieren"
+        assert dialog.findChild(QPushButton, "query_dialog_ok_button").accessibleName() == "Query übernehmen"
+        assert dialog.findChild(QPushButton, "query_dialog_cancel_button").accessibleName() == "Abbrechen"
+    finally:
+        dialog.close()

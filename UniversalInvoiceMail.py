@@ -51,7 +51,7 @@ from PySide6.QtWidgets import (
     QDateEdit, QGridLayout, QRadioButton
 )
 from PySide6.QtCore import Qt, QThread, Signal, QUrl, QDate
-from PySide6.QtGui import QDesktopServices, QIcon
+from PySide6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
 
 # PDF Konvertierung
 try:
@@ -2633,7 +2633,7 @@ class AccountDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle("E-Mail Konto" if not self.account else "Konto bearbeiten")
+        self.setWindowTitle("E-Mail-Konto" if not self.account else "E-Mail-Konto bearbeiten")
         self.resize(450, 300)
 
         layout = QVBoxLayout(self)
@@ -2641,18 +2641,39 @@ class AccountDialog(QDialog):
         form = QFormLayout()
 
         # Name
+        lbl_name = QLabel("&Anzeigename:")
         self.inp_name = QLineEdit()
+        self.inp_name.setObjectName("account_name_input")
+        self.inp_name.setAccessibleName("Anzeigename")
+        self.inp_name.setAccessibleDescription(
+            "Name zur Identifizierung des E-Mail-Kontos in der Anwendung."
+        )
+        self.inp_name.setToolTip("Anzeigename für dieses E-Mail-Konto")
         self.inp_name.setPlaceholderText("z.B. 'Mein Gmail'")
-        form.addRow("Anzeigename:", self.inp_name)
+        lbl_name.setBuddy(self.inp_name)
+        form.addRow(lbl_name, self.inp_name)
 
         # Provider Auswahl
+        lbl_provider = QLabel("&Anbieter:")
         self.cb_provider = QComboBox()
+        self.cb_provider.setObjectName("account_provider_combo")
+        self.cb_provider.setAccessibleName("E-Mail-Anbieter")
+        self.cb_provider.setAccessibleDescription(
+            "Wählen Sie Ihren E-Mail-Anbieter für vorkonfigurierte Server-Einstellungen."
+        )
+        self.cb_provider.setToolTip("E-Mail-Anbieter auswählen")
         self.cb_provider.addItems(list(IMAP_PRESETS.keys()))
         self.cb_provider.currentTextChanged.connect(self.on_provider_changed)
-        form.addRow("Anbieter:", self.cb_provider)
+        lbl_provider.setBuddy(self.cb_provider)
+        form.addRow(lbl_provider, self.cb_provider)
 
         # Gmail API Option
         self.ck_gmail_api = QCheckBox("Gmail API nutzen (empfohlen für Gmail)")
+        self.ck_gmail_api.setObjectName("account_gmail_api_checkbox")
+        self.ck_gmail_api.setAccessibleName("Gmail API nutzen")
+        self.ck_gmail_api.setAccessibleDescription(
+            "Aktiviert den schnelleren und zuverlässigeren Gmail-API-Zugriff anstelle von IMAP."
+        )
         self.ck_gmail_api.setToolTip("Schneller und zuverlässiger als IMAP")
         form.addRow("", self.ck_gmail_api)
 
@@ -2666,23 +2687,55 @@ class AccountDialog(QDialog):
         self.lbl_imap.setStyleSheet("font-weight: bold; margin-top: 10px;")
         form.addRow(self.lbl_imap)
 
+        lbl_host = QLabel("&Server:")
         self.inp_host = QLineEdit()
+        self.inp_host.setObjectName("account_host_input")
+        self.inp_host.setAccessibleName("IMAP-Server")
+        self.inp_host.setAccessibleDescription(
+            "Adresse des IMAP-Mailservers, z. B. imap.example.com."
+        )
+        self.inp_host.setToolTip("IMAP-Serveradresse eingeben")
         self.inp_host.setPlaceholderText("imap.example.com")
-        form.addRow("Server:", self.inp_host)
+        lbl_host.setBuddy(self.inp_host)
+        form.addRow(lbl_host, self.inp_host)
 
+        lbl_port = QLabel("&Port:")
         self.inp_port = QSpinBox()
+        self.inp_port.setObjectName("account_port_input")
+        self.inp_port.setAccessibleName("IMAP-Port")
+        self.inp_port.setAccessibleDescription(
+            "Portnummer des IMAP-Mailservers, standardmäßig 993 für SSL/TLS."
+        )
+        self.inp_port.setToolTip("Portnummer für IMAP (Standard: 993)")
         self.inp_port.setRange(1, 65535)
         self.inp_port.setValue(993)
-        form.addRow("Port:", self.inp_port)
+        lbl_port.setBuddy(self.inp_port)
+        form.addRow(lbl_port, self.inp_port)
 
+        lbl_user = QLabel("&Benutzername:")
         self.inp_user = QLineEdit()
+        self.inp_user.setObjectName("account_user_input")
+        self.inp_user.setAccessibleName("Benutzername")
+        self.inp_user.setAccessibleDescription(
+            "E-Mail-Adresse oder Benutzername für die Anmeldung am Mailserver."
+        )
+        self.inp_user.setToolTip("E-Mail-Adresse oder Benutzername")
         self.inp_user.setPlaceholderText("email@example.com")
-        form.addRow("Benutzername:", self.inp_user)
+        lbl_user.setBuddy(self.inp_user)
+        form.addRow(lbl_user, self.inp_user)
 
+        lbl_pass = QLabel("&Passwort:")
         self.inp_pass = QLineEdit()
+        self.inp_pass.setObjectName("account_pass_input")
+        self.inp_pass.setAccessibleName("Passwort")
+        self.inp_pass.setAccessibleDescription(
+            "Passwort oder App-spezifisches Passwort für den E-Mail-Zugang."
+        )
+        self.inp_pass.setToolTip("Passwort oder App-Passwort eingeben")
         self.inp_pass.setEchoMode(QLineEdit.EchoMode.Password)
         self.inp_pass.setPlaceholderText("Passwort / App-Passwort")
-        form.addRow("Passwort:", self.inp_pass)
+        lbl_pass.setBuddy(self.inp_pass)
+        form.addRow(lbl_pass, self.inp_pass)
 
         layout.addLayout(form)
 
@@ -2690,6 +2743,18 @@ class AccountDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_btn:
+            ok_btn.setObjectName("account_dialog_ok_button")
+            ok_btn.setAccessibleName("Konto speichern")
+            ok_btn.setAccessibleDescription("Speichert die Kontoeinstellungen.")
+            ok_btn.setToolTip("Kontoeinstellungen speichern")
+        cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if cancel_btn:
+            cancel_btn.setObjectName("account_dialog_cancel_button")
+            cancel_btn.setAccessibleName("Abbrechen")
+            cancel_btn.setAccessibleDescription("Schließt den Dialog ohne Änderungen zu speichern.")
+            cancel_btn.setToolTip("Dialog ohne Speichern schließen (Escape)")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -2742,7 +2807,7 @@ class QueryBuilderDialog(QDialog):
 
     def __init__(self, current_query: str = "", parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gmail Query Builder")
+        self.setWindowTitle("Gmail-Suchabfrage erstellen")
         self.resize(560, 420)
 
         layout = QVBoxLayout(self)
@@ -2750,10 +2815,22 @@ class QueryBuilderDialog(QDialog):
         scope_group = QGroupBox("1. Bereich")
         scope_layout = QHBoxLayout(scope_group)
         self.rb_all = QRadioButton("Überall außer Papierkorb")
+        self.rb_all.setObjectName("query_scope_all_radio")
+        self.rb_all.setAccessibleName("Suchbereich Überall außer Papierkorb")
+        self.rb_all.setAccessibleDescription("Durchsucht das gesamte Postfach mit Ausnahme des Papierkorbs.")
         self.rb_all.setChecked(True)
         self.rb_inbox = QRadioButton("Nur Inbox")
+        self.rb_inbox.setObjectName("query_scope_inbox_radio")
+        self.rb_inbox.setAccessibleName("Suchbereich Nur Posteingang")
+        self.rb_inbox.setAccessibleDescription("Beschränkt die Suche auf den Posteingangsordner.")
         self.rb_sent = QRadioButton("Gesendet")
+        self.rb_sent.setObjectName("query_scope_sent_radio")
+        self.rb_sent.setAccessibleName("Suchbereich Gesendet")
+        self.rb_sent.setAccessibleDescription("Beschränkt die Suche auf gesendete Nachrichten.")
         self.rb_trash = QRadioButton("Auch Papierkorb")
+        self.rb_trash.setObjectName("query_scope_trash_radio")
+        self.rb_trash.setAccessibleName("Suchbereich Auch Papierkorb")
+        self.rb_trash.setAccessibleDescription("Schließt gelöschte Nachrichten im Papierkorb in die Suche ein.")
         scope_layout.addWidget(self.rb_all)
         scope_layout.addWidget(self.rb_inbox)
         scope_layout.addWidget(self.rb_sent)
@@ -2763,40 +2840,89 @@ class QueryBuilderDialog(QDialog):
         date_group = QGroupBox("2. Zeitraum")
         date_layout = QGridLayout(date_group)
         self.cb_time = QComboBox()
+        self.cb_time.setObjectName("query_timeframe_combo")
+        self.cb_time.setAccessibleName("Zeitraum-Vorlage")
+        self.cb_time.setAccessibleDescription("Wählt eine vordefinierte Zeitspanne für die Abfrage.")
+        self.cb_time.setToolTip("Zeitraum für die Gmail-Query auswählen")
         self.cb_time.addItems(["Alles", "Dieses Jahr", "Letztes Jahr", "Benutzerdefiniert"])
         self.cb_time.currentIndexChanged.connect(self.toggle_dates)
         self.de_from = QDateEdit(QDate.currentDate().addYears(-1))
+        self.de_from.setObjectName("query_date_from")
+        self.de_from.setAccessibleName("Query-Datum Von")
+        self.de_from.setAccessibleDescription("Startdatum für die Gmail-Query.")
+        self.de_from.setToolTip("Startdatum für die Gmail-Suche")
         self.de_from.setCalendarPopup(True)
         self.de_to = QDateEdit(QDate.currentDate())
+        self.de_to.setObjectName("query_date_to")
+        self.de_to.setAccessibleName("Query-Datum Bis")
+        self.de_to.setAccessibleDescription("Enddatum für die Gmail-Query.")
+        self.de_to.setToolTip("Enddatum für die Gmail-Suche")
         self.de_to.setCalendarPopup(True)
         self.de_from.setEnabled(False)
         self.de_to.setEnabled(False)
-        date_layout.addWidget(QLabel("Preset:"), 0, 0)
+
+        lbl_preset = QLabel("&Vorlage:")
+        lbl_preset.setBuddy(self.cb_time)
+        lbl_from = QLabel("Vo&n:")
+        lbl_from.setBuddy(self.de_from)
+        lbl_to = QLabel("Bi&s:")
+        lbl_to.setBuddy(self.de_to)
+
+        date_layout.addWidget(lbl_preset, 0, 0)
         date_layout.addWidget(self.cb_time, 0, 1)
-        date_layout.addWidget(QLabel("Von:"), 1, 0)
+        date_layout.addWidget(lbl_from, 1, 0)
         date_layout.addWidget(self.de_from, 1, 1)
-        date_layout.addWidget(QLabel("Bis:"), 2, 0)
+        date_layout.addWidget(lbl_to, 2, 0)
         date_layout.addWidget(self.de_to, 2, 1)
         layout.addWidget(date_group)
 
         criteria_group = QGroupBox("3. Kriterien")
         criteria_layout = QGridLayout(criteria_group)
         self.inp_from = QLineEdit()
+        self.inp_from.setObjectName("query_from_input")
+        self.inp_from.setAccessibleName("Absender-Filter")
+        self.inp_from.setAccessibleDescription("Kommagetrennte Liste von Absender-Adressen oder Domains für die Query.")
+        self.inp_from.setToolTip("Absender für die Gmail-Suche (z. B. amazon.de, amazon.com)")
         self.inp_from.setPlaceholderText("z.B. amazon.de, amazon.com")
+
         self.inp_subject = QLineEdit()
+        self.inp_subject.setObjectName("query_subject_input")
+        self.inp_subject.setAccessibleName("Betreff-Filter")
+        self.inp_subject.setAccessibleDescription("Kommagetrennte Begriffe, die im Betreff vorkommen sollen.")
+        self.inp_subject.setToolTip("Betreff-Begriffe für die Gmail-Suche (z. B. Rechnung, Invoice)")
         self.inp_subject.setPlaceholderText("z.B. Rechnung, Invoice")
+
         self.chk_attachment = QCheckBox("Muss Anhänge haben (has:attachment)")
+        self.chk_attachment.setObjectName("query_attachment_checkbox")
+        self.chk_attachment.setAccessibleName("Muss Anhänge haben")
+        self.chk_attachment.setAccessibleDescription("Filtert nach Nachrichten mit Dateianhängen (has:attachment).")
+        self.chk_attachment.setToolTip("Nur E-Mails mit Dateianhängen berücksichtigen")
         self.chk_attachment.setChecked(True)
-        criteria_layout.addWidget(QLabel("Absender:"), 0, 0)
+
+        lbl_sender = QLabel("&Absender:")
+        lbl_sender.setBuddy(self.inp_from)
+        lbl_subject = QLabel("&Betreff:")
+        lbl_subject.setBuddy(self.inp_subject)
+
+        criteria_layout.addWidget(lbl_sender, 0, 0)
         criteria_layout.addWidget(self.inp_from, 0, 1)
-        criteria_layout.addWidget(QLabel("Betreff:"), 1, 0)
+        criteria_layout.addWidget(lbl_subject, 1, 0)
         criteria_layout.addWidget(self.inp_subject, 1, 1)
         criteria_layout.addWidget(self.chk_attachment, 2, 0, 1, 2)
         layout.addWidget(criteria_group)
 
         self.result_query = QLineEdit(current_query)
+        self.result_query.setObjectName("query_result_input")
+        self.result_query.setAccessibleName("Erzeugte Gmail-Query")
+        self.result_query.setAccessibleDescription("Ergebnis-Suchstring für die Gmail API oder IMAP-Suche.")
+        self.result_query.setToolTip("Generierte Such-Query (editierbar)")
         self.result_query.setPlaceholderText("Erzeugte Query …")
+
         btn_generate = QPushButton("Query generieren")
+        btn_generate.setObjectName("query_generate_button")
+        btn_generate.setAccessibleName("Query generieren")
+        btn_generate.setAccessibleDescription("Erzeugt den Gmail-Suchstring aus den oben gewählten Optionen.")
+        btn_generate.setToolTip("Gmail-Suchsyntax aus den Feldern generieren")
         btn_generate.clicked.connect(self.generate)
         layout.addWidget(btn_generate)
         layout.addWidget(self.result_query)
@@ -2804,6 +2930,18 @@ class QueryBuilderDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_btn:
+            ok_btn.setObjectName("query_dialog_ok_button")
+            ok_btn.setAccessibleName("Query übernehmen")
+            ok_btn.setAccessibleDescription("Übernimmt die generierte Query in das Suchprofil.")
+            ok_btn.setToolTip("Query übernehmen und Dialog schließen")
+        cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if cancel_btn:
+            cancel_btn.setObjectName("query_dialog_cancel_button")
+            cancel_btn.setAccessibleName("Abbrechen")
+            cancel_btn.setAccessibleDescription("Schließt den Dialog ohne Änderungen.")
+            cancel_btn.setToolTip("Dialog ohne Übernahme schließen (Escape)")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -2877,7 +3015,7 @@ class ProfileDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle("Suchprofil" if not self.profile else "Profil bearbeiten")
+        self.setWindowTitle("Suchprofil" if not self.profile else "Suchprofil bearbeiten")
         self.resize(560, 460)
 
         layout = QVBoxLayout(self)
@@ -2885,23 +3023,41 @@ class ProfileDialog(QDialog):
         form = QFormLayout()
 
         # Name
+        lbl_name = QLabel("&Name:")
         self.inp_name = QLineEdit()
+        self.inp_name.setObjectName("profile_name_input")
+        self.inp_name.setAccessibleName("Profilname")
+        self.inp_name.setAccessibleDescription("Bezeichnung für dieses Rechnungs-Suchprofil.")
+        self.inp_name.setToolTip("Name für das Suchprofil")
         self.inp_name.setPlaceholderText("z.B. 'Amazon Rechnungen'")
-        form.addRow("Name:", self.inp_name)
+        lbl_name.setBuddy(self.inp_name)
+        form.addRow(lbl_name, self.inp_name)
 
         # Account Auswahl
+        lbl_account = QLabel("&E-Mail-Konto:")
         self.cb_account = QComboBox()
+        self.cb_account.setObjectName("profile_account_combo")
+        self.cb_account.setAccessibleName("Zugeordnetes E-Mail-Konto")
+        self.cb_account.setAccessibleDescription("Wählen Sie das E-Mail-Konto, auf dem dieses Suchprofil ausgeführt wird.")
+        self.cb_account.setToolTip("E-Mail-Konto für die Suche auswählen")
         for acc in self.accounts:
             self.cb_account.addItem(acc.name, acc.id)
-        form.addRow("E-Mail Konto:", self.cb_account)
+        lbl_account.setBuddy(self.cb_account)
+        form.addRow(lbl_account, self.cb_account)
 
         # Schnellauswahl Shop
+        lbl_shop = QLabel("&Shop-Vorlage:")
         self.cb_shop = QComboBox()
+        self.cb_shop.setObjectName("profile_shop_combo")
+        self.cb_shop.setAccessibleName("Shop-Vorlage")
+        self.cb_shop.setAccessibleDescription("Vorkonfigurierte Filterregeln für bekannte Anbieter wie Amazon, PayPal, eBay etc.")
+        self.cb_shop.setToolTip("Vorkonfigurierte Shop-Vorlage laden")
         self.cb_shop.addItem("-- Manuell konfigurieren --")
         for shop in DEFAULT_SHOP_PROFILES:
             self.cb_shop.addItem(shop['name'])
         self.cb_shop.currentTextChanged.connect(self.on_shop_changed)
-        form.addRow("Shop-Vorlage:", self.cb_shop)
+        lbl_shop.setBuddy(self.cb_shop)
+        form.addRow(lbl_shop, self.cb_shop)
 
         # Separator
         line = QFrame()
@@ -2909,35 +3065,58 @@ class ProfileDialog(QDialog):
         form.addRow(line)
 
         # Filter
+        lbl_sender = QLabel("A&bsender enthält:")
         self.inp_sender = QLineEdit()
+        self.inp_sender.setObjectName("profile_sender_input")
+        self.inp_sender.setAccessibleName("Absender-Filter")
+        self.inp_sender.setAccessibleDescription("Kommagetrennte Absender-Adressen oder Domains. Trifft zu, wenn der Absender mindestens einen dieser Werte enthält.")
         self.inp_sender.setPlaceholderText("z.B. amazon.de, amazon.com")
         self.inp_sender.setToolTip("Komma-getrennt = ODER-Verknüpfung\nBeispiel: amazon.de, amazon.com\n→ Mail von amazon.de ODER amazon.com")
-        form.addRow("Absender enthält:", self.inp_sender)
+        lbl_sender.setBuddy(self.inp_sender)
+        form.addRow(lbl_sender, self.inp_sender)
 
+        lbl_subject = QLabel("B&etreff enthält:")
         self.inp_subject = QLineEdit()
+        self.inp_subject.setObjectName("profile_subject_input")
+        self.inp_subject.setAccessibleName("Betreff-Filter")
+        self.inp_subject.setAccessibleDescription("Kommagetrennte Begriffe, von denen mindestens einer im Betreff vorkommen muss.")
         self.inp_subject.setPlaceholderText("z.B. Rechnung, Invoice, Bestellung")
         self.inp_subject.setToolTip("Komma-getrennt = ODER-Verknüpfung\nBeispiel: Rechnung, Invoice\n→ Betreff enthält 'Rechnung' ODER 'Invoice'")
-        form.addRow("Betreff enthält:", self.inp_subject)
+        lbl_subject.setBuddy(self.inp_subject)
+        form.addRow(lbl_subject, self.inp_subject)
 
+        lbl_gmail = QLabel("&Gmail-Query:")
         self.inp_gmail_query = QLineEdit()
+        self.inp_gmail_query.setObjectName("profile_gmail_query_input")
+        self.inp_gmail_query.setAccessibleName("Gmail-Query-Filter")
+        self.inp_gmail_query.setAccessibleDescription("Optionaler nativer Gmail-Suchstring zur serverseitigen Vorfilterung.")
         self.inp_gmail_query.setPlaceholderText("Optional: z.B. label:finance has:attachment")
         self.inp_gmail_query.setToolTip(
             "Optionaler Gmail-Raw-Query-Kanal.\n"
             "Greift bei Gmail API immer und bei IMAP nur auf Servern mit X-GM-RAW."
         )
         btn_query_builder = QPushButton("Builder …")
+        btn_query_builder.setObjectName("open_query_builder_button")
+        btn_query_builder.setAccessibleName("Gmail-Query-Builder öffnen")
+        btn_query_builder.setAccessibleDescription("Öffnet den Assistenten zum visuellen Zusammenstellen einer Gmail-Suchabfrage.")
         btn_query_builder.setToolTip("Hilft beim Erstellen einer Gmail-Query")
         btn_query_builder.clicked.connect(self.open_query_builder)
+        lbl_gmail.setBuddy(self.inp_gmail_query)
         gmail_query_row = QHBoxLayout()
         gmail_query_row.addWidget(self.inp_gmail_query)
         gmail_query_row.addWidget(btn_query_builder)
-        form.addRow("Gmail-Query:", gmail_query_row)
+        form.addRow(lbl_gmail, gmail_query_row)
 
         # Blacklist
+        lbl_blacklist = QLabel("&Darf NICHT enthalten:")
         self.inp_blacklist = QLineEdit()
+        self.inp_blacklist.setObjectName("profile_blacklist_input")
+        self.inp_blacklist.setAccessibleName("Ausschlussfilter")
+        self.inp_blacklist.setAccessibleDescription("Mails werden ignoriert, wenn Betreff oder Nachrichtentext eines dieser kommagetrennten Wörter enthält.")
         self.inp_blacklist.setPlaceholderText("z.B. Storno, Mahnung, Werbung")
         self.inp_blacklist.setToolTip("Komma-getrennt = ODER-Verknüpfung\nMails werden übersprungen wenn Betreff/Body\neines dieser Worte enthält")
-        form.addRow("Darf NICHT enthalten:", self.inp_blacklist)
+        lbl_blacklist.setBuddy(self.inp_blacklist)
+        form.addRow(lbl_blacklist, self.inp_blacklist)
 
         # Separator fuer Body-Filter
         line2 = QFrame()
@@ -2945,23 +3124,43 @@ class ProfileDialog(QDialog):
         form.addRow(line2)
 
         # Body-Filter
+        lbl_body_must = QLabel("Body &muss enthalten:")
         self.inp_body_must = QLineEdit()
+        self.inp_body_must.setObjectName("profile_body_must_input")
+        self.inp_body_must.setAccessibleName("Erforderlicher Nachrichtentext")
+        self.inp_body_must.setAccessibleDescription("Der E-Mail-Text muss mindestens eines dieser kommagetrennten Wörter enthalten.")
         self.inp_body_must.setPlaceholderText("Optional: z.B. Rechnung, Invoice, Bestellung")
         self.inp_body_must.setToolTip("Mail-Body MUSS mindestens eines dieser Worte enthalten\nKomma-getrennt = ODER-Verknüpfung\nLeer = kein Filter")
-        form.addRow("Body muss enthalten:", self.inp_body_must)
+        lbl_body_must.setBuddy(self.inp_body_must)
+        form.addRow(lbl_body_must, self.inp_body_must)
 
+        lbl_body_not = QLabel("Body darf &nicht enthalten:")
         self.inp_body_must_not = QLineEdit()
+        self.inp_body_must_not.setObjectName("profile_body_must_not_input")
+        self.inp_body_must_not.setAccessibleName("Ausgeschlossener Nachrichtentext")
+        self.inp_body_must_not.setAccessibleDescription("Der E-Mail-Text darf keines dieser kommagetrennten Wörter enthalten.")
         self.inp_body_must_not.setPlaceholderText("Optional: z.B. Werbung, Newsletter")
         self.inp_body_must_not.setToolTip("Mail-Body darf KEINES dieser Worte enthalten\nKomma-getrennt = ODER-Verknüpfung\nLeer = kein Filter")
-        form.addRow("Body darf nicht enthalten:", self.inp_body_must_not)
+        lbl_body_not.setBuddy(self.inp_body_must_not)
+        form.addRow(lbl_body_not, self.inp_body_must_not)
 
         # Zielordner
+        lbl_folder = QLabel("&Unterordner:")
         self.inp_folder = QLineEdit()
+        self.inp_folder.setObjectName("profile_folder_input")
+        self.inp_folder.setAccessibleName("Ziel-Unterordner")
+        self.inp_folder.setAccessibleDescription("Optionaler Unterordner im Speicherverzeichnis für gefundene Rechnungen dieses Profils.")
+        self.inp_folder.setToolTip("Ziel-Unterordner für Rechnungen dieses Profils")
         self.inp_folder.setPlaceholderText("Optional: Unterordner für diese Rechnungen")
-        form.addRow("Unterordner:", self.inp_folder)
+        lbl_folder.setBuddy(self.inp_folder)
+        form.addRow(lbl_folder, self.inp_folder)
 
         # Aktiv
         self.ck_enabled = QCheckBox("Profil aktiviert")
+        self.ck_enabled.setObjectName("profile_enabled_checkbox")
+        self.ck_enabled.setAccessibleName("Suchprofil aktiviert")
+        self.ck_enabled.setAccessibleDescription("Legt fest, ob dieses Suchprofil beim Rechnungsabruf ausgeführt wird.")
+        self.ck_enabled.setToolTip("Profil beim automatischen Abruf einbeziehen")
         self.ck_enabled.setChecked(True)
         form.addRow("", self.ck_enabled)
 
@@ -2971,6 +3170,18 @@ class ProfileDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_btn:
+            ok_btn.setObjectName("profile_dialog_ok_button")
+            ok_btn.setAccessibleName("Profil speichern")
+            ok_btn.setAccessibleDescription("Speichert die Suchprofil-Einstellungen.")
+            ok_btn.setToolTip("Suchprofil speichern")
+        cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if cancel_btn:
+            cancel_btn.setObjectName("profile_dialog_cancel_button")
+            cancel_btn.setAccessibleName("Abbrechen")
+            cancel_btn.setAccessibleDescription("Schließt den Dialog ohne Änderungen zu speichern.")
+            cancel_btn.setToolTip("Dialog ohne Speichern schließen (Escape)")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -3357,6 +3568,12 @@ class MainWindow(QMainWindow):
 
         # Start Button
         self.btn_start = QPushButton("🚀  RECHNUNGEN ABRUFEN")
+        self.btn_start.setObjectName("start_grabbing_button")
+        self.btn_start.setAccessibleName("Rechnungen abrufen")
+        self.btn_start.setAccessibleDescription(
+            "Startet den Abruf von Rechnungen über die konfigurierten E-Mail-Konten und Suchprofile."
+        )
+        self.btn_start.setToolTip("Rechnungsabruf starten (Strg+Eingabetaste)")
         self.btn_start.setMinimumHeight(50)
         self.btn_start.setStyleSheet("""
             QPushButton {
@@ -3382,7 +3599,13 @@ class MainWindow(QMainWindow):
 
         # Schnellauswahl
         quick_layout = QHBoxLayout()
+        lbl_quick = QLabel("Schnellauswahl:")
         self.cb_timeframe = QComboBox()
+        self.cb_timeframe.setObjectName("timeframe_quick_combo")
+        self.cb_timeframe.setAccessibleName("Zeitraum-Schnellauswahl")
+        self.cb_timeframe.setAccessibleDescription(
+            "Wählt vordefinierte Zeiträume wie dieses Jahr, letztes Jahr oder benutzerdefiniert für den Rechnungsabruf."
+        )
         self.cb_timeframe.addItems([
             "Benutzerdefiniert",
             "Letzte 12 Monate",
@@ -3394,7 +3617,7 @@ class MainWindow(QMainWindow):
         ])
         self.cb_timeframe.currentTextChanged.connect(self._on_timeframe_changed)
         self.cb_timeframe.setToolTip("Schnellauswahl oder 'Benutzerdefiniert' für eigene Daten")
-        quick_layout.addWidget(QLabel("Schnellauswahl:"))
+        quick_layout.addWidget(lbl_quick)
         quick_layout.addWidget(self.cb_timeframe)
         filter_layout.addLayout(quick_layout)
 
@@ -3403,8 +3626,14 @@ class MainWindow(QMainWindow):
         from PySide6.QtCore import QDate
 
         date_layout = QHBoxLayout()
-        date_layout.addWidget(QLabel("Von:"))
+        lbl_from = QLabel("Von:")
         self.date_from = QDateEdit()
+        self.date_from.setObjectName("date_from_picker")
+        self.date_from.setAccessibleName("Zeitraum Von")
+        self.date_from.setAccessibleDescription(
+            "Startdatum für den Rechnungsabruf im Format TT.MM.JJJJ."
+        )
+        self.date_from.setToolTip("Startdatum für den Rechnungsabruf")
         self.date_from.setCalendarPopup(True)
         self.date_from.setDisplayFormat("dd.MM.yyyy")
         # Gespeichertes Datum laden oder Default
@@ -3416,10 +3645,17 @@ class MainWindow(QMainWindow):
                 self.date_from.setDate(QDate.currentDate().addMonths(-12))
         else:
             self.date_from.setDate(QDate.currentDate().addMonths(-12))
+        date_layout.addWidget(lbl_from)
         date_layout.addWidget(self.date_from)
 
-        date_layout.addWidget(QLabel("Bis:"))
+        lbl_to = QLabel("Bis:")
         self.date_to = QDateEdit()
+        self.date_to.setObjectName("date_to_picker")
+        self.date_to.setAccessibleName("Zeitraum Bis")
+        self.date_to.setAccessibleDescription(
+            "Enddatum für den Rechnungsabruf im Format TT.MM.JJJJ."
+        )
+        self.date_to.setToolTip("Enddatum für den Rechnungsabruf")
         self.date_to.setCalendarPopup(True)
         self.date_to.setDisplayFormat("dd.MM.yyyy")
         # Gespeichertes Datum laden oder Default
@@ -3431,6 +3667,7 @@ class MainWindow(QMainWindow):
                 self.date_to.setDate(QDate.currentDate())
         else:
             self.date_to.setDate(QDate.currentDate())
+        date_layout.addWidget(lbl_to)
         date_layout.addWidget(self.date_to)
         filter_layout.addLayout(date_layout)
 
@@ -3441,6 +3678,12 @@ class MainWindow(QMainWindow):
         profile_layout = QVBoxLayout(profile_group)
 
         self.profile_list = QListWidget()
+        self.profile_list.setObjectName("profile_list")
+        self.profile_list.setAccessibleName("Suchprofile")
+        self.profile_list.setAccessibleDescription(
+            "Liste aller angelegten Rechnungs-Suchprofile. Doppelklick öffnet den Bearbeitungsdialog."
+        )
+        self.profile_list.setToolTip("Suchprofile verwalten (Doppelklick zum Bearbeiten)")
         self.profile_list.itemDoubleClicked.connect(self.edit_profile)
         profile_layout.addWidget(self.profile_list)
 
@@ -3470,6 +3713,12 @@ class MainWindow(QMainWindow):
         account_layout = QVBoxLayout(account_group)
 
         self.account_list = QListWidget()
+        self.account_list.setObjectName("account_list")
+        self.account_list.setAccessibleName("E-Mail-Konten")
+        self.account_list.setAccessibleDescription(
+            "Liste aller konfigurierten E-Mail-Konten. Doppelklick öffnet den Bearbeitungsdialog."
+        )
+        self.account_list.setToolTip("E-Mail-Konten verwalten (Doppelklick zum Bearbeiten)")
         self.account_list.setMaximumHeight(100)
         self.account_list.itemDoubleClicked.connect(self.edit_account)
         account_layout.addWidget(self.account_list)
@@ -3629,6 +3878,9 @@ class MainWindow(QMainWindow):
         # Download-Pfad
         path_row = QHBoxLayout()
         self.inp_path = QLineEdit(self.settings.download_path)
+        self.inp_path.setObjectName("download_path_input")
+        self.inp_path.setAccessibleName("Speicherordner-Pfad")
+        self.inp_path.setAccessibleDescription("Vollständiger lokaler Dateipfad, in dem Rechnungen gespeichert werden.")
         btn_browse = QPushButton("...")
         btn_browse.setObjectName("browse_download_path_button")
         btn_browse.setAccessibleName("Speicherordner auswählen")
@@ -3644,23 +3896,38 @@ class MainWindow(QMainWindow):
 
         # Optionen
         self.ck_attachments = QCheckBox("PDF-Anhänge herunterladen")
+        self.ck_attachments.setObjectName("download_attachments_checkbox")
+        self.ck_attachments.setAccessibleName("PDF-Anhänge herunterladen")
+        self.ck_attachments.setAccessibleDescription("Aktiviert das Speichern von PDF-Anhängen aus Rechnungs-Mails.")
         self.ck_attachments.setChecked(self.settings.download_attachments)
         settings_form.addRow("", self.ck_attachments)
 
         self.ck_body_pdf = QCheckBox("Mail-Body als PDF speichern (wenn keine Anhänge)")
+        self.ck_body_pdf.setObjectName("convert_body_to_pdf_checkbox")
+        self.ck_body_pdf.setAccessibleName("Mail-Body als PDF speichern")
+        self.ck_body_pdf.setAccessibleDescription("Erzeugt ein PDF aus dem Text der E-Mail, wenn keine Rechnungsdatei angehängt ist.")
         self.ck_body_pdf.setChecked(self.settings.convert_body_to_pdf)
         settings_form.addRow("", self.ck_body_pdf)
 
         self.ck_merge_body = QCheckBox("Dem PDF den Mail-Body anhängen")
+        self.ck_merge_body.setObjectName("merge_body_checkbox")
+        self.ck_merge_body.setAccessibleName("Mail-Body an PDF anhängen")
+        self.ck_merge_body.setAccessibleDescription("Fügt den Text der E-Mail als zusätzliche Seiten an vorhandene PDF-Anhänge an.")
         self.ck_merge_body.setChecked(self.settings.merge_body_with_attachments)
         self.ck_merge_body.setToolTip("Wenn aktiv: Mail-Header und Body werden\nan PDF-Anhänge angehängt")
         settings_form.addRow("", self.ck_merge_body)
 
         self.ck_hash = QCheckBox("Duplikat-Erkennung (Hash-Check)")
+        self.ck_hash.setObjectName("hash_check_checkbox")
+        self.ck_hash.setAccessibleName("Duplikat-Erkennung")
+        self.ck_hash.setAccessibleDescription("Verhindert das doppelte Speichern bereits vorhandener Rechnungsdateien per Hash-Vergleich.")
         self.ck_hash.setChecked(self.settings.enable_hash_check)
         settings_form.addRow("", self.ck_hash)
 
         self.ck_trash = QCheckBox("Papierkorb durchsuchen")
+        self.ck_trash.setObjectName("include_trash_checkbox")
+        self.ck_trash.setAccessibleName("Papierkorb durchsuchen")
+        self.ck_trash.setAccessibleDescription("Schließt gelöschte Nachrichten im Papierkorb in die Rechnungssuche ein.")
         self.ck_trash.setChecked(self.settings.include_trash)
         self.ck_trash.setToolTip("Auch gelöschte Mails nach Rechnungen durchsuchen")
         settings_form.addRow("", self.ck_trash)
@@ -3669,6 +3936,9 @@ class MainWindow(QMainWindow):
         settings_form.addRow(QLabel("<b>PDF-Erstellung:</b>"))
 
         self.cmb_pdf_mode = QComboBox()
+        self.cmb_pdf_mode.setObjectName("pdf_mode_combo")
+        self.cmb_pdf_mode.setAccessibleName("PDF-Erstellungsmodus")
+        self.cmb_pdf_mode.setAccessibleDescription("Wählt das Render-Verfahren für erzeugte PDFs (Text, mit Bildern oder nativer Browser).")
         self.cmb_pdf_mode.addItem("Schnell (nur Text)", "fast")
         self.cmb_pdf_mode.addItem("Vollständig (mit Bildern)", "full")
         # Browser-Modus nur anzeigen wenn Selenium verfuegbar
@@ -3686,6 +3956,9 @@ class MainWindow(QMainWindow):
         settings_form.addRow("PDF-Modus:", self.cmb_pdf_mode)
 
         self.ck_ocr = QCheckBox("OCR für bildbasierte PDFs")
+        self.ck_ocr.setObjectName("ocr_enabled_checkbox")
+        self.ck_ocr.setAccessibleName("OCR-Texterkennung")
+        self.ck_ocr.setAccessibleDescription("Führt Texterkennung via Tesseract bei rein bildbasierten Rechnungen durch.")
         self.ck_ocr.setChecked(self.settings.ocr_enabled)
         self.ck_ocr.setToolTip(
             "Tesseract OCR ausführen wenn PDF nur Bilder enthält.\n"
@@ -3697,6 +3970,9 @@ class MainWindow(QMainWindow):
         settings_form.addRow("", self.ck_ocr)
 
         self.inp_max_mails = QSpinBox()
+        self.inp_max_mails.setObjectName("max_mails_spinbox")
+        self.inp_max_mails.setAccessibleName("Maximale Mails pro Durchlauf")
+        self.inp_max_mails.setAccessibleDescription("Begrenzt die Anzahl der geprüften Nachrichten je Suchprofil und Durchlauf.")
         self.inp_max_mails.setRange(10, 1000)
         self.inp_max_mails.setValue(self.settings.max_emails_per_run)
         settings_form.addRow("Max. Mails pro Durchlauf:", self.inp_max_mails)
@@ -3753,6 +4029,12 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         settings_layout.addWidget(hints_group)
 
         btn_save = QPushButton("💾 Einstellungen speichern")
+        btn_save.setObjectName("save_settings_button")
+        btn_save.setAccessibleName("Einstellungen speichern")
+        btn_save.setAccessibleDescription(
+            "Speichert die geänderten Anwendungseinstellungen dauerhaft in der Konfigurationsdatei."
+        )
+        btn_save.setToolTip("Einstellungen speichern (Strg+S)")
         btn_save.clicked.connect(self.save_settings)
         settings_layout.addWidget(btn_save)
         settings_layout.addStretch()
@@ -3818,8 +4100,51 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         main_layout.addWidget(tabs, stretch=1)
 
+        # Tastatur-Navigation & Shortcuts
+        self.setup_shortcuts()
+
         # UI aktualisieren
         self.refresh_ui()
+
+    def setup_shortcuts(self):
+        """Richtet barrierefreie Tastenkombinationen für Kernaktionen ein."""
+        # F5 / Strg+R: Tabelle mit Ordnerinhalt aktualisieren
+        self.shortcut_refresh_f5 = QShortcut(QKeySequence("F5"), self)
+        self.shortcut_refresh_f5.activated.connect(self.refresh_invoice_table)
+        self.shortcut_refresh_ctrl_r = QShortcut(QKeySequence("Ctrl+R"), self)
+        self.shortcut_refresh_ctrl_r.activated.connect(self.refresh_invoice_table)
+
+        # Strg+Return / Strg+Enter: Rechnungsabruf starten
+        self.shortcut_start_ctrl_ret = QShortcut(QKeySequence("Ctrl+Return"), self)
+        self.shortcut_start_ctrl_ret.activated.connect(self.start_grabbing)
+        self.shortcut_start_ctrl_ent = QShortcut(QKeySequence("Ctrl+Enter"), self)
+        self.shortcut_start_ctrl_ent.activated.connect(self.start_grabbing)
+
+        # Strg+O: Speicherordner im Explorer öffnen
+        self.shortcut_open_folder = QShortcut(QKeySequence("Ctrl+O"), self)
+        self.shortcut_open_folder.activated.connect(self.open_download_folder)
+
+        # Strg+A: Alle Rechnungen auswählen
+        self.shortcut_select_all = QShortcut(QKeySequence("Ctrl+A"), self)
+        self.shortcut_select_all.activated.connect(self.select_all_invoices)
+
+        # Escape / Strg+Umschalt+A: Rechnungsauswahl aufheben
+        self.shortcut_select_none_esc = QShortcut(QKeySequence("Escape"), self)
+        self.shortcut_select_none_esc.activated.connect(self.select_no_invoices)
+        self.shortcut_select_none_ctrl = QShortcut(QKeySequence("Ctrl+Shift+A"), self)
+        self.shortcut_select_none_ctrl.activated.connect(self.select_no_invoices)
+
+        # Entf: Ausgewählte Rechnungen und Dateien löschen
+        self.shortcut_delete_invoices = QShortcut(QKeySequence("Delete"), self)
+        self.shortcut_delete_invoices.activated.connect(self.delete_selected_invoices)
+
+        # Strg+E: Rechnungsliste als CSV exportieren
+        self.shortcut_export_csv = QShortcut(QKeySequence("Ctrl+E"), self)
+        self.shortcut_export_csv.activated.connect(self.export_invoices_csv)
+
+        # Strg+S: Einstellungen speichern
+        self.shortcut_save_settings = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.shortcut_save_settings.activated.connect(self.save_settings)
 
     def refresh_ui(self):
         """Aktualisiert alle Listen"""
