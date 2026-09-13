@@ -176,6 +176,8 @@ For Linux, an additional headless smoke covers the desktop start path, missing-k
 
 ## Privacy
 
+- Complete privacy policy: [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
+- Support & assistance: [SUPPORT.md](SUPPORT.md)
 - Credentials and Gmail OAuth tokens are stored under `%USERPROFILE%\.universal_invoice_mail\`, not in the repository.
 - `.gitignore` excludes `credentials.json`, `client_secret*.json`, `token.json`, local databases, sample output folders, and portable OCR bundles.
 - Real invoices, attachments, and generated release artifacts should remain local.

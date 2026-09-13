@@ -66,6 +66,7 @@ releases/
 *.msix
 *.appx
 *.spec
+!UniversalInvoiceMail.spec
 logs/
 *.log
 web_companion/apple-touch-icon.png
@@ -102,7 +103,8 @@ Thumbs.db
 .DS_Store
 ehthumbs.db
 DECISIONS.md
-PORTIERUNGSPLAN.md
+# PORTIERUNGSPLAN.md tracked for store/transfer architecture
+!PORTIERUNGSPLAN.md
 TODO.md
 DONE.md
 *.bak

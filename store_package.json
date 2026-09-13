@@ -1,0 +1,24 @@
+{
+  "name": "UniversalInvoiceMail",
+  "package_id": "Geiger.UniversalInvoiceMail",
+  "identity_name": "Geiger.UniversalInvoiceMail",
+  "app_name": "UniversalInvoiceMail",
+  "display_name": "UniversalInvoiceMail",
+  "description": "Lokale Rechnungszentrale: Automatischer Abruf, PDF-Konvertierung, DATEV-Export und Rechnungsmanagement aus E-Mail-Postfächern ohne Cloud-Zwang.",
+  "publisher_id": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher_name": "Lukas Geiger",
+  "publisher_display": "Lukas Geiger",
+  "version": "2.3.0.0",
+  "executable": "UniversalInvoiceMail.exe",
+  "capabilities": [
+    "runFullTrust"
+  ],
+  "languages": [
+    "de-DE",
+    "en-US"
+  ],
+  "category": "Productivity",
+  "privacy_url": "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/PRIVACY_POLICY.md",
+  "support_url": "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
+}

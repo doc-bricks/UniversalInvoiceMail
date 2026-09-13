@@ -180,7 +180,9 @@ Node-Tests; eine fremde, uncommittete Manifest-Variante liefert `9/10` und wurde
 nicht übernommen. Die Android-/iOS-Geräte- bzw. Emulator-Abnahme bleibt separat offen.
 
 ## Datenschutz
-
+ 
+- Vollständige Datenschutzerklärung: [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
+- Support & Hilfe: [SUPPORT.md](SUPPORT.md)
 - Zugangsdaten und Gmail-OAuth-Tokens werden unter `%USERPROFILE%\.universal_invoice_mail\` gespeichert, nicht im Repository.
 - `.gitignore` schließt `credentials.json`, `client_secret*.json`, `token.json`, lokale Datenbanken, Beispielausgaben und portable OCR-Bundles aus.
 - Echte Rechnungen, Anhänge und erzeugte Release-Artefakte bleiben lokal.
