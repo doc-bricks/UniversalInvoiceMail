@@ -314,6 +314,44 @@ def test_normalize_amount_various_formats_and_edge_cases():
         _normalize_amount("ungültiger_betrag")
 
 
+def test_normalize_amount_advanced_currency_and_accounting_formats():
+    """Regression tests for previously crashing/misparsed currency formats:
+    - Multiple thousands separators without cents (1.234.567, 1,234,567)
+    - Swiss CHF notation with apostrophe separators (1'234.56 CHF, 1'234,56 CHF, 1’234.56)
+    - Accounting / credit note notation with parentheses ((12.50 €), (1.234,56 €))
+    - Whole thousands with dot or comma separator (10.000 €, 10,000 $, 1.500 €)
+    - Fractional values with leading zero (0.125 €, 0,125 €)
+    """
+    from invoice_bundle import _normalize_amount
+
+    # Multiple thousands separators without cents
+    assert _normalize_amount("1.234.567") == 1234567.0
+    assert _normalize_amount("1,234,567") == 1234567.0
+    assert _normalize_amount("1.234.567 €") == 1234567.0
+    assert _normalize_amount("1,234,567 $") == 1234567.0
+
+    # Swiss Francs (CHF) with apostrophe thousands separators
+    assert _normalize_amount("1'234.56 CHF") == 1234.56
+    assert _normalize_amount("1'234,56 CHF") == 1234.56
+    assert _normalize_amount("1’234.56") == 1234.56
+    assert _normalize_amount("1'234'567.89 CHF") == 1234567.89
+
+    # Accounting parentheses (credit notes / Gutschriften)
+    assert _normalize_amount("(12.50 €)") == -12.50
+    assert _normalize_amount("(1.234,56 €)") == -1234.56
+    assert _normalize_amount("( 19.99 )") == -19.99
+
+    # Whole thousands with single separator
+    assert _normalize_amount("10.000 €") == 10000.0
+    assert _normalize_amount("10,000 $") == 10000.0
+    assert _normalize_amount("1.500 €") == 1500.0
+
+    # Fractional with leading zero
+    assert _normalize_amount("0.125 €") == 0.12
+    assert _normalize_amount("0,125 €") == 0.12
+
+
+
 def test_build_invoice_bundle_with_string_amounts_and_preserved_profile_id(tmp_path):
     download_root = tmp_path / "downloads"
     inv_file = download_root / "inv.pdf"

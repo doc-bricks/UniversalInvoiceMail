@@ -38,27 +38,73 @@ def _normalize_amount(value: Any) -> Optional[float]:
     if not text:
         return None
 
+    is_negative = False
+    # Accounting parentheses e.g. (12.50) or (1.234,56 €)
+    if text.startswith("(") and text.endswith(")"):
+        is_negative = True
+        text = text[1:-1].strip()
+    elif text.startswith("-"):
+        is_negative = True
+        text = text[1:].strip()
+    elif text.endswith("-"):
+        is_negative = True
+        text = text[:-1].strip()
+
     # Remove currency symbols and common currency codes (€, $, £, ¥, ₹, EUR, USD, CHF, GBP)
     text = re.sub(r"[€$£¥₹\s]|(?i:\b(eur|usd|chf|gbp)\b)", "", text).strip()
     if not text:
         return None
 
+    if text.startswith("-"):
+        is_negative = True
+        text = text[1:].strip()
+    elif text.endswith("-"):
+        is_negative = True
+        text = text[:-1].strip()
+
+    # Remove Swiss / apostrophe thousand separators (' ’ ´)
+    text = re.sub(r"['’´]", "", text).strip()
+    if not text:
+        return None
+
     # Handle European vs US number formats:
-    # "1.234,56" -> "1234.56"
-    # "1,234.56" -> "1234.56"
-    # "12,50" -> "12.50"
+    # 1. Both comma and dot present
     if "," in text and "." in text:
         if text.rfind(",") > text.rfind("."):
+            # 1.234,56 or 1.234.567,89 (European format)
             text = text.replace(".", "").replace(",", ".")
         else:
+            # 1,234.56 or 1,234,567.89 (US format)
             text = text.replace(",", "")
+    # 2. Only comma present
     elif "," in text:
-        text = text.replace(",", ".")
+        if text.count(",") > 1:
+            # Multiple commas: 1,234,567 -> thousands separators
+            text = text.replace(",", "")
+        else:
+            # Single comma: check if it is decimal or thousands separator
+            parts = text.split(",")
+            if len(parts[1]) == 3 and parts[0] != "0" and 1 <= len(parts[0]) <= 3 and parts[1].isdigit() and parts[0].isdigit():
+                text = text.replace(",", "")
+            else:
+                text = text.replace(",", ".")
+    # 3. Only dot present
+    elif "." in text:
+        if text.count(".") > 1:
+            # Multiple dots: 1.234.567 -> thousands separators
+            text = text.replace(".", "")
+        else:
+            # Single dot: check if it is decimal or thousands separator (German 10.000 or 1.500)
+            parts = text.split(".")
+            if len(parts[1]) == 3 and parts[0] != "0" and 1 <= len(parts[0]) <= 3 and parts[1].isdigit() and parts[0].isdigit():
+                text = text.replace(".", "")
 
     try:
-        return round(float(text), 2)
+        res = round(float(text), 2)
+        return -res if is_negative else res
     except ValueError:
         raise ValueError(f"could not convert string to float: {value!r}")
+
 
 
 def _normalize_review_status(value: Any) -> str:
