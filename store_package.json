@@ -19,6 +19,7 @@
     "en-US"
   ],
   "category": "Productivity",
+  "license": "MIT",
   "privacy_url": "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/PRIVACY_POLICY.md",
   "support_url": "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
 }

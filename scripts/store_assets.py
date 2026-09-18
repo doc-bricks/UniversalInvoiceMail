@@ -103,7 +103,7 @@ def render_manifest(store_config: dict[str, Any], exe_name: str | None = None) -
   <Properties>
     <DisplayName>{xml_text(display_name)}</DisplayName>
     <PublisherDisplayName>{xml_text(publisher_display)}</PublisherDisplayName>
-    <Logo>icons\\icon_150x150.png</Logo>
+    <Logo>icons\\StoreLogo.png</Logo>
     <Description>{xml_text(description)}</Description>
   </Properties>
 
@@ -186,6 +186,11 @@ def _generate_icons_pil(icon_source: Path, icon_dir: Path) -> list[Path]:
         splash_target = icon_dir / "SplashScreen.png"
         splash_img.save(splash_target, format="PNG")
 
+        store_logo = icon_dir / "StoreLogo.png"
+        icon_50 = icon_dir / "icon_50x50.png"
+        if icon_50.exists():
+            shutil.copy2(icon_50, store_logo)
+
     return sorted(icon_dir.glob("*.png"))
 
 
@@ -209,6 +214,10 @@ def generate_icons(icon_source: Path = ICON_SOURCE, icon_dir: Path = ICON_DIR) -
                         splash_scaled = img_rgba.resize((w_splash, h_splash), Image.Resampling.LANCZOS)
                         splash_img.paste(splash_scaled, ((620 - w_splash) // 2, (300 - h_splash) // 2), splash_scaled)
                         splash_img.save(splash_target, format="PNG")
+                store_logo = icon_dir / "StoreLogo.png"
+                icon_50 = icon_dir / "icon_50x50.png"
+                if icon_50.exists():
+                    shutil.copy2(icon_50, store_logo)
                 return sorted(icon_dir.glob("*.png"))
         except Exception:
             pass

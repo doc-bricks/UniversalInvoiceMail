@@ -81,3 +81,29 @@ def test_partner_center_10_1_3_keywords_max_7():
     assert len(en_kws) <= 7, f"Zu viele englische Keywords: {len(en_kws)} > 7"
     for k in en_kws:
         assert len(k) <= 30, f"Keyword zu lang: '{k}'"
+
+
+def test_store_package_json_license_is_mit():
+    data = json.loads((PROJECT_ROOT / "store_package.json").read_text(encoding="utf-8"))
+    assert data.get("license") == "MIT"
+
+
+def test_appx_manifest_properties_logo_is_store_logo():
+    manifest_path = PROJECT_ROOT / "store_package" / "UniversalInvoiceMail" / "AppxManifest.xml"
+    content = manifest_path.read_text(encoding="utf-8")
+    assert "<Logo>icons\\StoreLogo.png</Logo>" in content or "<Logo>icons/StoreLogo.png</Logo>" in content
+    assert "icon_150x150.png" not in content.split("<Properties>")[1].split("</Properties>")[0]
+
+
+def test_release_staging_directory_and_files():
+    from scripts.check_store_readiness import REQUIRED_RELEASE_STAGING_FILES, REQUIRED_STORE_SCREENSHOTS
+    staging_dir = PROJECT_ROOT / "releases" / "windowsstore"
+    assert staging_dir.is_dir(), "Release-Staging-Verzeichnis fehlt"
+    for f in REQUIRED_RELEASE_STAGING_FILES:
+        p = staging_dir / f
+        assert p.is_file(), f"Staging-Datei {f} fehlt"
+        assert p.stat().st_size > 0, f"Staging-Datei {f} ist leer"
+    st_screen_dir = staging_dir / "screenshots"
+    assert st_screen_dir.is_dir()
+    for s in REQUIRED_STORE_SCREENSHOTS:
+        assert (st_screen_dir / s).is_file(), f"Screenshot {s} fehlt im Staging"

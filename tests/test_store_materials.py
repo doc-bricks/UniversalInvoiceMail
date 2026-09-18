@@ -20,6 +20,7 @@ def test_store_package_json_exists_and_valid():
     assert "Geiger" in data["identity_name"]
     assert "languages" in data and len(data["languages"]) >= 2
     assert "runFullTrust" in data["capabilities"]
+    assert data.get("license") == "MIT"
 
 
 def test_store_listing_has_de_and_en():

@@ -12,7 +12,7 @@
   <Properties>
     <DisplayName>UniversalInvoiceMail</DisplayName>
     <PublisherDisplayName>Lukas Geiger</PublisherDisplayName>
-    <Logo>icons\icon_150x150.png</Logo>
+    <Logo>icons\StoreLogo.png</Logo>
     <Description>Lokale Rechnungszentrale: Automatischer Abruf, PDF-Konvertierung, DATEV-Export und Rechnungsmanagement aus E-Mail-Postfächern ohne Cloud-Zwang.</Description>
   </Properties>
 

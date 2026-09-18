@@ -29,11 +29,21 @@ REQUIRED_DOCUMENTS = [
 REQUIRED_STORE_ICONS = {
     "icon_44x44.png": (44, 44),
     "icon_50x50.png": (50, 50),
+    "StoreLogo.png": (50, 50),
     "icon_150x150.png": (150, 150),
     "icon_310x150.png": (310, 150),
     "icon_310x310.png": (310, 310),
     "SplashScreen.png": (620, 300),
 }
+
+REQUIRED_RELEASE_STAGING_FILES = [
+    "BUILD.md",
+    "store_settings.json",
+    "store_listing_de.md",
+    "store_listing_en.md",
+    "WACK_PROTOCOL.md",
+    "StoreLogo.png",
+]
 
 REQUIRED_LEGACY_STORE_ASSETS = [
     "Square44x44Logo.png",
@@ -120,6 +130,12 @@ def run_store_readiness_check(
             languages = package_data.get("languages", [])
             if len(languages) < 2:
                 findings.append("Mindestens 2 Sprachen (de-DE, en-US) in store_package.json gefordert")
+
+            license_val = package_data.get("license")
+            if license_val != "MIT":
+                findings.append(
+                    f"Ungültige oder fehlende Lizenz in store_package.json: {license_val} (erwartet: MIT)"
+                )
 
         except Exception as e:
             findings.append(f"store_package.json ist kein gültiges JSON: {e}")
@@ -290,6 +306,19 @@ def run_store_readiness_check(
                 if exe != "UniversalInvoiceMail.exe":
                     findings.append(f"AppxManifest.xml: Falsches Executable: {exe}")
 
+            props_node = root.find(".//m:Properties", ns)
+            if props_node is not None:
+                logo_node = props_node.find("m:Logo", ns)
+                if logo_node is not None and logo_node.text:
+                    if "150x150" in logo_node.text:
+                        findings.append(
+                            f"AppxManifest.xml: Properties Logo darf kein 150x150 Bild sein: {logo_node.text}"
+                        )
+                    if "StoreLogo" not in logo_node.text and "50x50" not in logo_node.text:
+                        findings.append(
+                            f"AppxManifest.xml: Properties Logo sollte StoreLogo.png oder icon_50x50.png referenzieren: {logo_node.text}"
+                        )
+
         except Exception as e:
             findings.append(f"AppxManifest.xml ist kein valides XML: {e}")
 
@@ -313,6 +342,23 @@ def run_store_readiness_check(
         if "name='UniversalInvoiceMail'" not in spec_text and 'name="UniversalInvoiceMail"' not in spec_text:
             findings.append("UniversalInvoiceMail.spec: name='UniversalInvoiceMail' fehlt")
 
+    # 13. Windows Store Release Staging Validation
+    release_staging_dir = project_root / "releases" / "windowsstore"
+    if not release_staging_dir.exists():
+        findings.append(f"Release-Staging-Verzeichnis fehlt: {release_staging_dir}")
+    else:
+        for st_file in REQUIRED_RELEASE_STAGING_FILES:
+            p = release_staging_dir / st_file
+            if not p.exists() or p.stat().st_size == 0:
+                findings.append(f"Release-Staging-Datei fehlt oder ist leer: releases/windowsstore/{st_file}")
+        st_screen_dir = release_staging_dir / "screenshots"
+        if not st_screen_dir.exists():
+            findings.append("Screenshots-Verzeichnis fehlt in releases/windowsstore/screenshots")
+        else:
+            for s_name in REQUIRED_STORE_SCREENSHOTS:
+                if not (st_screen_dir / s_name).exists():
+                    findings.append(f"Store-Screenshot fehlt in releases/windowsstore/screenshots: {s_name}")
+
     return findings
 
 
@@ -332,7 +378,7 @@ def main() -> int:
             print(f"  - {f}")
         return 1
 
-    print("[OK] Preflight-Store-Audit erfolgreich: Alle 21 Kriterien erfuellt (0 Findings)!")
+    print("[OK] Preflight-Store-Audit erfolgreich: Alle 25 Kriterien erfuellt (0 Findings)!")
     return 0
 
 

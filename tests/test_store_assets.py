@@ -40,6 +40,7 @@ def test_render_manifest_xml_validity():
     assert "runFullTrust" in manifest_xml
     assert "Geiger.UniversalInvoiceMail" in manifest_xml
     assert "CN=52596601-BAB4-4F3F-B182-E8F3F273B202" in manifest_xml
+    assert "<Logo>icons\\StoreLogo.png</Logo>" in manifest_xml
 
 
 def test_generated_assets_exist():
@@ -47,6 +48,7 @@ def test_generated_assets_exist():
     for icon_name in [
         "icon_44x44.png",
         "icon_50x50.png",
+        "StoreLogo.png",
         "icon_150x150.png",
         "icon_310x150.png",
         "icon_310x310.png",
