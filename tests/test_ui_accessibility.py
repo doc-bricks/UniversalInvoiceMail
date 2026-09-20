@@ -52,17 +52,9 @@ for mod in [
 import pytest
 from PySide6.QtWidgets import (
     QApplication,
-    QCheckBox,
-    QComboBox,
-    QDateEdit,
-    QDialogButtonBox,
     QLabel,
-    QLineEdit,
-    QListWidget,
     QPlainTextEdit,
     QPushButton,
-    QRadioButton,
-    QSpinBox,
     QTableWidget,
     QTabWidget,
 )

@@ -25,7 +25,7 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-09-11
+## Last-checked: 2026-09-20
 
 Important files:
 
@@ -34,15 +34,15 @@ Important files:
 - `USER_GUIDE.md`: German setup and workflow guide.
 - `EXPORTFORMAT.md`: implemented `universalinvoicemail-invoicebundle-v1.json` exchange contract with desktop export/import.
 - `pyproject.toml`: PEP 621 metadata, Pytest and Ruff configuration.
-- `UniversalInvoiceMail.py`: PySide6 desktop application with pre-save DATEV validation.
-- `datev_exporter.py`: DATEV CSV export helper with account number checking, config validation, and batch diagnostics.
+- `UniversalInvoiceMail.py`: PySide6 desktop application with pre-save DATEV validation and selection-aware CSV export.
+- `datev_exporter.py`: DATEV CSV export helper with account number checking, config validation, robust amount parsing, and batch diagnostics.
 - `translator.py`: 6-language translation system (`de`, `en`, `es`, `zh`, `ja`, `ru`) with fallback chain.
 - `locales/translations.json`: Multi-language dictionary for core UI, filters, and DATEV dialogs.
 - `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit, integration, validation, i18n, metadata parity, and security/license contract tests (170 Pytest + 10 Node tests in the tracked baseline; verified on 2026-09-11).
+- `tests/`: mocked unit, integration, validation, i18n, metadata parity, accessibility, and security/license contract tests (201 Pytest + 10 Node tests in the tracked baseline; verified on 2026-09-20).
 - `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset, pre-save validation against SKR03/SKR04 rules, and `DATEVConfig` persistence.
 
 Safety boundary:

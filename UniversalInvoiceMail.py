@@ -38,7 +38,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from dataclasses import dataclass, asdict, fields
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import uuid
 
 # GUI
@@ -5147,43 +5147,76 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         except Exception as e:
             QMessageBox.critical(self, "Fehler", f"DATEV-Export fehlgeschlagen:\n{e}")
 
-    def export_invoices_csv(self):
-        """Exportiert Rechnungsliste als CSV"""
+    def export_invoices_csv(self, filepath: Optional[Union[str, Path]] = None) -> Optional[str]:
+        """Exportiert Rechnungsliste als CSV (inkl. Betrag, Währung, Status und Notizen)."""
         if not self.invoices:
-            QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
-            return
+            if filepath is None:
+                QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
+            return None
 
-        # Speicherort waehlen
-        default_name = f"Rechnungen_{datetime.now().strftime('%Y-%m-%d')}.csv"
-        filepath, _ = QFileDialog.getSaveFileName(
-            self, "CSV speichern",
-            str(Path(self.settings.download_path) / default_name),
-            "CSV Dateien (*.csv)"
-        )
+        # Ausgewaehlte Rechnungen ermitteln (falls Checkboxen in Spalte 0 aktiv sind)
+        selected_paths = self._get_selected_invoice_paths()
+        if selected_paths:
+            source_invoices = [inv for inv in self.invoices if inv.path in selected_paths]
+        else:
+            source_invoices = list(self.invoices)
 
-        if not filepath:
-            return
+        if not source_invoices:
+            if filepath is None:
+                QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
+            return None
+
+        # Speicherort waehlen falls nicht direkt uebergeben
+        if filepath is None:
+            default_name = f"Rechnungen_{datetime.now().strftime('%Y-%m-%d')}.csv"
+            chosen_path, _ = QFileDialog.getSaveFileName(
+                self, "CSV speichern",
+                str(Path(self.settings.download_path) / default_name),
+                "CSV Dateien (*.csv)"
+            )
+            if not chosen_path:
+                return None
+            filepath = chosen_path
 
         try:
             import csv
-            with open(filepath, 'w', newline='', encoding='utf-8-sig') as f:
+            target_path = Path(filepath)
+            with open(target_path, 'w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.writer(f, delimiter=';')
-                # Header
-                writer.writerow(['Datum', 'Profil/Shop', 'Absender', 'Betreff', 'Dateiname', 'Pfad'])
+                # Header mit erweiterten Feldern
+                writer.writerow([
+                    'Datum', 'Profil/Shop', 'Absender', 'Betreff',
+                    'Dateiname', 'Pfad', 'Betrag', 'Währung', 'Status', 'Notizen'
+                ])
                 # Daten
-                for inv in self.invoices:
+                for inv in source_invoices:
+                    amt_str = ""
+                    if getattr(inv, "amount", None) is not None:
+                        amt_str = f"{inv.amount:.2f}".replace(".", ",")
+                    curr = getattr(inv, "currency", "EUR") or "EUR"
+                    status = getattr(inv, "review_status", "unchecked") or "unchecked"
+                    notes = getattr(inv, "notes", "") or ""
                     writer.writerow([
                         inv.date,
                         inv.profile_name,
                         inv.sender,
                         inv.subject,
                         inv.filename,
-                        inv.path
+                        inv.path,
+                        amt_str,
+                        curr,
+                        status,
+                        notes,
                     ])
 
-            QMessageBox.information(self, "Erfolg", f"CSV exportiert:\n{filepath}")
+            count = len(source_invoices)
+            self._log(f"[EXPORT] {count} Rechnungen als CSV exportiert: {target_path}")
+            QMessageBox.information(self, "Erfolg", f"CSV exportiert ({count} Rechnungen):\n{target_path}")
+            return str(target_path)
         except Exception as e:
+            self._log(f"[ERROR] CSV-Export fehlgeschlagen: {e}")
             QMessageBox.warning(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
+            return None
 
     def closeEvent(self, event):
         """Cleanup beim Schließen"""

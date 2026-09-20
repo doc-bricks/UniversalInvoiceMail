@@ -17,7 +17,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional, Union, Any
 
 # ==================== KONFIGURATION ====================
 
@@ -134,14 +134,72 @@ def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
     return (len(errors) == 0), errors
 
 
+def parse_datev_amount(amount: Any) -> Optional[float]:
+    """
+    Parst einen Rechnungsbetrag robust in einen positiven float-Wert für den DATEV-Export.
+    Unterstützt int, float, Decimal, str mit Dezimalkomma oder Punkt und Währungszeichen.
+    Gibt None zurück, wenn der Betrag leer, ungültig oder <= 0 ist.
+    """
+    if amount is None:
+        return None
+    if isinstance(amount, (int, float)):
+        try:
+            val = round(float(amount), 2)
+            return val if val > 0 else None
+        except (ValueError, OverflowError):
+            return None
+
+    if isinstance(amount, str):
+        s = amount.strip()
+        if not s:
+            return None
+        # Vorzeichen und Währungszeichen säubern
+        s = s.replace("€", "").replace("EUR", "").replace("eur", "").strip()
+        if not s:
+            return None
+        # Buchhaltungsklammern (12.34) oder Minus -> überspringen
+        if (s.startswith("(") and s.endswith(")")) or s.startswith("-") or s.endswith("-"):
+            return None
+        # Schweizer Franken Apostroph-Trennzeichen
+        s = s.replace("'", "").replace("’", "").replace("´", "")
+        # Tausender und Dezimaltrenner
+        if "," in s and "." in s:
+            if s.rfind(",") > s.rfind("."):
+                s = s.replace(".", "").replace(",", ".")
+            else:
+                s = s.replace(",", "")
+        elif "," in s:
+            parts = s.split(",")
+            if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+                s = s.replace(",", "")
+            else:
+                s = s.replace(",", ".")
+        elif "." in s:
+            parts = s.split(".")
+            if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+                s = s.replace(".", "")
+
+        try:
+            val = round(float(s), 2)
+            return val if val > 0 else None
+        except (ValueError, OverflowError):
+            return None
+
+    try:
+        val = round(float(amount), 2)
+        return val if val > 0 else None
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
 def parse_datev_datetime(date_str: Union[str, datetime]) -> Optional[datetime]:
     """
     Parst ein Rechnungsdatum aus verschiedenen Standard- und Zeitstempelformaten.
 
     Unterstützt:
     - ISO / RFC Formate: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS
-    - Deutsche Formate: DD.MM.YYYY, DD-MM-YYYY
-    - Englische / Slash Formate: DD/MM/YYYY, MM/DD/YYYY (mit Tag-Priorität)
+    - Deutsche Formate: DD.MM.YYYY, DD-MM-YYYY, DD.MM.YY, DD-MM-YY
+    - Englische / Slash Formate: DD/MM/YYYY, MM/DD/YYYY, YYYY/MM/DD, DD/MM/YY
     - Kompakte Formate: YYYYMMDD
     - Punktierte Formate: YYYY.MM.DD
     """
@@ -162,8 +220,12 @@ def parse_datev_datetime(date_str: Union[str, datetime]) -> Optional[datetime]:
         "%Y-%m-%d",
         "%d.%m.%Y",
         "%d/%m/%Y",
+        "%Y/%m/%d",
         "%Y.%m.%d",
         "%d-%m-%Y",
+        "%d.%m.%y",
+        "%d/%m/%y",
+        "%d-%m-%y",
         "%Y%m%d",
     ]
 
@@ -256,13 +318,14 @@ def validate_invoices_for_export(invoices: List[dict], config: Optional[DATEVCon
         return report
 
     for idx, inv in enumerate(invoices, start=1):
-        amount = inv.get("amount", None)
+        raw_amount = inv.get("amount", None)
+        parsed_amount = parse_datev_amount(raw_amount)
         filename = inv.get("filename", f"Rechnung #{idx}")
 
-        # Betragsprüfung
-        if amount is None or amount <= 0:
+        # Betragsprüfung mit robuster Normalisierung
+        if parsed_amount is None:
             report.skipped_zero_amount += 1
-            report.warnings.append(f"'{filename}': Kein oder negativer/null Betrag ({amount}) - wird beim Export übersprungen.")
+            report.warnings.append(f"'{filename}': Kein oder ungültiger/negativer Betrag ({raw_amount}) - wird beim Export übersprungen.")
         else:
             report.valid_invoices += 1
 
@@ -451,8 +514,8 @@ class DATEVExporter:
 
         # Ab Zeile 3: Buchungen
         for inv in invoices:
-            amount = inv.get("amount", 0.0)
-            if not amount or amount <= 0:
+            parsed_amount = parse_datev_amount(inv.get("amount", 0.0))
+            if parsed_amount is None:
                 continue  # Überspringe Rechnungen ohne Betrag
 
             provider = inv.get("provider", "Sonstige") or "Sonstige"
@@ -461,7 +524,7 @@ class DATEVExporter:
             konto, gegenkonto = self._get_konten(category or provider)
 
             buchung = DATEVBuchung(
-                umsatz=amount,
+                umsatz=parsed_amount,
                 soll_haben="S",  # Ausgabe
                 wkz=self.config.währung,
                 konto=konto,

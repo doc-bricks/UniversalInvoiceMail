@@ -23,6 +23,21 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### CSV Export Enhancement & DATEV Amount Robustness [TW-UIM-07] (2026-09-20)
+- **Selection-Aware & Enriched CSV Export (`UniversalInvoiceMail.py`)**:
+  - Enhanced `export_invoices_csv()` to respect table selections (`_get_selected_invoice_paths()`) with graceful fallback to all invoices.
+  - Added essential invoice metadata columns to CSV export: `Betrag`, `Währung`, `Status`, and `Notizen`.
+  - Added headless/programmatic parameter `filepath` support for scripted and automated runs.
+- **DATEV Amount & Date Robustness (`datev_exporter.py`)**:
+  - Implemented `parse_datev_amount()` supporting floats, ints, Decimals, and strings with currency symbols/commas to prevent `TypeError` exceptions during validation and export.
+  - Expanded date parsing formats (`%Y/%m/%d`, `%d.%m.%y`, `%d/%m/%y`, `%d-%m-%y`) in `parse_datev_datetime()`.
+- **Code Hygiene & Accessibility Imports Cleanup (`tests/test_ui_accessibility.py`)**:
+  - Removed 8 unused PySide6 widget imports (`QCheckBox`, `QComboBox`, `QDateEdit`, `QDialogButtonBox`, `QLineEdit`, `QListWidget`, `QRadioButton`, `QSpinBox`) to bring `ruff check .` to 100% clean (0 warnings).
+- **Test Coverage Expansion**:
+  - Added `tests/test_csv_export.py` covering programmatic export, table selection filtering, empty states, and dialog interactions.
+  - Added `tests/test_datev_robustness.py` covering edge case amounts, extended date formats, and string amount DATEV export.
+  - Test suite expanded to 201 Pytest tests (+ 10 Node Web Companion tests), all green.
+
 ### Security, Dependency Floor & Third-Party License Audit (2026-09-11)
 - **Dependency Floors & CVE Mitigation**:
   - Hardened `Pillow>=12.3.0` in `requirements.txt` and `pyproject.toml` to protect against known CVEs/GHSAs (including `GHSA-4x4j-2g7c-83w6` and `GHSA-45hq-cxwh-f6vc`).
