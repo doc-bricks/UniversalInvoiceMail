@@ -3825,9 +3825,11 @@ class MainWindow(QMainWindow):
         btn_export_csv.setObjectName("export_invoices_csv_button")
         btn_export_csv.setAccessibleName("Rechnungsliste als CSV exportieren")
         btn_export_csv.setAccessibleDescription(
-            "Exportiert die aktuelle Rechnungsliste als Tabellen-Datei."
+            "Exportiert markierte Rechnungen als Tabellen-Datei. Sind keine Rechnungen markiert, wird die gesamte Liste exportiert."
         )
-        btn_export_csv.setToolTip("Rechnungsliste als CSV exportieren (filterbar in Excel)")
+        btn_export_csv.setToolTip(
+            "Markierte Rechnungen exportieren; ohne Markierung die gesamte Liste (Strg+E)"
+        )
         btn_bundle_export = QPushButton("Bundle Export")
         btn_bundle_export.clicked.connect(self.export_invoice_bundle)
         btn_bundle_export.setObjectName("export_invoice_bundle_button")

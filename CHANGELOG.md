@@ -23,6 +23,10 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Accessibility: CSV export scope guidance (2026-09-20)
+- The CSV export action now tells screen-reader and keyboard users that marked invoices are exported, while an empty selection exports the complete list; its tooltip also exposes the `Strg+E` shortcut.
+- `tests/test_ui_accessibility.py` keeps this selection/fallback guidance under contract.
+
 ### CSV Export Enhancement & DATEV Amount Robustness [TW-UIM-07] (2026-09-20)
 - **Selection-Aware & Enriched CSV Export (`UniversalInvoiceMail.py`)**:
   - Enhanced `export_invoices_csv()` to respect table selections (`_get_selected_invoice_paths()`) with graceful fallback to all invoices.

@@ -220,8 +220,8 @@ def test_invoice_action_buttons_expose_context(tmp_path, monkeypatch, qapp):
             ),
             "export_invoices_csv_button": (
                 "Rechnungsliste als CSV exportieren",
-                "Exportiert die aktuelle Rechnungsliste als Tabellen-Datei.",
-                "Rechnungsliste als CSV exportieren (filterbar in Excel)",
+                "Exportiert markierte Rechnungen als Tabellen-Datei. Sind keine Rechnungen markiert, wird die gesamte Liste exportiert.",
+                "Markierte Rechnungen exportieren; ohne Markierung die gesamte Liste (Strg+E)",
             ),
             "export_invoice_bundle_button": (
                 "Redigiertes Rechnungs-Bundle exportieren",
