@@ -5151,8 +5151,10 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
     def export_invoices_csv(self, filepath: Optional[Union[str, Path]] = None) -> Optional[str]:
         """Exportiert Rechnungsliste als CSV (inkl. Betrag, Währung, Status und Notizen)."""
+        interactive = filepath is None
+
         if not self.invoices:
-            if filepath is None:
+            if interactive:
                 QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
             return None
 
@@ -5164,12 +5166,12 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             source_invoices = list(self.invoices)
 
         if not source_invoices:
-            if filepath is None:
+            if interactive:
                 QMessageBox.information(self, "Info", "Keine Rechnungen zum Exportieren vorhanden.")
             return None
 
         # Speicherort waehlen falls nicht direkt uebergeben
-        if filepath is None:
+        if interactive:
             default_name = f"Rechnungen_{datetime.now().strftime('%Y-%m-%d')}.csv"
             chosen_path, _ = QFileDialog.getSaveFileName(
                 self, "CSV speichern",
@@ -5183,6 +5185,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         try:
             import csv
             target_path = Path(filepath)
+            target_path.parent.mkdir(parents=True, exist_ok=True)
             with open(target_path, 'w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.writer(f, delimiter=';')
                 # Header mit erweiterten Feldern
@@ -5213,11 +5216,13 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
             count = len(source_invoices)
             self._log(f"[EXPORT] {count} Rechnungen als CSV exportiert: {target_path}")
-            QMessageBox.information(self, "Erfolg", f"CSV exportiert ({count} Rechnungen):\n{target_path}")
+            if interactive:
+                QMessageBox.information(self, "Erfolg", f"CSV exportiert ({count} Rechnungen):\n{target_path}")
             return str(target_path)
         except Exception as e:
             self._log(f"[ERROR] CSV-Export fehlgeschlagen: {e}")
-            QMessageBox.warning(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
+            if interactive:
+                QMessageBox.warning(self, "Fehler", f"Export fehlgeschlagen:\n{e}")
             return None
 
     def closeEvent(self, event):

@@ -23,6 +23,11 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Headless CSV Export & Dialog Decoupling (2026-09-22)
+- **Modal Dialog Decoupling in `export_invoices_csv()`**: Decoupled GUI `QMessageBox` popups (both success and failure) from programmatic/headless invocations (`filepath is not None`) in `UniversalInvoiceMail.py`. Headless callers and test suites no longer block on modal message boxes.
+- **Directory Auto-Creation**: Ensured `target_path.parent.mkdir(parents=True, exist_ok=True)` is called before writing CSV files, preventing `FileNotFoundError` when exporting to non-existent subdirectories.
+- **Headless Contract & Regression Tests**: Added `test_export_invoices_csv_headless_no_modals_and_nested_dirs` and `test_export_invoices_csv_headless_error_handling_no_modals` in `tests/test_csv_export.py` ensuring zero modal popups occur during headless exports, and set `QT_QPA_PLATFORM=offscreen` at the module level.
+
 ### Accessibility: CSV export scope guidance (2026-09-20)
 - The CSV export action now tells screen-reader and keyboard users that marked invoices are exported, while an empty selection exports the complete list; its tooltip also exposes the `Strg+E` shortcut.
 - `tests/test_ui_accessibility.py` keeps this selection/fallback guidance under contract.

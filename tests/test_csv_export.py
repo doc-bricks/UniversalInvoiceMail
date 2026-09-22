@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import csv
+import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 # Headless mock setup for PySide6 if running off-screen
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -216,5 +219,94 @@ def test_export_invoices_csv_dialog_flow(tmp_path: Path, monkeypatch, qapp):
         assert result == str(target_csv)
         assert target_csv.exists()
         assert len(info_shown) >= 1
+    finally:
+        window.close()
+
+
+def test_export_invoices_csv_headless_no_modals_and_nested_dirs(tmp_path: Path, monkeypatch, qapp):
+    """Regression test: headless export creates parent dirs and never opens modal QMessageBoxes."""
+    invoices_db = tmp_path / "invoices.json"
+    invoices_db.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(uim, "INVOICES_DB", invoices_db)
+
+    modal_calls = []
+    monkeypatch.setattr(
+        uim.QMessageBox,
+        "information",
+        lambda *args, **kwargs: modal_calls.append(("information", args)),
+    )
+    monkeypatch.setattr(
+        uim.QMessageBox,
+        "warning",
+        lambda *args, **kwargs: modal_calls.append(("warning", args)),
+    )
+
+    window = uim.MainWindow()
+    try:
+        window.invoices = [
+            uim.Invoice(
+                id="inv-nested",
+                profile_name="Nested Shop",
+                filename="nested.pdf",
+                date="2026-09-22",
+                path=str(tmp_path / "nested.pdf"),
+                amount=123.45,
+            )
+        ]
+
+        # Nested directory that does not exist yet
+        target_csv = tmp_path / "nested" / "subfolder" / "invoices.csv"
+        assert not target_csv.parent.exists()
+
+        result = window.export_invoices_csv(filepath=target_csv)
+        assert result == str(target_csv)
+        assert target_csv.exists()
+        assert target_csv.parent.is_dir()
+        # Headless mode must NOT trigger any modal dialogs
+        assert len(modal_calls) == 0
+
+        # Read back CSV to verify content
+        with open(target_csv, "r", encoding="utf-8-sig") as f:
+            lines = list(csv.reader(f, delimiter=";"))
+        assert len(lines) == 2
+        assert lines[1][1] == "Nested Shop"
+        assert lines[1][6] == "123,45"
+    finally:
+        window.close()
+
+
+def test_export_invoices_csv_headless_error_handling_no_modals(tmp_path: Path, monkeypatch, qapp):
+    """Regression test: headless export errors do not trigger modal QMessageBox.warning."""
+    invoices_db = tmp_path / "invoices.json"
+    invoices_db.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(uim, "INVOICES_DB", invoices_db)
+
+    modal_calls = []
+    monkeypatch.setattr(
+        uim.QMessageBox,
+        "warning",
+        lambda *args, **kwargs: modal_calls.append(("warning", args)),
+    )
+
+    window = uim.MainWindow()
+    try:
+        window.invoices = [
+            uim.Invoice(
+                id="inv-err",
+                profile_name="Err Shop",
+                filename="err.pdf",
+                date="2026-09-22",
+                path=str(tmp_path / "err.pdf"),
+                amount=50.0,
+            )
+        ]
+
+        # Pass a directory path as filepath to provoke an OSError/PermissionError on open()
+        invalid_path = tmp_path / "is_a_directory"
+        invalid_path.mkdir(parents=True, exist_ok=True)
+
+        result = window.export_invoices_csv(filepath=invalid_path)
+        assert result is None
+        assert len(modal_calls) == 0
     finally:
         window.close()
