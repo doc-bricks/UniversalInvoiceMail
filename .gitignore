@@ -32,6 +32,14 @@ EXPERIMENT_BEFEHLSKETTE.txt
 LOCK*.txt
 LOCK.*
 *.lock
+LOCK
+LOCK.user.*
+LOCK.until.*
+LOCK.condition.*
+LOCK.permissions.json
+uv.lock
+!package-lock.json
+.automation-lock
 
 # ---- Sensible Daten ----
 _USER/
@@ -55,6 +63,14 @@ Outputbeispiele/
 # ---- Multi-Host Synchronisation & Konflikte ----
 *-WORKSTATION-LG*
 *-ASUS-GEI*
+*-WORKSTATION*
+*-ASUS*
+*-LAPTOP*
+*-Mac Studio*
+*-MacBook*
+*conflicted copy*
+* (Kopie)*
+* (Copy)*
 *.sync-conflict-*
 *.conflict
 *.conflict.*
@@ -121,3 +137,10 @@ DECISIONS.md
 TODO.md
 DONE.md
 *.bak
+*.orig
+*.rej
+
+# ---- Cache & Tooling ----
+.hypothesis/
+.turbo/
+.nyc_output/

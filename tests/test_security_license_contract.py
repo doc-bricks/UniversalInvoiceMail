@@ -91,12 +91,34 @@ def test_gitignore_security_and_multi_host_hardening() -> None:
         assert pat in content, f"Secret pattern {pat} missing in .gitignore"
 
     # Multi-host sync hardening
-    for host_pat in ["*-WORKSTATION-LG*", "*-ASUS-GEI*", "*.sync-conflict-*", "*.conflict"]:
+    for host_pat in ["*-WORKSTATION-LG*", "*-ASUS-GEI*", "*-WORKSTATION*", "*-ASUS*", "*-LAPTOP*", "*conflicted copy*", "*.sync-conflict-*", "*.conflict"]:
         assert host_pat in content, f"Sync conflict pattern {host_pat} missing in .gitignore"
 
     # Multi-agent lock system fail-closed patterns
-    for lock_pat in ["LOCK.*", "*.lock", "LOCK*.txt"]:
+    for lock_pat in ["LOCK.*", "*.lock", "LOCK*.txt", "LOCK", "LOCK.user.*", "LOCK.until.*", "LOCK.condition.*", "LOCK.permissions.json", "uv.lock", ".automation-lock"]:
         assert lock_pat in content, f"Lock pattern {lock_pat} missing in .gitignore"
+
+
+def test_level1_sbom_and_governance_invariants() -> None:
+    """Verify THIRD_PARTY_LICENSES.md contains complete Level 1 SBOM and all 10 invariants."""
+    sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
+    assert sbom_file.is_file(), "THIRD_PARTY_LICENSES.md must exist"
+    sbom_text = sbom_file.read_text(encoding="utf-8")
+
+    # 10 System Invariants
+    for code in [
+        "INV-LOCAL-01", "INV-CRED-02", "INV-PRIVACY-03", "INV-DATEV-04", "INV-FLOOR-05",
+        "INV-TLS-06", "INV-LEASTPRIV-07", "INV-LAZYLOAD-08", "INV-OFFLINE-09", "INV-SLA-10",
+    ]:
+        assert code in sbom_text, f"Invariant code {code} missing from THIRD_PARTY_LICENSES.md"
+
+    # Core package coverage in SBOM
+    for pkg in ["PySide6", "keyring", "Pillow", "openpyxl", "python-docx", "xhtml2pdf", "reportlab", "pypdfium2", "pypdf", "docx2pdf", "pytesseract"]:
+        assert pkg in sbom_text, f"Package {pkg} missing from Level 1 SBOM"
+
+    assert "Weak Copyleft / Permissive" in sbom_text
+    assert "asInvoker" in sbom_text
+
 
 
 def test_no_hardcoded_user_paths_in_python_code() -> None:

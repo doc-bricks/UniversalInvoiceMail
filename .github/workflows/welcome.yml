@@ -1,0 +1,27 @@
+name: Welcome new contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: welcome-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Welcome first-time contributors
+        uses: actions/first-interaction@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first issue. Our maintainers review incoming issues within the documented SLA.'
+          pr-message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first pull request. Please ensure all tests pass and your changes adhere to local-first privacy invariants.'

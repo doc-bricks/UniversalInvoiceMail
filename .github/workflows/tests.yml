@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: windows-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -43,6 +48,7 @@ jobs:
 
   source-platform-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     env:
       PYTHONIOENCODING: utf-8

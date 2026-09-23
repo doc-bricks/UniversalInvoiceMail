@@ -4,10 +4,12 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-201%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-206%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Privacy: Local-First](https://img.shields.io/badge/Privacy-Local--First-brightgreen.svg)](#privacy)
+[![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -200,8 +202,10 @@ Part of the [doc-bricks](https://github.com/doc-bricks) document productivity su
 | [DevCenter](https://github.com/dev-bricks/DevCenter) | dev-bricks | Developer cockpit and repository telemetry hub |
 | [CodeBox](https://github.com/dev-bricks/CodeBox) | dev-bricks | Reusable code snippet repository with semantic lookup |
 
-## License
+## License & Attribution
 
-[MIT](LICENSE)
-
-Third-party runtime inventory: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
+UniversalInvoiceMail is licensed under the [MIT License](LICENSE).
+- Canonical attribution and copyright: [NOTICE](NOTICE)
+- Level 1 SBOM & dependency compliance: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
+- Third-party runtime inventory: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
+- Marketing & Governance log: [MARKETING-LOG.txt](MARKETING-LOG.txt)

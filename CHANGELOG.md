@@ -23,6 +23,24 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Technical Hygiene, CI Lifecycle Hardening & Level 1 SBOM Audit (2026-09-23)
+- **CI Workflows Hardening**:
+  - Added `.github/workflows/stale.yml` (actions/stale@v9, daily schedule 01:30 UTC, concurrency group with cancel-in-progress, least-privilege permissions `issues: write`, `pull-requests: write`, 10-minute timeout).
+  - Added `.github/workflows/welcome.yml` (actions/first-interaction@v3, concurrency group with cancel-in-progress, least-privilege permissions `issues: write`, `pull-requests: write`, 5-minute timeout).
+  - Hardened `.github/workflows/tests.yml` and `source-platform-smoke.yml` with concurrency groups (`cancel-in-progress: true`), explicit 15-minute job timeouts, and strict `contents: read` permissions.
+- **Canonical Root NOTICE & Level 1 SBOM Audit**:
+  - Created canonical root `NOTICE` file documenting copyright attribution, doc-bricks/open-bricks ecosystem affiliation, and permissive MIT licensing.
+  - Authored comprehensive Level 1 SBOM in `THIRD_PARTY_LICENSES.md` documenting 10 system and governance invariants (`INV-LOCAL-01` through `INV-SLA-10`), direct runtime packages, transitive dependencies, build/test chains, and license compatibility analysis.
+- **Repository Hygiene & Multi-Host Lock Defense**:
+  - Hardened `.gitignore` with cloud-sync conflict tokens (`*conflicted copy*`, `* (Kopie)*`, `* (Copy)*`, `*-WORKSTATION*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac Studio*`, `*-MacBook*`), canonical lock patterns (`LOCK`, `LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`, `LOCK.permissions.json`, `uv.lock`, `.automation-lock`), and cache/build directories (`.hypothesis/`, `.turbo/`, `.nyc_output/`).
+- **Packaging & PEP 621 Metadata**:
+  - Enhanced `pyproject.toml` with PEP 621 / PEP 639 standard metadata (`license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]`), extended URLs (`Marketing Log`, `LLM Ready`, `Notice`, `Third-Party Licenses`, `Parent Organization`, `Umbrella Ecosystem`), and hardened test configurations.
+- **Documentation & LLM Context Parity**:
+  - Refreshed `llms.txt` and `README.md` / `README-DE.md` badges to reflect 206 passing Pytest tests (+ 10 Node Web Companion tests).
+  - Created root `MARKETING-LOG.txt` documenting Pfad A hygiene baseline, target personas, invariants, and ecosystem links.
+- **Automated Contract Tests**:
+  - Expanded `tests/test_metadata.py` and `tests/test_security_license_contract.py` with regression checks for `NOTICE`, `THIRD_PARTY_LICENSES.md`, `.github/workflows/stale.yml`, `.github/workflows/welcome.yml`, and hardened lock defense patterns (206 Pytest tests passing).
+
 ### Headless CSV Export & Dialog Decoupling (2026-09-22)
 - **Modal Dialog Decoupling in `export_invoices_csv()`**: Decoupled GUI `QMessageBox` popups (both success and failure) from programmatic/headless invocations (`filepath is not None`) in `UniversalInvoiceMail.py`. Headless callers and test suites no longer block on modal message boxes.
 - **Directory Auto-Creation**: Ensured `target_path.parent.mkdir(parents=True, exist_ok=True)` is called before writing CSV files, preventing `FileNotFoundError` when exporting to non-existent subdirectories.

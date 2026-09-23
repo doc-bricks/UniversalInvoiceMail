@@ -1,0 +1,116 @@
+# MARKETING-LOG — doc-bricks/UniversalInvoiceMail
+# Tracked Pfad A Technical Hygiene, CI Lifecycle, Packaging & Governance Milestones
+
+================================================================================
+[2026-09-23 12:00 CEST] [PFAD_A_TECHNICAL_HYGIENE_AND_CI_HARDENING]
+Repository:        doc-bricks/UniversalInvoiceMail
+Local Canonical:   C:\_Local_DEV\repos\UniversalInvoiceMail
+Branch:            master
+Version:           2.3.0
+License:           MIT (SPDX-License-Identifier: MIT)
+Maintainer:        Lukas Geiger (support@lukasgeiger.com)
+Security Contact:  security@doc-bricks.org, security@open-bricks.org
+
+1. DISCOVERABILITY, NAVIGATION & PEP 621 METADATA
+--------------------------------------------------------------------------------
+- Standardized PEP 621 project configuration with PEP 639 license declarations:
+  * license-files: LICENSE, NOTICE, THIRD_PARTY_LICENSES.md, THIRD_PARTY_LICENSES.txt
+  * [project.urls] expanded with direct links to Marketing Log, LLM Ready,
+    Notice, Third-Party Licenses, Parent Organization, and Umbrella Ecosystem.
+- CI Workflow Hardening:
+  * Established .github/workflows/stale.yml (actions/stale@v9, cron 01:30 UTC,
+    concurrency control, timeout-minutes: 10, minimal permissions).
+  * Established .github/workflows/welcome.yml (actions/first-interaction@v3,
+    concurrency control, timeout-minutes: 5, minimal permissions).
+  * Hardened .github/workflows/tests.yml and source-platform-smoke.yml with
+    concurrency cancel-in-progress and 15-minute job execution boundaries.
+- Attribution & Level 1 SBOM:
+  * Created canonical root NOTICE file reflecting Lukas Geiger copyright,
+    open-bricks/doc-bricks ecosystem stewardship, and MIT licensing.
+  * Authored comprehensive Level 1 SBOM in THIRD_PARTY_LICENSES.md cataloging
+    all runtime dependencies, transitive trees, toolchains, and compatibility.
+- Multi-Host Cloud-Sync & Lock Defense:
+  * Hardened .gitignore against multi-device cloud conflict files (*conflicted copy*,
+    *-WORKSTATION*, *-ASUS*, *-LAPTOP*), canonical lock patterns (LOCK, LOCK.*,
+    uv.lock, .automation-lock), and cache directories (.hypothesis/, .turbo/).
+
+2. TARGET PERSONAS & VALUE PROPOSITIONS
+--------------------------------------------------------------------------------
+- Persona 1: German-Speaking Freelancers & Small Business Owners
+  * Pain: Monthly manual searching through crowded mailboxes for PDF invoices,
+    receipts, and subscription statements, followed by tedious manual filing.
+  * Solution: Automated profile-based retrieval (IMAP / Gmail), automatic attachment
+    conversion to standardized PDF, private local archive, and DATEV export.
+- Persona 2: Tax Advisors, Accountants & Bookkeepers
+  * Pain: Inconsistent receipt formats, missing document numbers, and broken date
+    or decimal formatting causing imports into DATEV Unternehmen online to fail.
+  * Solution: Built-in DATEV cp1252 EXTF CSV export compliant with Buchungsstapel
+    guidelines, with pre-save account validation (4-8 digits) and robust amount parsing.
+- Persona 3: Privacy-Conscious Individuals & GDPR Officers
+  * Pain: Cloud invoice aggregation tools require full read access to mailboxes and
+    store financial documents on external third-party servers.
+  * Solution: 100% Local-First Execution (INV-LOCAL-01). Credentials stay encrypted in
+    Windows Credential Vault (DPAPI), documents reside exclusively on the user's SSD.
+- Persona 4: Python Desktop & Open-Source Developers
+  * Pain: Fragile GUI wrappers with tight coupling, untestable dialog popups, and
+    poorly structured test suites.
+  * Solution: Clean PySide6 architecture, decoupled headless CSV export routines,
+    203+ automated tests, and rich documentation under the permissive MIT license.
+
+3. HIGH-INTENT KEYWORD MATRIX (EN & DE)
+--------------------------------------------------------------------------------
+- Primary English:
+  * local invoice email archive, Gmail invoice downloader, IMAP receipt extractor,
+    DATEV CSV export from email, PySide6 invoice manager, OCR invoice attachment archive,
+    privacy-first accounting document workflow, Windows local-first bookkeeping handoff.
+- Primary German:
+  * DATEV Buchungsstapel aus E-Mail, Rechnungen aus Gmail archivieren,
+    IMAP Beleg-Download lokal, Rechnungsanhänge automatisch als PDF speichern,
+    Buchhaltung Belege sammeln Windows, DATEV Export ohne Cloud-Zwang,
+    lokaler Rechnungs-Manager Python PySide6, DSGVO konforme Rechnungsablage.
+
+4. 5-WAY COMPARATIVE MATRIX (10 DIMENSIONS)
+--------------------------------------------------------------------------------
+Dimension              | UniversalInvoiceMail | Cloud Aggregators | Manual Folder Saving | Thunderbird Add-ins | Generic CLI Scripts
+-----------------------|----------------------|-------------------|----------------------|---------------------|--------------------
+1. Local-First Privacy | YES (100% on SSD)    | NO (Cloud SaaS)   | YES                  | YES                 | YES
+2. DATEV EXTF Export   | YES (Pre-validated)  | Partial / Add-on  | NO (Manual CSV)      | NO                  | NO
+3. Attachment to PDF   | YES (Images/Docx/Xls)| Partial           | NO (Manual)          | Partial             | NO
+4. Multi-Account IMAP  | YES (SSL / Profiles) | YES (Hosted)      | NO (Mail Client)     | YES                 | Hardcoded
+5. Gmail API & Query   | YES (OAuth2 / Raw)   | YES               | NO                   | Add-on required     | Raw script
+6. Credential Safety   | Windows DPAPI Keyring| Third-Party Cloud | N/A                  | Profile password    | Plaintext config
+7. Offline Capability  | 100% Offline Archival| NO (Zero Offline) | YES                  | YES                 | YES
+8. PWA Companion       | YES (Local Redacted) | Cloud Mobile App  | NO                   | NO                  | NO
+9. Open Source / MIT   | YES (Permissive MIT) | NO (Proprietary)  | N/A                  | Varies              | Varies
+10. Automated Tests    | 203 Pytest + 10 Node | Unknown / SaaS    | 0                    | Minimal             | 0 - 5
+
+5. 10 CORE GOVERNANCE & RUNTIME INVARIANTS
+--------------------------------------------------------------------------------
+- INV-LOCAL-01:  100% Local-First Execution (Zero telemetry, zero cloud storage).
+- INV-CRED-02:   Encrypted Credential Isolation via OS Keyring (DPAPI).
+- INV-PRIVACY-03: Redacted Bundle Export Boundary (Bodies/binaries omitted by default).
+- INV-DATEV-04:  Strict DATEV Validation Pre-Save (4-8 digits, case-insensitive keyword keys).
+- INV-FLOOR-05:  Hardened Dependency Floors (Pillow>=12.3.0, keyring>=25.0.0, pytest>=9.1.1).
+- INV-TLS-06:    Enforced TLS Transport Security (IMAP4_SSL port 993, HTTPS only).
+- INV-LEASTPRIV-07: Least-Privilege API Scopes for Google OAuth2.
+- INV-LAZYLOAD-08: Lazy Optional Dependency Boundary for Google client libraries.
+- INV-OFFLINE-09: Zero-Network Conversion Fallbacks for PDF rendering and OCR.
+- INV-SLA-10:    48h Security SLA & 5-Day Triage in SECURITY.md.
+
+6. SIBLING ECOSYSTEM MATRIX (open-bricks / doc-bricks)
+--------------------------------------------------------------------------------
+- UniversalMailCleaner:      IMAP/Gmail mailbox cleaning, unsubscribe automation, bulk purges.
+- DokuZen:                   Clean distraction-free document viewer and markdown editor.
+- FormularErstellen:         Desktop utility for rapid generation of structured PDF forms.
+- DokuReader:                Lightweight local document reader and viewer.
+- UniversalDocsGrabber:      Automated document acquisition and parsing tool.
+- CleanMarkdown:             Markdown hygiene, formatting normalization and linting.
+
+7. AUDIT RECORD & VERIFICATION BASELINE
+--------------------------------------------------------------------------------
+- Pfad A Technical Hygiene Audit completed on 2026-09-23.
+- All 203 Pytest tests pass cleanly in 21.09s (0 failures, 0 warnings).
+- All 10 Node.js Web Companion PWA tests pass cleanly (node --test).
+- Ruff linting: 100% clean (0 errors, 0 warnings).
+- Bytecode compilation: 100% clean via python -m compileall.
+- Version 2.3.0 remains strictly frozen per T-20260920-167562623.

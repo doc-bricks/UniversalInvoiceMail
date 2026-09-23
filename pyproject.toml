@@ -11,6 +11,7 @@ authors = [
     { name = "Lukas Geiger" }
 ]
 license = { text = "MIT" }
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]
 keywords = ["invoice", "email", "imap", "gmail", "datev", "pdf", "accounting", "pyside6", "local-first"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -51,11 +52,21 @@ gmail = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/doc-bricks/UniversalInvoiceMail"
+Homepage = "https://github.com/doc-bricks/UniversalInvoiceMail#readme"
 Repository = "https://github.com/doc-bricks/UniversalInvoiceMail.git"
 Issues = "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
+"Bug Tracker" = "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
+"Marketing Log" = "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/MARKETING-LOG.txt"
+"LLM Ready" = "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/llms.txt"
+Notice = "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/NOTICE"
+"Third-Party Licenses" = "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/THIRD_PARTY_LICENSES.md"
+"Parent Organization" = "https://github.com/doc-bricks"
+"Umbrella Ecosystem" = "https://github.com/open-bricks"
 
 [tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+norecursedirs = [".git", ".pytest_cache", "__pycache__", "build", "dist", ".venv", "venv", ".ruff_cache"]
 pythonpath = ["."]
 testpaths = ["tests", "."]
 

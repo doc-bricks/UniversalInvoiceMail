@@ -50,6 +50,14 @@ def test_core_documentation_files():
         "web_companion/package.json",
         "web_companion/index.html",
         "web_companion/manifest.webmanifest",
+        "NOTICE",
+        "THIRD_PARTY_LICENSES.md",
+        "THIRD_PARTY_LICENSES.txt",
+        "MARKETING-LOG.txt",
+        ".github/workflows/stale.yml",
+        ".github/workflows/welcome.yml",
+        ".github/workflows/tests.yml",
+        ".github/workflows/source-platform-smoke.yml",
     ]
     for rel_path in required_files:
         file_path = REPO_ROOT / rel_path
@@ -131,3 +139,57 @@ def test_datev_validation_guidance_matches_the_dialog_contract():
     assert "Automatische oder fachlich verbindliche Kontierung" in roadmap
     assert "93-Spalten-Exportvertrag bleibt" in roadmap
     assert "TASKPLAN ist die kanonische" in roadmap
+
+
+def test_notice_attribution_and_ecosystem():
+    """Verify canonical NOTICE file attribution and ecosystem stewardship."""
+    notice_path = REPO_ROOT / "NOTICE"
+    assert notice_path.is_file(), "NOTICE file must exist"
+    notice_text = notice_path.read_text(encoding="utf-8")
+
+    assert "UniversalInvoiceMail" in notice_text
+    assert "Lukas Geiger" in notice_text
+    assert "doc-bricks" in notice_text
+    assert "open-bricks" in notice_text
+    assert "MIT License" in notice_text
+    assert "THIRD_PARTY_LICENSES.md" in notice_text
+
+
+def test_ci_workflow_hardening_contracts():
+    """Verify all GitHub Actions workflows enforce concurrency and timeouts."""
+    workflows_dir = REPO_ROOT / ".github" / "workflows"
+    assert workflows_dir.is_dir(), ".github/workflows directory must exist"
+
+    # stale.yml
+    stale_file = workflows_dir / "stale.yml"
+    assert stale_file.is_file(), "stale.yml must exist"
+    stale_text = stale_file.read_text(encoding="utf-8")
+    assert "actions/stale@v9" in stale_text
+    assert "timeout-minutes: 10" in stale_text
+    assert "cancel-in-progress: true" in stale_text
+    assert "issues: write" in stale_text
+    assert "pull-requests: write" in stale_text
+
+    # welcome.yml
+    welcome_file = workflows_dir / "welcome.yml"
+    assert welcome_file.is_file(), "welcome.yml must exist"
+    welcome_text = welcome_file.read_text(encoding="utf-8")
+    assert "actions/first-interaction@v3" in welcome_text
+    assert "timeout-minutes: 5" in welcome_text
+    assert "cancel-in-progress: true" in welcome_text
+
+    # tests.yml
+    tests_file = workflows_dir / "tests.yml"
+    assert tests_file.is_file(), "tests.yml must exist"
+    tests_text = tests_file.read_text(encoding="utf-8")
+    assert "cancel-in-progress: true" in tests_text
+    assert "timeout-minutes: 15" in tests_text
+    assert "contents: read" in tests_text
+
+    # source-platform-smoke.yml
+    smoke_file = workflows_dir / "source-platform-smoke.yml"
+    assert smoke_file.is_file(), "source-platform-smoke.yml must exist"
+    smoke_text = smoke_file.read_text(encoding="utf-8")
+    assert "cancel-in-progress: true" in smoke_text
+    assert "timeout-minutes: 15" in smoke_text
+

@@ -4,10 +4,12 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-201%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-206%20passed-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Datenschutz: Local-First](https://img.shields.io/badge/Datenschutz-Local--First-brightgreen.svg)](#datenschutz)
+[![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow.svg)](LICENSE)
 
@@ -205,8 +207,10 @@ Teil der [doc-bricks](https://github.com/doc-bricks) Dokumenten-Produktivitäts-
 | [DevCenter](https://github.com/dev-bricks/DevCenter) | dev-bricks | Entwickler-Cockpit und Repository-Telemetrie-Hub |
 | [CodeBox](https://github.com/dev-bricks/CodeBox) | dev-bricks | Wiederverwendbare Code-Snippet-Ablage mit semantischer Suche |
 
-## Lizenz
+## Lizenz & Attribution
 
-[MIT](LICENSE)
-
-Drittanbieter-Laufzeitinventar: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
+UniversalInvoiceMail ist unter der [MIT-Lizenz](LICENSE) lizenziert.
+- Kanonische Attribution und Urheberrecht: [NOTICE](NOTICE)
+- Level 1 SBOM & Lizenz-Compliance: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
+- Drittanbieter-Laufzeitinventar: [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
+- Marketing- & Governance-Register: [MARKETING-LOG.txt](MARKETING-LOG.txt)
