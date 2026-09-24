@@ -25,19 +25,19 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-09-23
+## Last-checked: 2026-09-24
 
 Important files:
 
 - `NOTICE`: Canonical root attribution, Lukas Geiger copyright, doc-bricks ecosystem stewardship, and MIT licensing.
-- `THIRD_PARTY_LICENSES.md`: Level 1 SBOM documenting 10 governance invariants (INV-LOCAL-01..INV-SLA-10) and full dependency tree.
+- `THIRD_PARTY_LICENSES.md`: Level 1 SBOM documenting 10 governance invariants (INV-LOCAL-01..INV-SLA-10), invariant cross-reference matrix, and full dependency tree.
 - `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
-- `MARKETING-LOG.txt`: Discoverability, target personas, keyword matrix, and competitive analysis.
-- `README.md`: English user-facing project overview and ecosystem grid.
-- `README-DE.md`: German project overview and ecosystem grid.
+- `MARKETING-LOG.txt`: Discoverability, target personas, keyword matrix, 5-way comparative matrix, and Pfad B audit baseline.
+- `README.md`: English user-facing project overview, 18-point bilateral navigation, and ecosystem grid.
+- `README-DE.md`: German project overview, 18-point bilateral navigation, and ecosystem grid.
 - `USER_GUIDE.md`: German setup and workflow guide.
 - `EXPORTFORMAT.md`: implemented `universalinvoicemail-invoicebundle-v1.json` exchange contract with desktop export/import.
-- `pyproject.toml`: PEP 621 metadata, Pytest and Ruff configuration.
+- `pyproject.toml`: PEP 621 metadata, saturated 20-topic keywords, Pytest and Ruff configuration.
 - `UniversalInvoiceMail.py`: PySide6 desktop application with pre-save DATEV validation and selection-aware CSV export.
 - `datev_exporter.py`: DATEV CSV export helper with account number checking, config validation, robust amount parsing, and batch diagnostics.
 - `translator.py`: 6-language translation system (`de`, `en`, `es`, `zh`, `ja`, `ru`) with fallback chain.
@@ -45,8 +45,9 @@ Important files:
 - `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit, integration, validation, i18n, metadata parity, accessibility, and security/license contract tests (206 Pytest + 10 Node tests in the tracked baseline; verified on 2026-09-23).
+- `tests/`: mocked unit, integration, validation, i18n, metadata parity, accessibility, and security/license contract tests.
 - `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset, pre-save validation against SKR03/SKR04 rules, and `DATEVConfig` persistence.
+- Statutory liability limitation: German Civil Code § 521 BGB (Gefälligkeitsrecht) and 48h Security Response SLA.
 
 Safety boundary:
 

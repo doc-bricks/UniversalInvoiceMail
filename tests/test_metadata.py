@@ -193,3 +193,84 @@ def test_ci_workflow_hardening_contracts():
     assert "cancel-in-progress: true" in smoke_text
     assert "timeout-minutes: 15" in smoke_text
 
+
+def test_keywords_saturated_and_project_urls():
+    """Verify that pyproject.toml has 20 saturated keywords matching GitHub topics and full project URLs."""
+    pyproject_path = REPO_ROOT / "pyproject.toml"
+    assert pyproject_path.exists(), "pyproject.toml must exist"
+    content = pyproject_path.read_text(encoding="utf-8")
+
+    expected_topics = [
+        "accounting", "datev", "document-archive", "email", "email-attachments",
+        "gmail", "gmail-api", "imap", "invoice", "invoice-automation",
+        "json-export", "local-first", "ocr", "offline-first", "pdf",
+        "privacy-first", "pyside6", "python", "receipt", "windows"
+    ]
+    for topic in expected_topics:
+        assert f'"{topic}"' in content, f"Topic '{topic}' missing from pyproject.toml keywords"
+
+    # Verify project.urls
+    for url_key in [
+        "Homepage", "Repository", "Issues", "Bug Tracker", "Marketing Log",
+        "LLM Ready", "Notice", "Third-Party Licenses", "Parent Organization", "Umbrella Ecosystem"
+    ]:
+        assert f'"{url_key}"' in content or f'{url_key} =' in content, f"URL '{url_key}' missing from project.urls"
+
+
+def test_dual_reciprocal_anchors_sec_01_to_sec_18():
+    """Verify both README.md and README-DE.md implement 18-point bilateral navigation with dual anchors."""
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
+
+    for i in range(1, 19):
+        anchor = f'<a id="sec-{i:02d}"></a>'
+        assert anchor in readme_en, f"Anchor {anchor} missing from README.md"
+        assert anchor in readme_de, f"Anchor {anchor} missing from README-DE.md"
+
+
+def test_level_1_sbom_cross_reference_matrix():
+    """Verify THIRD_PARTY_LICENSES.md contains the Invariant Cross-Reference Matrix."""
+    sbom_path = REPO_ROOT / "THIRD_PARTY_LICENSES.md"
+    assert sbom_path.exists(), "THIRD_PARTY_LICENSES.md must exist"
+    sbom_text = sbom_path.read_text(encoding="utf-8")
+
+    assert "Level 1 SBOM Invarianten-Kreuzreferenzmatrix" in sbom_text
+    assert "2026-09-24" in sbom_text
+    for i in range(1, 11):
+        # Check codes INV-LOCAL-01 through INV-SLA-10
+        pattern = re.compile(rf"INV-[A-Z]+-{i:02d}")
+        assert pattern.search(sbom_text), f"Invariant index {i:02d} missing from matrix in THIRD_PARTY_LICENSES.md"
+
+
+def test_statutory_disclaimer_and_sla_in_readmes():
+    """Verify German statutory notice (§ 521 BGB Gefälligkeitsrecht) and 48h SLA in both READMEs."""
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
+
+    for doc, name in [(readme_en, "README.md"), (readme_de, "README-DE.md")]:
+        assert "521 BGB" in doc, f"§ 521 BGB disclaimer missing from {name}"
+        assert "48h" in doc or "48-Stunden" in doc or "48-hour" in doc, f"48h SLA missing from {name}"
+        assert "Gefälligkeitsrecht" in doc, f"Gefälligkeitsrecht missing from {name}"
+
+
+def test_marketing_log_pfad_b_audit_20260924():
+    """Verify MARKETING-LOG.txt documents the Pfad B milestone from 2026-09-24."""
+    log_path = REPO_ROOT / "MARKETING-LOG.txt"
+    assert log_path.exists(), "MARKETING-LOG.txt must exist"
+    log_text = log_path.read_text(encoding="utf-8")
+
+    assert "PFAD_B_MARKETING_DISCOVERABILITY_AND_VISUAL_ARCHITECTURE" in log_text
+    assert "2026-09-24" in log_text
+    assert "20-TOPIC & KEYWORD SATURATION" in log_text
+    assert "18-POINT BILATERAL QUICK NAVIGATION" in log_text
+
+
+def test_changelog_unreleased_pfad_b_entry():
+    """Verify CHANGELOG.md contains Pfad B notes under [Unreleased]."""
+    changelog_path = REPO_ROOT / "CHANGELOG.md"
+    assert changelog_path.exists(), "CHANGELOG.md must exist"
+    changelog_text = changelog_path.read_text(encoding="utf-8")
+
+    assert "### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-24)" in changelog_text
+    assert "T-20260920-167562623" in changelog_text
+

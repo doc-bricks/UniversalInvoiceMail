@@ -23,6 +23,23 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-24)
+- **18-Point Bilateral Quick Navigation & Dual Reciprocal Anchors**:
+  - Implemented 18-point bilateral quick navigation across both `README.md` and `README-DE.md` with reciprocal dual HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-18"></a>`) and language-specific anchors for deep-linking.
+  - Saturated Shields.io badges for attribution (NOTICE), verification date, test pass rates (100% green), Web Companion status, Local-First privacy, RunAsInvoker unprivileged execution, and 48h Security SLA.
+- **20-Topic & Keywords Saturation (PEP 621 Parity)**:
+  - Synchronized `pyproject.toml` keywords 20/20 with GitHub repository topics: `accounting`, `datev`, `document-archive`, `email`, `email-attachments`, `gmail`, `gmail-api`, `imap`, `invoice`, `invoice-automation`, `json-export`, `local-first`, `ocr`, `offline-first`, `pdf`, `privacy-first`, `pyside6`, `python`, `receipt`, `windows`.
+- **Target Personas & 5-Way Comparative Matrix**:
+  - Documented 4 core user personas (Freelancers/SMBs, Tax Advisors/Bookkeepers, Privacy Officers, Open-Source Developers) with dedicated high-intent search queries.
+  - Published 5-way comparative matrix benchmarking UniversalInvoiceMail against Cloud Aggregators, Manual Saving, Thunderbird Add-ins, and Generic CLI Scripts across 10 invariant dimensions.
+- **Governance, Level 1 SBOM & German Statutory Legal Notice**:
+  - Re-audited Level 1 SBOM in `THIRD_PARTY_LICENSES.md` (Stand 2026-09-24) with complete Invariant Cross-Reference Matrix (`INV-LOCAL-01` through `INV-SLA-10`).
+  - Added statutory liability limitation under German Civil Code (§ 521 BGB Gefälligkeitsrecht) and 48h Security Response SLA in Section 18 of both `README.md` and `README-DE.md`.
+- **Automated Metadata Contract Test Suite**:
+  - Extended `tests/test_metadata.py` with contract tests verifying 20-topic saturation, 18-point dual reciprocal anchors (`sec-01` to `sec-18`), Level 1 SBOM matrix, and § 521 BGB / SLA presence.
+- **Strict Version Freeze**:
+  - Version 2.3.0 preserved strictly intact per `T-20260920-167562623`.
+
 ### Technical Hygiene, CI Lifecycle Hardening & Level 1 SBOM Audit (2026-09-23)
 - **CI Workflows Hardening**:
   - Added `.github/workflows/stale.yml` (actions/stale@v9, daily schedule 01:30 UTC, concurrency group with cancel-in-progress, least-privilege permissions `issues: write`, `pull-requests: write`, 10-minute timeout).

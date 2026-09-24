@@ -2,8 +2,8 @@
 
 **Project:** UniversalInvoiceMail (`doc-bricks/UniversalInvoiceMail`)<br>
 **Canonical Project License:** MIT License (`MIT`)<br>
-**Audit Date:** 2026-09-23<br>
-**Auditor:** Antigravity / Gemini (via GithubBot Pfad A)<br>
+**Audit Date:** 2026-09-24<br>
+**Auditor:** Antigravity / Gemini (via GithubBot Pfad B)<br>
 **Version:** `2.3.0`<br>
 **Umbrella Ecosystem:** `open-bricks` / `doc-bricks`<br>
 **Notice Attribution:** See canonical root [`NOTICE`](NOTICE) file.
@@ -30,6 +30,21 @@ This inventory is derived directly from `pyproject.toml`, `requirements.txt`, an
 | `INV-LAZYLOAD-08` | Runtime | **Lazy Optional Dependency Boundary** | Google client libraries (`google-api-python-client`, `google-auth-oauthlib`) are loaded lazily on demand; standard IMAP users operate with zero Google library overhead. |
 | `INV-OFFLINE-09` | Usability | **Zero-Network Conversion Fallbacks** | Attachment processing (PDF rendering, image stitching, DOCX/XLSX conversion, OCR) functions entirely offline without external SaaS API dependencies. |
 | `INV-SLA-10` | Governance | **48h Security SLA & 5-Day Triage** | Documented response commitment in `SECURITY.md` establishing a 48-hour initial response window and 5-day triage SLA for all verified vulnerability reports. |
+
+### Level 1 SBOM Invarianten-Kreuzreferenzmatrix
+
+| Invariant Code | Primäre Datei / Komponente | Nachweismethode & Kontrakt-Gate |
+|---|---|---|
+| `INV-LOCAL-01` | `UniversalInvoiceMail.py`, `invoice_bundle.py` | `test_local_first_and_offline_invariants` (Zero telemetry / tracking URL check) |
+| `INV-CRED-02` | `UniversalInvoiceMail.py` (keyring) | `test_dependency_vulnerability_floors`, DPAPI vault isolation |
+| `INV-PRIVACY-03` | `invoice_bundle.py` | `test_invoice_bundle.py` (redacted payload format contract) |
+| `INV-DATEV-04` | `datev_exporter.py`, `UniversalInvoiceMail.py` | `test_datev_validation.py`, `test_datev_robustness.py` (pre-save gates) |
+| `INV-FLOOR-05` | `pyproject.toml`, `requirements.txt` | `test_dependency_vulnerability_floors` (Pillow>=12.3.0, pytest>=9.1.1) |
+| `INV-TLS-06` | `UniversalInvoiceMail.py` | IMAP4_SSL port 993 enforcement, zero cleartext fallback |
+| `INV-LEASTPRIV-07` | `UniversalInvoiceMail.py` (Gmail OAuth) | Read-only / minimal search scopes requested |
+| `INV-LAZYLOAD-08` | `UniversalInvoiceMail.py` | `test_no_google_import.py` (lazy-load boundary without Google client installed) |
+| `INV-OFFLINE-09` | `UniversalInvoiceMail.py`, `pypdfium2` | `test_attachment_conversion_regressions.py` (local offline rendering) |
+| `INV-SLA-10` | `SECURITY.md`, `README.md`, `README-DE.md` | `test_security_policy_bilingual_and_sla` (48h SLA / 5d triage commitment) |
 
 ---
 

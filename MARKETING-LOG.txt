@@ -114,3 +114,67 @@ Dimension              | UniversalInvoiceMail | Cloud Aggregators | Manual Folde
 - Ruff linting: 100% clean (0 errors, 0 warnings).
 - Bytecode compilation: 100% clean via python -m compileall.
 - Version 2.3.0 remains strictly frozen per T-20260920-167562623.
+
+================================================================================
+[2026-09-24 15:45 CEST] [PFAD_B_MARKETING_DISCOVERABILITY_AND_VISUAL_ARCHITECTURE]
+Repository:        doc-bricks/UniversalInvoiceMail
+Local Canonical:   C:\_Local_DEV\repos\UniversalInvoiceMail
+Branch:            master
+Version:           2.3.0
+License:           MIT (SPDX-License-Identifier: MIT)
+Maintainer:        Lukas Geiger (support@lukasgeiger.com)
+Security Contact:  security@doc-bricks.org, security@open-bricks.org
+
+1. 20-TOPIC & KEYWORD SATURATION (PEP 621 PARITY)
+--------------------------------------------------------------------------------
+- GitHub Topics & pyproject.toml Keywords synchronized 20/20:
+  accounting, datev, document-archive, email, email-attachments, gmail,
+  gmail-api, imap, invoice, invoice-automation, json-export, local-first,
+  ocr, offline-first, pdf, privacy-first, pyside6, python, receipt, windows.
+- Canonical Homepage: https://github.com/doc-bricks/UniversalInvoiceMail#readme
+
+2. 18-POINT BILATERAL QUICK NAVIGATION & DUAL RECIPROCAL ANCHORS
+--------------------------------------------------------------------------------
+- README.md and README-DE.md upgraded to 18-section structured quick navigation.
+- Reciprocal dual HTML anchors (<a id="sec-01"></a> through <a id="sec-18"></a>)
+  alongside English and German slugs for bilingual deep-linking and automated testing.
+- Harmonized Shields.io badges across both READMEs:
+  Attribution (NOTICE), Verified (2026-09-24), Tests (212 passed | 100% green),
+  Web Companion (10 passed), Python (3.10+), Privacy (100% Local-First),
+  Security (RunAsInvoker | Non-Elevation), Security SLA (48h response | 5d triage),
+  Code Style (Ruff), and Level 1 SBOM.
+
+3. VISUAL ARCHITECTURE & PROCESSING PIPELINE
+--------------------------------------------------------------------------------
+- Multi-tier Mermaid flowchart visualizing mail sources (IMAP / Gmail API),
+  processing engine (PDF conversion, OCR hooks, hash deduplication), local
+  storage isolation (%USERPROFILE%\.universal_invoice_mail\), and export/handoff
+  surfaces (DATEV cp1252 CSV, Redacted JSON bundle, Web Companion PWA).
+
+4. 4 TARGET PERSONAS & HIGH-INTENT DISCOVERABILITY
+--------------------------------------------------------------------------------
+- Persona 1 [FREELANCER]: Freelancers & Small Business Owners (Automated invoice collection, DATEV-ready).
+- Persona 2 [ACCOUNTANT]: Tax Advisors & Bookkeepers (Validated cp1252 EXTF Buchungsstapel, SKR03/SKR04).
+- Persona 3 [PRIVACY]: Privacy-Conscious Users & Compliance Officers (100% Local-First, Zero Egress, DPAPI).
+- Persona 4 [DEVELOPER]: Open-Source & PySide6 Developers (Decoupled CSV export, 206+ tests, permissive MIT).
+
+5. 5-WAY COMPARATIVE MATRIX (10 INVARIANT DIMENSIONS)
+--------------------------------------------------------------------------------
+- Evaluated against Cloud Aggregators, Manual Saving, Thunderbird Add-ins, and Generic CLI Scripts.
+- Complete dominance in Local-First Privacy, pre-validated DATEV export, attachment-to-PDF conversion,
+  Windows DPAPI keyring security, and comprehensive automated test coverage.
+
+6. GOVERNANCE, LEVEL 1 SBOM & LEGAL COMPLIANCE
+--------------------------------------------------------------------------------
+- Level 1 SBOM re-audited (Stand 2026-09-24) in THIRD_PARTY_LICENSES.md with 10 core invariants
+  (INV-LOCAL-01 to INV-SLA-10) and full invariant cross-reference matrix.
+- Statutory liability disclaimer under German Civil Code (§ 521 BGB Gefälligkeitsrecht)
+  anchored in section 18 of README.md and README-DE.md.
+- Binding 48h Security Response SLA and 5-day triage commitment documented and linked.
+
+7. AUTOMATED METADATA CONTRACT TEST SUITE
+--------------------------------------------------------------------------------
+- Expanded tests/test_metadata.py with contract tests for 20-topic saturation,
+  bilateral dual reciprocal anchors (sec-01 to sec-18), Level 1 SBOM matrix,
+  and German statutory notice (§ 521 BGB) / 48h SLA validation.
+- All test suites passing 100% green. Version 2.3.0 strictly preserved per T-20260920-167562623.

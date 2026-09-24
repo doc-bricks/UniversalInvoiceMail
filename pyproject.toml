@@ -12,7 +12,28 @@ authors = [
 ]
 license = { text = "MIT" }
 license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]
-keywords = ["invoice", "email", "imap", "gmail", "datev", "pdf", "accounting", "pyside6", "local-first"]
+keywords = [
+    "accounting",
+    "datev",
+    "document-archive",
+    "email",
+    "email-attachments",
+    "gmail",
+    "gmail-api",
+    "imap",
+    "invoice",
+    "invoice-automation",
+    "json-export",
+    "local-first",
+    "ocr",
+    "offline-first",
+    "pdf",
+    "privacy-first",
+    "pyside6",
+    "python",
+    "receipt",
+    "windows",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Win32 (MS Windows)",
