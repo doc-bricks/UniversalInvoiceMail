@@ -411,5 +411,69 @@
     "zh": "没有可供导出的发票。",
     "ja": "エクスポート可能な請求書がありません。",
     "ru": "Нет счетов для экспорта."
+  },
+  "dlg_shortcuts_title": {
+    "de": "Tastaturkürzel & Hilfe",
+    "en": "Keyboard Shortcuts & Help",
+    "es": "Atajos de teclado y ayuda",
+    "zh": "键盘快捷键与帮助",
+    "ja": "キーボードショートカットとヘルプ",
+    "ru": "Сочетания клавиш и справка"
+  },
+  "btn_shortcuts": {
+    "de": "❓ Hilfe & Kürzel",
+    "en": "❓ Help & Shortcuts",
+    "es": "❓ Ayuda y atajos",
+    "zh": "❓ 帮助与快捷键",
+    "ja": "❓ ヘルプとショートカット",
+    "ru": "❓ Справка и клавиши"
+  },
+  "shortcuts_col_key": {
+    "de": "Tastenkombination",
+    "en": "Shortcut",
+    "es": "Combinación de teclas",
+    "zh": "按键组合",
+    "ja": "キーの組み合わせ",
+    "ru": "Сочетание клавиш"
+  },
+  "shortcuts_col_action": {
+    "de": "Aktion / Funktion",
+    "en": "Action / Function",
+    "es": "Acción / Función",
+    "zh": "操作 / 功能",
+    "ja": "アクション / 機能",
+    "ru": "Действие / Функция"
+  },
+  "shortcuts_col_scope": {
+    "de": "Bereich",
+    "en": "Scope",
+    "es": "Ámbito",
+    "zh": "作用范围",
+    "ja": "スコープ",
+    "ru": "Область"
+  },
+  "shortcuts_table_name": {
+    "de": "Tabelle aller Tastaturkürzel",
+    "en": "Table of all keyboard shortcuts",
+    "es": "Tabla de todos los atajos de teclado",
+    "zh": "所有键盘快捷键表格",
+    "ja": "すべてのキーボードショートカットの表",
+    "ru": "Таблица всех сочетаний клавиш"
+  },
+  "shortcuts_table_desc": {
+    "de": "Übersicht aller verfügbaren Tastenkombinationen zur barrierefreien Bedienung.",
+    "en": "Overview of all available keyboard shortcuts for accessible operation.",
+    "es": "Descripción general de todos los atajos de teclado disponibles para una operación accesible.",
+    "zh": "所有可用无障碍键盘快捷键概览。",
+    "ja": "アクセシブルな操作のための利用可能なすべてのキーボードショートカットの概要。",
+    "ru": "Обзор всех доступных сочетаний клавиш для удобного управления."
+  },
+  "a11y_wcag_reference": {
+    "de": "Barrierefreiheit nach WCAG 2.1 AA / BITV 2.0: Alle Funktionen sind vollständig per Tastatur bedienbar.",
+    "en": "Accessibility according to WCAG 2.1 AA / BITV 2.0: All functions can be operated entirely via keyboard.",
+    "es": "Accesibilidad según WCAG 2.1 AA / BITV 2.0: Todas las funciones son totalmente accesibles mediante teclado.",
+    "zh": "符合 WCAG 2.1 AA / BITV 2.0 无障碍标准：所有功能均可完全通过键盘操作。",
+    "ja": "WCAG 2.1 AA / BITV 2.0 に準拠したアクセシビリティ: すべての機能はキーボードのみで完全に操作可能です。",
+    "ru": "Доступность по стандартам WCAG 2.1 AA / BITV 2.0: Все функции полностью доступны с клавиатуры."
   }
 }

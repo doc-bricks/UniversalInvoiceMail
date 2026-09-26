@@ -59,6 +59,7 @@ from PySide6.QtWidgets import (
     QTabWidget,
 )
 from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import Qt, QEvent
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -484,3 +485,237 @@ def test_query_builder_dialog_accessibility(qapp):
         assert dialog.findChild(QPushButton, "query_dialog_cancel_button").accessibleName() == "Abbrechen"
     finally:
         dialog.close()
+def test_shortcuts_dialog_content_and_accessibility(qapp):
+    """ShortcutsDialog lists key combinations, provides WCAG 2.1 AA context, and supports offscreen testing."""
+    shortcuts = [
+        ("F1", "Tastaturkürzel & Barrierefreiheits-Hilfe anzeigen", "Global"),
+        ("Strg+Eingabe / Strg+Enter", "Rechnungen abrufen (Start)", "Global"),
+        ("F5 / Strg+R", "Rechnungstabelle mit Ordnerinhalt aktualisieren", "Global / Rechnungen"),
+        ("Strg+O", "Speicherordner für Rechnungen im Dateimanager öffnen", "Global / Rechnungen"),
+        ("Strg+A", "Alle sichtbaren Rechnungen in der Tabelle markieren", "Rechnungen"),
+        ("Esc / Strg+Umschalt+A", "Markierungen in der Rechnungstabelle aufheben", "Rechnungen"),
+        ("Eingabe / Return", "Ausgewählte Rechnung öffnen / Profil bzw. Konto bearbeiten", "Tabelle / Listen"),
+        ("Leertaste", "Rechnungs-Auswahlfeld umschalten (Check/Uncheck)", "Rechnungstabelle"),
+        ("Entf / Backspace", "Ausgewählte Rechnungen, Profile oder Konten löschen", "Tabelle / Listen"),
+        ("Strg+E", "Rechnungsliste als CSV exportieren", "Rechnungen"),
+        ("Strg+S", "Einstellungen speichern", "Einstellungen"),
+        ("Alt+B", "Fokus auf Beraternummer setzen", "DATEV-Dialog"),
+        ("Alt+M", "Fokus auf Mandantennummer setzen", "DATEV-Dialog"),
+        ("Alt+Z / Einfg", "Neue Zeile im Konten-Mapping hinzufügen", "DATEV-Dialog"),
+        ("Alt+E / Entf", "Ausgewählte Zeile im Konten-Mapping entfernen", "DATEV-Dialog"),
+        ("Alt+S", "Standardmäßige Konten-Zuordnung wiederherstellen", "DATEV-Dialog"),
+    ]
+    dialog = uim.ShortcutsDialog(shortcuts)
+    try:
+        assert dialog.windowTitle() == "Tastaturkürzel & Hilfe"
+        assert dialog.objectName() == "shortcuts_help_dialog"
+        assert dialog.accessibleName() == "Tastaturkürzel und Hilfe"
+        assert "Übersicht" in dialog.accessibleDescription()
+
+        assert dialog.table.rowCount() == len(shortcuts)
+        assert dialog.table.columnCount() == 3
+        assert dialog.table.objectName() == "shortcuts_table"
+        assert dialog.table.accessibleName() == "Tabelle aller Tastaturkürzel"
+        assert "barrierefreien Bedienung" in dialog.table.accessibleDescription()
+
+        # Check first and last shortcut entries
+        assert dialog.table.item(0, 0).text() == "F1"
+        assert dialog.table.item(0, 1).text() == "Tastaturkürzel & Barrierefreiheits-Hilfe anzeigen"
+        assert dialog.table.item(0, 2).text() == "Global"
+
+        assert dialog.table.item(len(shortcuts) - 1, 0).text() == "Alt+S"
+
+        # Close button
+        assert dialog.close_btn is not None
+        assert dialog.close_btn.objectName() == "shortcuts_dialog_close_button"
+        assert dialog.close_btn.accessibleName() == "Dialog schließen"
+    finally:
+        dialog.close()
+
+
+def test_mainwindow_shortcuts_f1_and_help_button(tmp_path, monkeypatch, qapp):
+    """MainWindow registers F1 shortcut, provides a visible help button, and returns shortcuts in offscreen mode."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        # F1 Shortcut registered
+        assert hasattr(window, "shortcut_help_f1")
+        assert window.shortcut_help_f1.key() == QKeySequence("F1")
+
+        # Visible button in toolbar
+        btn_help = window.findChild(QPushButton, "show_shortcuts_button")
+        assert btn_help is not None
+        assert btn_help.text() == "❓ Hilfe & Kürzel"
+        assert btn_help.accessibleName() == "Tastaturkürzel und Hilfe anzeigen"
+        assert "F1" in btn_help.toolTip()
+
+        # show_shortcuts_dialog() offscreen bypass returns title and list of shortcuts
+        title, sc_list = window.show_shortcuts_dialog()
+        assert title == "Tastaturkürzel & Hilfe"
+        assert len(sc_list) == 16
+        keys = [sc[0] for sc in sc_list]
+        assert "F1" in keys
+        assert "Strg+Eingabe / Strg+Enter" in keys
+        assert "F5 / Strg+R" in keys
+        assert "Ctrl+O" in [k.replace("Strg", "Ctrl") for k in keys]
+    finally:
+        window.close()
+
+
+def test_datev_settings_dialog_accessibility_and_buddies(qapp):
+    """DATEVSettingsDialog provides mnemonic buddies, object names, and accessible descriptions."""
+    config = uim.DATEVConfig(
+        berater_nr="98765",
+        mandant_nr="43210",
+        konten_mapping={"TestProvider": (70001, 4901)},
+    )
+    dialog = uim.DATEVSettingsDialog(config)
+    try:
+        assert dialog.objectName() == "datev_settings_dialog"
+        assert dialog.accessibleName() == "DATEV-Export Einstellungen und Konten-Mapping"
+
+        # Object names
+        assert dialog.inp_berater.objectName() == "datev_berater_input"
+        assert dialog.inp_mandant.objectName() == "datev_mandant_input"
+        assert dialog.table_mapping.objectName() == "datev_mapping_table"
+        assert dialog.btn_add_row.objectName() == "datev_add_row_button"
+        assert dialog.btn_remove_row.objectName() == "datev_remove_row_button"
+        assert dialog.btn_reset_mapping.objectName() == "datev_reset_mapping_button"
+
+        # Label buddies
+        labels = dialog.findChildren(QLabel)
+        buddies = {lbl.text(): lbl.buddy() for lbl in labels if lbl.buddy() is not None}
+        assert "&Beraternummer:" in buddies and buddies["&Beraternummer:"] == dialog.inp_berater
+        assert "&Mandantennummer:" in buddies and buddies["&Mandantennummer:"] == dialog.inp_mandant
+
+        # Button texts & mnemonics
+        assert "&Zeile hinzufügen" in dialog.btn_add_row.text()
+        assert "Zeile &entfernen" in dialog.btn_remove_row.text()
+        assert "&Standard wiederherstellen" in dialog.btn_reset_mapping.text()
+
+        # Table items have tooltips
+        assert dialog.table_mapping.rowCount() == 1
+        item_k = dialog.table_mapping.item(0, 0)
+        assert item_k is not None and "Absender" in item_k.toolTip()
+        item_c = dialog.table_mapping.item(0, 1)
+        assert item_c is not None and "Kreditorenkonto" in item_c.toolTip()
+
+        # Dialog buttons have object names
+        ok_btn = dialog.dialog_buttons.button(uim.QDialogButtonBox.StandardButton.Ok)
+        assert ok_btn.objectName() == "datev_dialog_ok_button"
+        assert ok_btn.accessibleName() == "DATEV-Einstellungen speichern"
+
+        cancel_btn = dialog.dialog_buttons.button(uim.QDialogButtonBox.StandardButton.Cancel)
+        assert cancel_btn.objectName() == "datev_dialog_cancel_button"
+        assert cancel_btn.accessibleName() == "DATEV-Einstellungen verwerfen"
+    finally:
+        dialog.close()
+
+
+def test_accessible_mapping_table_keyboard_navigation(qapp):
+    """AccessibleMappingTable handles Delete/Backspace (remove row) and Insert (add row)."""
+    from PySide6.QtGui import QKeyEvent
+
+    config = uim.DATEVConfig(
+        berater_nr="12345",
+        mandant_nr="67890",
+        konten_mapping={"A": (70000, 4900), "B": (70001, 4901)},
+    )
+    dialog = uim.DATEVSettingsDialog(config)
+    try:
+        assert dialog.table_mapping.rowCount() == 2
+
+        # Select row 1 and press Delete
+        dialog.table_mapping.setCurrentCell(1, 0)
+        del_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Delete, Qt.KeyboardModifier.NoModifier)
+        dialog.table_mapping.keyPressEvent(del_event)
+        assert dialog.table_mapping.rowCount() == 1
+
+        # Press Insert to add row
+        ins_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Insert, Qt.KeyboardModifier.NoModifier)
+        dialog.table_mapping.keyPressEvent(ins_event)
+        assert dialog.table_mapping.rowCount() == 2
+        assert dialog.table_mapping.item(1, 0).text() == "Neuer Partner"
+    finally:
+        dialog.close()
+
+
+def test_accessible_invoice_table_keyboard_navigation(tmp_path, monkeypatch, qapp):
+    """AccessibleInvoiceTable handles Enter (open invoice) and Space (toggle checkbox)."""
+    from PySide6.QtGui import QKeyEvent
+
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        invoice_path = tmp_path / "test_rechnung.pdf"
+        invoice_path.write_bytes(b"dummy")
+        inv = uim.Invoice(
+            id="inv_kb_1",
+            profile_name="Shop",
+            filename="test_rechnung.pdf",
+            date="2026-09-26",
+            path=str(invoice_path),
+            amount=42.50,
+        )
+        window.invoices = [inv]
+        window.refresh_invoice_table()
+
+        assert window.invoice_table.rowCount() == 1
+
+        # Test Space key toggles checkmark
+        window.invoice_table.setCurrentCell(0, 0)
+        item0 = window.invoice_table.item(0, 0)
+        assert item0.checkState() == Qt.CheckState.Unchecked
+
+        space_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.NoModifier)
+        window.invoice_table.keyPressEvent(space_event)
+        assert item0.checkState() == Qt.CheckState.Checked
+
+        window.invoice_table.keyPressEvent(space_event)
+        assert item0.checkState() == Qt.CheckState.Unchecked
+
+        # Test Enter key triggers cellDoubleClicked
+        opened = []
+        window.invoice_table.cellDoubleClicked.connect(lambda row, col: opened.append((row, col)))
+        enter_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
+        window.invoice_table.keyPressEvent(enter_event)
+        assert opened == [(0, 0)]
+    finally:
+        window.close()
+
+
+def test_accessible_list_widget_keyboard_navigation(qapp):
+    """AccessibleListWidget handles Return (edit callback) and Delete (delete callback)."""
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QListWidgetItem
+
+    edited = []
+    deleted = []
+
+    list_widget = uim.AccessibleListWidget(
+        on_edit_callback=lambda item: edited.append(item.text()),
+        on_delete_callback=lambda: deleted.append(True),
+    )
+    try:
+        item1 = QListWidgetItem("Item 1")
+        item2 = QListWidgetItem("Item 2")
+        list_widget.addItem(item1)
+        list_widget.addItem(item2)
+
+        list_widget.setCurrentItem(item1)
+
+        # Press Enter -> on_edit_callback
+        ret_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
+        list_widget.keyPressEvent(ret_event)
+        assert edited == ["Item 1"]
+
+        # Press Delete -> on_delete_callback
+        del_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Delete, Qt.KeyboardModifier.NoModifier)
+        list_widget.keyPressEvent(del_event)
+        assert deleted == [True]
+    finally:
+        list_widget.close()

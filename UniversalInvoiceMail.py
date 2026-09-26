@@ -53,6 +53,16 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QThread, Signal, QUrl, QDate
 from PySide6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
 
+# Internationalisierung (i18n)
+try:
+    from translator import get_translator, t
+except ImportError:
+    def t(key: str, **kwargs) -> str:
+        return kwargs.get("default", key)
+
+    def get_translator():
+        return None
+
 # PDF Konvertierung
 try:
     from xhtml2pdf import pisa
@@ -3237,6 +3247,145 @@ class ProfileDialog(QDialog):
         )
 
 
+# ==================== BARRIEREFREIE STEUERELEMENTE (WCAG 2.1 AA) ====================
+
+class AccessibleInvoiceTable(QTableWidget):
+    """Tabelle für Rechnungen mit barrierefreier Tastatursteuerung (Enter: Öffnen, Leertaste: Checkbox)."""
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            curr = self.currentRow()
+            if curr >= 0:
+                self.cellDoubleClicked.emit(curr, 0)
+                event.accept()
+                return
+        elif event.key() == Qt.Key.Key_Space:
+            curr = self.currentRow()
+            if curr >= 0:
+                item = self.item(curr, 0)
+                if item is not None and (item.flags() & Qt.ItemFlag.ItemIsUserCheckable):
+                    new_state = (
+                        Qt.CheckState.Unchecked
+                        if item.checkState() == Qt.CheckState.Checked
+                        else Qt.CheckState.Checked
+                    )
+                    item.setCheckState(new_state)
+                    event.accept()
+                    return
+        super().keyPressEvent(event)
+
+
+class AccessibleListWidget(QListWidget):
+    """ListWidget mit Tastaturnavigation (Enter: Bearbeiten, Entf/Backspace: Löschen)."""
+
+    def __init__(self, on_edit_callback=None, on_delete_callback=None, parent=None):
+        super().__init__(parent)
+        self.on_edit_callback = on_edit_callback
+        self.on_delete_callback = on_delete_callback
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            curr_item = self.currentItem()
+            if curr_item and self.on_edit_callback:
+                self.on_edit_callback(curr_item)
+                event.accept()
+                return
+        elif event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            if self.on_delete_callback:
+                self.on_delete_callback()
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+
+class AccessibleMappingTable(QTableWidget):
+    """Tabelle für DATEV-Konten-Mapping mit Tastatursteuerung (Entf: Zeile entfernen, Einfg: Zeile hinzufügen)."""
+
+    def __init__(self, on_remove_callback=None, on_add_callback=None, parent=None):
+        super().__init__(parent)
+        self.on_remove_callback = on_remove_callback
+        self.on_add_callback = on_add_callback
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            if not (self.currentItem() and self.isPersistentEditorOpen(self.currentItem())):
+                if self.on_remove_callback:
+                    self.on_remove_callback()
+                    event.accept()
+                    return
+        elif event.key() in (Qt.Key.Key_Insert,):
+            if self.on_add_callback:
+                self.on_add_callback()
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+
+class ShortcutsDialog(QDialog):
+    """Barrierefreier Hilfedialog mit strukturierter Übersicht aller Tastaturkürzel (WCAG 2.1 AA / BITV 2.0)."""
+
+    def __init__(self, shortcuts: List[Tuple[str, str, str]], parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(t("dlg_shortcuts_title", default="Tastaturkürzel & Hilfe"))
+        self.setObjectName("shortcuts_help_dialog")
+        self.setAccessibleName("Tastaturkürzel und Hilfe")
+        self.setAccessibleDescription("Dialog zur Übersicht aller Tastenkombinationen und Barrierefreiheitsfunktionen.")
+        self.setMinimumWidth(640)
+        self.setMinimumHeight(480)
+
+        layout = QVBoxLayout(self)
+
+        heading = QLabel(f"<h3>{t('dlg_shortcuts_title', default='Tastaturkürzel & Hilfe')}</h3>")
+        layout.addWidget(heading)
+
+        self.table = QTableWidget(len(shortcuts), 3, self)
+        self.table.setObjectName("shortcuts_table")
+        self.table.setHorizontalHeaderLabels([
+            t("shortcuts_col_key", default="Tastenkombination"),
+            t("shortcuts_col_action", default="Aktion / Funktion"),
+            t("shortcuts_col_scope", default="Bereich"),
+        ])
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.table.setAccessibleName(t("shortcuts_table_name", default="Tabelle aller Tastaturkürzel"))
+        self.table.setAccessibleDescription(
+            t("shortcuts_table_desc", default="Übersicht aller verfügbaren Tastenkombinationen zur barrierefreien Bedienung.")
+        )
+
+        for row, (key_str, action_str, scope_str) in enumerate(shortcuts):
+            item_key = QTableWidgetItem(key_str)
+            item_key.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            item_act = QTableWidgetItem(action_str)
+            item_act.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            item_scope = QTableWidgetItem(scope_str)
+            item_scope.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            self.table.setItem(row, 0, item_key)
+            self.table.setItem(row, 1, item_act)
+            self.table.setItem(row, 2, item_scope)
+
+        layout.addWidget(self.table)
+
+        a11y_note = QLabel(
+            t("a11y_wcag_reference", default="Barrierefreiheit nach WCAG 2.1 AA / BITV 2.0: Alle Funktionen sind vollständig per Tastatur bedienbar.")
+        )
+        a11y_note.setWordWrap(True)
+        a11y_note.setStyleSheet("color: #aaa; font-size: 9pt; margin-top: 4px;")
+        layout.addWidget(a11y_note)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        btn_box.rejected.connect(self.reject)
+        self.close_btn = btn_box.button(QDialogButtonBox.StandardButton.Close)
+        if self.close_btn:
+            self.close_btn.setObjectName("shortcuts_dialog_close_button")
+            self.close_btn.setText(t("btn_close", default="Schließen"))
+            self.close_btn.setAccessibleName("Dialog schließen")
+            self.close_btn.setFocus()
+        layout.addWidget(btn_box)
+
+
 # ==================== DATEV-DIALOG ====================
 
 class DATEVSettingsDialog(QDialog):
@@ -3245,6 +3394,9 @@ class DATEVSettingsDialog(QDialog):
     def __init__(self, config: DATEVConfig, parent=None):
         super().__init__(parent)
         self.setWindowTitle("DATEV-Export Einstellungen & Konten-Mapping")
+        self.setObjectName("datev_settings_dialog")
+        self.setAccessibleName("DATEV-Export Einstellungen und Konten-Mapping")
+        self.setAccessibleDescription("Dialog zur Konfiguration von Beraternummer, Mandantennummer und Gegenkonten.")
         self.setMinimumWidth(550)
         self.setMinimumHeight(450)
 
@@ -3253,23 +3405,29 @@ class DATEVSettingsDialog(QDialog):
 
         berater_val = getattr(config, 'berater_nr', '12345') if config else '12345'
         self.inp_berater = QLineEdit(str(berater_val))
+        self.inp_berater.setObjectName("datev_berater_input")
         self.inp_berater.setPlaceholderText("z.B. 12345")
         self.inp_berater.setAccessibleName("Beraternummer")
         self.inp_berater.setAccessibleDescription(
             "DATEV-Beraternummer für den Buchungsstapel."
         )
         self.inp_berater.setToolTip("DATEV-Beraternummer eingeben")
-        form.addRow("Beraternummer:", self.inp_berater)
+        lbl_berater = QLabel("&Beraternummer:")
+        lbl_berater.setBuddy(self.inp_berater)
+        form.addRow(lbl_berater, self.inp_berater)
 
         mandant_val = getattr(config, 'mandant_nr', '67890') if config else '67890'
         self.inp_mandant = QLineEdit(str(mandant_val))
+        self.inp_mandant.setObjectName("datev_mandant_input")
         self.inp_mandant.setPlaceholderText("z.B. 67890")
         self.inp_mandant.setAccessibleName("Mandantennummer")
         self.inp_mandant.setAccessibleDescription(
             "DATEV-Mandantennummer für den Buchungsstapel."
         )
         self.inp_mandant.setToolTip("DATEV-Mandantennummer eingeben")
-        form.addRow("Mandantennummer:", self.inp_mandant)
+        lbl_mandant = QLabel("&Mandantennummer:")
+        lbl_mandant.setBuddy(self.inp_mandant)
+        form.addRow(lbl_mandant, self.inp_mandant)
 
         layout.addLayout(form)
 
@@ -3277,7 +3435,8 @@ class DATEVSettingsDialog(QDialog):
         lbl_mapping = QLabel("<b>Konten-Mapping (Kreditoren & Gegenkonten per Absender):</b>")
         layout.addWidget(lbl_mapping)
 
-        self.table_mapping = QTableWidget()
+        self.table_mapping = AccessibleMappingTable(on_remove_callback=self._remove_row, on_add_callback=self._add_row)
+        self.table_mapping.setObjectName("datev_mapping_table")
         self.table_mapping.setColumnCount(3)
         self.table_mapping.setHorizontalHeaderLabels(["Absender / Schlüsselwort", "Konto (Kreditor)", "Gegenkonto (Aufwand)"])
         self.table_mapping.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -3292,30 +3451,33 @@ class DATEVSettingsDialog(QDialog):
 
         # Table Control Buttons
         btn_layout = QHBoxLayout()
-        self.btn_add_row = QPushButton("Zeile hinzufügen")
+        self.btn_add_row = QPushButton("&Zeile hinzufügen")
+        self.btn_add_row.setObjectName("datev_add_row_button")
         self.btn_add_row.setAccessibleName("Zeile hinzufügen")
         self.btn_add_row.setAccessibleDescription(
             "Fügt eine neue, editierbare Konten-Mapping-Zeile hinzu."
         )
-        self.btn_add_row.setToolTip("Neue Konten-Mapping-Zeile hinzufügen")
+        self.btn_add_row.setToolTip("Neue Konten-Mapping-Zeile hinzufügen (Einfg / Alt+Z)")
         self.btn_add_row.clicked.connect(self._add_row)
         btn_layout.addWidget(self.btn_add_row)
 
-        self.btn_remove_row = QPushButton("Zeile entfernen")
+        self.btn_remove_row = QPushButton("Zeile &entfernen")
+        self.btn_remove_row.setObjectName("datev_remove_row_button")
         self.btn_remove_row.setAccessibleName("Zeile entfernen")
         self.btn_remove_row.setAccessibleDescription(
             "Entfernt die aktuell ausgewählte Konten-Mapping-Zeile."
         )
-        self.btn_remove_row.setToolTip("Ausgewählte Konten-Mapping-Zeile entfernen")
+        self.btn_remove_row.setToolTip("Ausgewählte Konten-Mapping-Zeile entfernen (Entf / Alt+E)")
         self.btn_remove_row.clicked.connect(self._remove_row)
         btn_layout.addWidget(self.btn_remove_row)
 
-        self.btn_reset_mapping = QPushButton("Standard wiederherstellen")
+        self.btn_reset_mapping = QPushButton("&Standard wiederherstellen")
+        self.btn_reset_mapping.setObjectName("datev_reset_mapping_button")
         self.btn_reset_mapping.setAccessibleName("Standard wiederherstellen")
         self.btn_reset_mapping.setAccessibleDescription(
             "Ersetzt alle Einträge durch die standardmäßige Konten-Zuordnung."
         )
-        self.btn_reset_mapping.setToolTip("Standardmäßige Konten-Zuordnung wiederherstellen")
+        self.btn_reset_mapping.setToolTip("Standardmäßige Konten-Zuordnung wiederherstellen (Alt+S)")
         self.btn_reset_mapping.clicked.connect(self._reset_mapping)
         btn_layout.addWidget(self.btn_reset_mapping)
 
@@ -3334,12 +3496,14 @@ class DATEVSettingsDialog(QDialog):
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         ok_button = self.dialog_buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok_button.setObjectName("datev_dialog_ok_button")
         ok_button.setAccessibleName("DATEV-Einstellungen speichern")
         ok_button.setAccessibleDescription(
             "Speichert Beraternummer, Mandantennummer und Konten-Mapping."
         )
         ok_button.setToolTip("DATEV-Einstellungen speichern")
         cancel_button = self.dialog_buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        cancel_button.setObjectName("datev_dialog_cancel_button")
         cancel_button.setAccessibleName("DATEV-Einstellungen verwerfen")
         cancel_button.setAccessibleDescription(
             "Schließt den Dialog ohne Änderungen zu speichern."
@@ -3360,16 +3524,28 @@ class DATEVSettingsDialog(QDialog):
             row = self.table_mapping.rowCount()
             self.table_mapping.insertRow(row)
             konto, gegenkonto = val if isinstance(val, (tuple, list)) and len(val) == 2 else (70000, 4900)
-            self.table_mapping.setItem(row, 0, QTableWidgetItem(str(key)))
-            self.table_mapping.setItem(row, 1, QTableWidgetItem(str(konto)))
-            self.table_mapping.setItem(row, 2, QTableWidgetItem(str(gegenkonto)))
+            item_k = QTableWidgetItem(str(key))
+            item_k.setToolTip("Absender oder Schlüsselwort (z. B. Adobe, Hetzner, Telekom)")
+            item_c = QTableWidgetItem(str(konto))
+            item_c.setToolTip("Kreditorenkonto (z. B. 70000)")
+            item_g = QTableWidgetItem(str(gegenkonto))
+            item_g.setToolTip("Aufwandskonto (z. B. 4900)")
+            self.table_mapping.setItem(row, 0, item_k)
+            self.table_mapping.setItem(row, 1, item_c)
+            self.table_mapping.setItem(row, 2, item_g)
 
     def _add_row(self):
         row = self.table_mapping.rowCount()
         self.table_mapping.insertRow(row)
-        self.table_mapping.setItem(row, 0, QTableWidgetItem("Neuer Partner"))
-        self.table_mapping.setItem(row, 1, QTableWidgetItem("70000"))
-        self.table_mapping.setItem(row, 2, QTableWidgetItem("4900"))
+        item_k = QTableWidgetItem("Neuer Partner")
+        item_k.setToolTip("Absender oder Schlüsselwort (z. B. Adobe, Hetzner, Telekom)")
+        item_c = QTableWidgetItem("70000")
+        item_c.setToolTip("Kreditorenkonto (z. B. 70000)")
+        item_g = QTableWidgetItem("4900")
+        item_g.setToolTip("Aufwandskonto (z. B. 4900)")
+        self.table_mapping.setItem(row, 0, item_k)
+        self.table_mapping.setItem(row, 1, item_c)
+        self.table_mapping.setItem(row, 2, item_g)
 
     def _remove_row(self):
         curr = self.table_mapping.currentRow()
@@ -3677,13 +3853,16 @@ class MainWindow(QMainWindow):
         profile_group = QGroupBox("Suchprofile")
         profile_layout = QVBoxLayout(profile_group)
 
-        self.profile_list = QListWidget()
+        self.profile_list = AccessibleListWidget(
+            on_edit_callback=self.edit_profile,
+            on_delete_callback=self.delete_profile
+        )
         self.profile_list.setObjectName("profile_list")
         self.profile_list.setAccessibleName("Suchprofile")
         self.profile_list.setAccessibleDescription(
-            "Liste aller angelegten Rechnungs-Suchprofile. Doppelklick öffnet den Bearbeitungsdialog."
+            "Liste aller angelegten Rechnungs-Suchprofile. Eingabe zum Bearbeiten, Entf zum Löschen."
         )
-        self.profile_list.setToolTip("Suchprofile verwalten (Doppelklick zum Bearbeiten)")
+        self.profile_list.setToolTip("Suchprofile verwalten (Eingabe: Bearbeiten, Entf: Löschen)")
         self.profile_list.itemDoubleClicked.connect(self.edit_profile)
         profile_layout.addWidget(self.profile_list)
 
@@ -3712,13 +3891,16 @@ class MainWindow(QMainWindow):
         account_group = QGroupBox("E-Mail Konten")
         account_layout = QVBoxLayout(account_group)
 
-        self.account_list = QListWidget()
+        self.account_list = AccessibleListWidget(
+            on_edit_callback=self.edit_account,
+            on_delete_callback=self.delete_account
+        )
         self.account_list.setObjectName("account_list")
         self.account_list.setAccessibleName("E-Mail-Konten")
         self.account_list.setAccessibleDescription(
-            "Liste aller konfigurierten E-Mail-Konten. Doppelklick öffnet den Bearbeitungsdialog."
+            "Liste aller konfigurierten E-Mail-Konten. Eingabe zum Bearbeiten, Entf zum Löschen."
         )
-        self.account_list.setToolTip("E-Mail-Konten verwalten (Doppelklick zum Bearbeiten)")
+        self.account_list.setToolTip("E-Mail-Konten verwalten (Eingabe: Bearbeiten, Entf: Löschen)")
         self.account_list.setMaximumHeight(100)
         self.account_list.itemDoubleClicked.connect(self.edit_account)
         account_layout.addWidget(self.account_list)
@@ -3759,7 +3941,7 @@ class MainWindow(QMainWindow):
         invoice_tab = QWidget()
         invoice_layout = QVBoxLayout(invoice_tab)
 
-        self.invoice_table = QTableWidget(0, 8)
+        self.invoice_table = AccessibleInvoiceTable(0, 8)
         self.invoice_table.setHorizontalHeaderLabels(
             ["✓", "Typ", "Datum", "Shop", "Absender", "Betrag (€)", "Datei", "Pfad"])
         self.invoice_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
@@ -3857,6 +4039,16 @@ class MainWindow(QMainWindow):
         btn_datev.setEnabled(DATEV_AVAILABLE)
         if not DATEV_AVAILABLE:
             btn_datev.setToolTip("datev_exporter.py nicht gefunden")
+
+        btn_shortcuts = QPushButton("❓ Hilfe & Kürzel")
+        btn_shortcuts.clicked.connect(self.show_shortcuts_dialog)
+        btn_shortcuts.setObjectName("show_shortcuts_button")
+        btn_shortcuts.setAccessibleName("Tastaturkürzel und Hilfe anzeigen")
+        btn_shortcuts.setAccessibleDescription(
+            "Öffnet die Übersicht aller Tastenkombinationen und Bedienhilfen (Taste F1)."
+        )
+        btn_shortcuts.setToolTip("Tastaturkürzel und Bedienhilfe anzeigen (F1)")
+        inv_btn_row.addWidget(btn_shortcuts)
         inv_btn_row.addWidget(btn_select_all)
         inv_btn_row.addWidget(btn_select_none)
         inv_btn_row.addWidget(btn_delete_selected)
@@ -4147,6 +4339,10 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         # Strg+S: Einstellungen speichern
         self.shortcut_save_settings = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save_settings.activated.connect(self.save_settings)
+
+        # F1: Hilfe & Tastaturkürzel
+        self.shortcut_help_f1 = QShortcut(QKeySequence("F1"), self)
+        self.shortcut_help_f1.activated.connect(self.show_shortcuts_dialog)
 
     def refresh_ui(self):
         """Aktualisiert alle Listen"""
@@ -4766,6 +4962,32 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         self.settings.date_filter_months = 0
 
         self.save_config()
+
+    def show_shortcuts_dialog(self):
+        """Öffnet den Dialog zur Übersicht aller Tastaturkürzel und Barrierefreiheitsfunktionen."""
+        shortcuts = [
+            ("F1", "Tastaturkürzel & Barrierefreiheits-Hilfe anzeigen", "Global"),
+            ("Strg+Eingabe / Strg+Enter", "Rechnungen abrufen (Start)", "Global"),
+            ("F5 / Strg+R", "Rechnungstabelle mit Ordnerinhalt aktualisieren", "Global / Rechnungen"),
+            ("Strg+O", "Speicherordner für Rechnungen im Dateimanager öffnen", "Global / Rechnungen"),
+            ("Strg+A", "Alle sichtbaren Rechnungen in der Tabelle markieren", "Rechnungen"),
+            ("Esc / Strg+Umschalt+A", "Markierungen in der Rechnungstabelle aufheben", "Rechnungen"),
+            ("Eingabe / Return", "Ausgewählte Rechnung öffnen / Profil bzw. Konto bearbeiten", "Tabelle / Listen"),
+            ("Leertaste", "Rechnungs-Auswahlfeld umschalten (Check/Uncheck)", "Rechnungstabelle"),
+            ("Entf / Backspace", "Ausgewählte Rechnungen, Profile oder Konten löschen", "Tabelle / Listen"),
+            ("Strg+E", "Rechnungsliste als CSV exportieren", "Rechnungen"),
+            ("Strg+S", "Einstellungen speichern", "Einstellungen"),
+            ("Alt+B", "Fokus auf Beraternummer setzen", "DATEV-Dialog"),
+            ("Alt+M", "Fokus auf Mandantennummer setzen", "DATEV-Dialog"),
+            ("Alt+Z / Einfg", "Neue Zeile im Konten-Mapping hinzufügen", "DATEV-Dialog"),
+            ("Alt+E / Entf", "Ausgewählte Zeile im Konten-Mapping entfernen", "DATEV-Dialog"),
+            ("Alt+S", "Standardmäßige Konten-Zuordnung wiederherstellen", "DATEV-Dialog"),
+        ]
+        if os.environ.get("QT_QPA_PLATFORM") == "offscreen" and not getattr(self, "_allow_modal_dialog_in_test", False):
+            return "Tastaturkürzel & Hilfe", shortcuts
+
+        dlg = ShortcutsDialog(shortcuts, parent=self)
+        return dlg.exec()
 
     def save_settings(self):
         """Speichert Einstellungen (mit Benutzer-Feedback)"""

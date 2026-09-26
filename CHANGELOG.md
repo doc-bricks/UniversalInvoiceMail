@@ -23,6 +23,24 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### UX & Accessibility Review (WCAG 2.1 AA / BITV 2.0) (2026-09-26)
+- **Tastaturbedienung & Barrierefreiheit (WCAG 2.1 AA / BITV 2.0)**:
+  - `AccessibleInvoiceTable`: Tastaturbedienung für die Rechnungstabelle implementiert (`Eingabe`/`Return` öffnet die ausgewählte Rechnung, `Leertaste` schaltet die Checkbox für den Export/Löschvorgang um).
+  - `AccessibleListWidget`: Tastaturnavigation für Suchprofile (`profile_list`) und E-Mail-Konten (`account_list`) implementiert (`Eingabe`/`Return` öffnet den Bearbeitungsdialog, `Entf`/`Backspace` löscht den ausgewählten Eintrag).
+  - `AccessibleMappingTable`: Tastatursteuerung für das DATEV-Konten-Mapping implementiert (`Entf`/`Backspace` entfernt die ausgewählte Zeile, `Einfg` fügt eine neue Zeile hinzu).
+  - `ShortcutsDialog` & `F1`-Hilfe: Zentraler barrierefreier Hilfedialog mit tabellarischer Übersicht aller 16 Tastaturkürzel (Tastenkombination, Aktion, Bereich), WCAG 2.1 AA / BITV 2.0 Hinweistext, Schließen-Button mit Initialfokus und barrierefreiem Offscreen-Test-Bypass.
+  - `MainWindow`: Neuer Toolbar-Button `show_shortcuts_button` ("❓ Hilfe & Kürzel") und globaler Shortcut `F1` (`shortcut_help_f1`) registriert.
+- **DATEVSettingsDialog A11y & Mnemonics**:
+  - Tastatur-Mnemonics und Label-Buddies ergänzt: `&Beraternummer:` (`Alt+B`) und `&Mandantennummer:` (`Alt+M`) mit `setBuddy()` an Eingabefelder angebunden.
+  - Button-Mnemonics und Tastaturkürzel: `&Zeile hinzufügen` (`Alt+Z`), `Zeile &entfernen` (`Alt+E`), `&Standard wiederherstellen` (`Alt+S`).
+  - Standardisierte `objectName`-Vergabe für alle Bedienelemente (`datev_berater_input`, `datev_mandant_input`, `datev_mapping_table`, `datev_add_row_button`, `datev_remove_row_button`, `datev_reset_mapping_button`, `datev_dialog_ok_button`, `datev_dialog_cancel_button`).
+  - Kontextbezogene Tooltips für alle Mapping-Tabellenzellen (Absender, Kreditorenkonto, Aufwandskonto).
+- **Internationalisierung (Tier-2 6-Sprachen-Parität)**:
+  - 8 neue Lokalisierungsschlüssel in `locales/translations.json` für alle 6 Sprachen (`de`, `en`, `es`, `zh`, `ja`, `ru`) mit echten Umlauten eingepflegt.
+- **Automatisierte Testsuite**:
+  - 6 neue Hermetische Tests in `tests/test_ui_accessibility.py` implementiert (ShortcutsDialog-Inhalt, MainWindow-F1 & Button, DATEVSettingsDialog-Buddies, AccessibleMappingTable-Tastaturnavigation, AccessibleInvoiceTable-Tastaturnavigation, AccessibleListWidget-Tastaturnavigation).
+  - Gesamt-Testsuite: 218 passed in 14.3s (100% grün).
+
 ### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-24)
 - **18-Point Bilateral Quick Navigation & Dual Reciprocal Anchors**:
   - Implemented 18-point bilateral quick navigation across both `README.md` and `README-DE.md` with reciprocal dual HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-18"></a>`) and language-specific anchors for deep-linking.
