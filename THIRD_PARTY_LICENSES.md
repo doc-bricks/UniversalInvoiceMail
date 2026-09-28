@@ -2,7 +2,7 @@
 
 **Project:** UniversalInvoiceMail (`doc-bricks/UniversalInvoiceMail`)<br>
 **Canonical Project License:** MIT License (`MIT`)<br>
-**Audit Date:** 2026-09-24<br>
+**Audit Date:** 2026-09-28<br>
 **Auditor:** Antigravity / Gemini (via GithubBot Pfad B)<br>
 **Version:** `2.3.0`<br>
 **Umbrella Ecosystem:** `open-bricks` / `doc-bricks`<br>

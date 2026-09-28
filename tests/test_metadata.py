@@ -229,13 +229,13 @@ def test_dual_reciprocal_anchors_sec_01_to_sec_18():
 
 
 def test_level_1_sbom_cross_reference_matrix():
-    """Verify THIRD_PARTY_LICENSES.md contains the Invariant Cross-Reference Matrix."""
+    """Verify THIRD_PARTY_LICENSES.md contains the Invariant Cross-Reference Matrix and 2026-09-28 audit."""
     sbom_path = REPO_ROOT / "THIRD_PARTY_LICENSES.md"
     assert sbom_path.exists(), "THIRD_PARTY_LICENSES.md must exist"
     sbom_text = sbom_path.read_text(encoding="utf-8")
 
     assert "Level 1 SBOM Invarianten-Kreuzreferenzmatrix" in sbom_text
-    assert "2026-09-24" in sbom_text
+    assert "2026-09-28" in sbom_text
     for i in range(1, 11):
         # Check codes INV-LOCAL-01 through INV-SLA-10
         pattern = re.compile(rf"INV-[A-Z]+-{i:02d}")
@@ -253,24 +253,48 @@ def test_statutory_disclaimer_and_sla_in_readmes():
         assert "Gefälligkeitsrecht" in doc, f"Gefälligkeitsrecht missing from {name}"
 
 
-def test_marketing_log_pfad_b_audit_20260924():
-    """Verify MARKETING-LOG.txt documents the Pfad B milestone from 2026-09-24."""
+def test_marketing_log_pfad_b_audit_20260928():
+    """Verify MARKETING-LOG.txt documents the Pfad B milestones from 2026-09-24 and 2026-09-28."""
     log_path = REPO_ROOT / "MARKETING-LOG.txt"
     assert log_path.exists(), "MARKETING-LOG.txt must exist"
     log_text = log_path.read_text(encoding="utf-8")
 
     assert "PFAD_B_MARKETING_DISCOVERABILITY_AND_VISUAL_ARCHITECTURE" in log_text
-    assert "2026-09-24" in log_text
+    assert "2026-09-28" in log_text
     assert "20-TOPIC & KEYWORD SATURATION" in log_text
     assert "18-POINT BILATERAL QUICK NAVIGATION" in log_text
 
 
 def test_changelog_unreleased_pfad_b_entry():
-    """Verify CHANGELOG.md contains Pfad B notes under [Unreleased]."""
+    """Verify CHANGELOG.md contains Pfad B notes under [Unreleased] for 2026-09-28."""
     changelog_path = REPO_ROOT / "CHANGELOG.md"
     assert changelog_path.exists(), "CHANGELOG.md must exist"
     changelog_text = changelog_path.read_text(encoding="utf-8")
 
-    assert "### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-24)" in changelog_text
+    assert "### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-28)" in changelog_text
     assert "T-20260920-167562623" in changelog_text
 
+
+def test_pytest_hardening_and_cache_defense():
+    """Verify pyproject.toml and .gitignore enforce test isolation and cache defense."""
+    pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    gitignore_text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+
+    assert "--basetemp=.pytest_temp" in pyproject_text
+    assert '".pytest_temp"' in pyproject_text
+    assert '".hypothesis"' in pyproject_text
+    assert ".pytest_temp/" in gitignore_text
+    assert ".pytest_tmp*/" in gitignore_text
+
+
+def test_readme_badges_and_test_parity():
+    """Verify README badges and comparative matrices reflect 220 passing tests and 2026-09-28."""
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
+
+    assert "Tests-220%20passed" in readme_en
+    assert "Tests-220%20passed" in readme_de
+    assert "Verified-2026--09--28" in readme_en
+    assert "Gepr%C3%BCft-2026--09--28" in readme_de
+    assert "220 Pytest + 10 Node" in readme_en
+    assert "220 Pytest + 10 Node" in readme_de

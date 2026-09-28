@@ -86,8 +86,8 @@ Notice = "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/NOTICE"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q"
-norecursedirs = [".git", ".pytest_cache", "__pycache__", "build", "dist", ".venv", "venv", ".ruff_cache"]
+addopts = "-ra -v --basetemp=.pytest_temp"
+norecursedirs = [".git", ".pytest_cache", "__pycache__", "build", "dist", ".venv", "venv", ".ruff_cache", ".pytest_temp", ".hypothesis"]
 pythonpath = ["."]
 testpaths = ["tests", "."]
 

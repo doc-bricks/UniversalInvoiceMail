@@ -23,6 +23,22 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-28)
+- **20-Topic & Keywords Saturation (PEP 621 Parity)**:
+  - Synchronized `pyproject.toml` keywords 20/20 with GitHub repository topics: `accounting`, `datev`, `document-archive`, `email`, `email-attachments`, `gmail`, `gmail-api`, `imap`, `invoice`, `invoice-automation`, `json-export`, `local-first`, `ocr`, `offline-first`, `pdf`, `privacy-first`, `pyside6`, `python`, `receipt`, `windows`.
+  - Hardened pytest configuration in `pyproject.toml` with `addopts = "-ra -v --basetemp=.pytest_temp"` and `norecursedirs` with `.pytest_temp` and `.hypothesis`.
+  - Added `.pytest_temp/` and `.pytest_tmp*/` to `.gitignore`.
+- **18-Point Bilateral Quick Navigation & Badges**:
+  - Re-verified 18-point bilateral quick navigation across both `README.md` and `README-DE.md` with reciprocal dual HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-18"></a>`) and section slugs.
+  - Synchronized Shields.io badges across EN/DE: Attribution (NOTICE), Verified (2026-09-28), Tests (220 passed | 100% green), Web Companion (10 passed), Python (3.10+), Privacy (100% Local-First), Security (RunAsInvoker | Non-Elevation), Security SLA (48h response | 5d triage), Code Style (Ruff), and Level 1 SBOM.
+- **Level 1 SBOM Re-Audit & Invariant Matrix**:
+  - Level 1 SBOM in `THIRD_PARTY_LICENSES.md` re-audited (Stand 2026-09-28) with 10 core invariants (`INV-LOCAL-01` through `INV-SLA-10`), unprivileged RunAsInvoker non-elevation certification, and full SPDX inventory.
+  - Statutory liability disclaimer under German Civil Code (§ 521 BGB Gefälligkeitsrecht) and 48h Security Response SLA maintained in Section 18 of both `README.md` and `README-DE.md`.
+- **Automated Metadata Contract Test Suite**:
+  - Extended `tests/test_metadata.py` with contract tests verifying 20-topic saturation, 18-point dual reciprocal anchors (`sec-01` to `sec-18`), Level 1 SBOM matrix recency (Stand 2026-09-28), pytest `--basetemp` & `norecursedirs` hardening, and 220 passed tests baseline.
+- **Strict Version Freeze**:
+  - Version 2.3.0 strictly preserved intact per `T-20260920-167562623`.
+
 ### UX & Accessibility Review (WCAG 2.1 AA / BITV 2.0) (2026-09-26)
 - **Tastaturbedienung & Barrierefreiheit (WCAG 2.1 AA / BITV 2.0)**:
   - `AccessibleInvoiceTable`: Tastaturbedienung für die Rechnungstabelle implementiert (`Eingabe`/`Return` öffnet die ausgewählte Rechnung, `Leertaste` schaltet die Checkbox für den Export/Löschvorgang um).
