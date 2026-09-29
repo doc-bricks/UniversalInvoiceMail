@@ -38,7 +38,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from dataclasses import dataclass, asdict, fields
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 import uuid
 
 # GUI
@@ -5463,8 +5463,21 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
 # ==================== MAIN ====================
 
-def main():
-    """Haupteinstiegspunkt"""
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Haupteinstiegspunkt — delegiert bei CLI-Aktionen an cli.py, sonst GUI-Start."""
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # CLI-Aktionen (z. B. --version, --list-profiles, --export-csv, --validate-datev) headless abfangen
+    try:
+        from cli import has_cli_action, run_cli
+        if has_cli_action(argv):
+            res = run_cli(argv)
+            if res != -1:
+                return res
+    except ImportError:
+        pass
+
     # Logging konfigurieren
     log_file = BASE_DIR / "app.log"
     logging.basicConfig(
@@ -5490,8 +5503,8 @@ def main():
     window = MainWindow()
     window.show()
 
-    sys.exit(app.exec())
+    return app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

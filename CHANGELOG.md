@@ -23,6 +23,27 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Headless CLI & Automation Interface (2026-09-29)
+- **Headless CLI Interface (`cli.py` & `UniversalInvoiceMail.py`)**:
+  - Headless CLI-Modul `cli.py` mit `argparse` und Unterstützung für alle Automationsszenarien implementiert:
+    - `--version` / `-v`: Versionsabfrage ("UniversalInvoiceMail 2.3.0").
+    - `--list-profiles`: Listet konfigurierte Shop- und E-Mail-Profile auf.
+    - `--list-accounts`: Listet konfigurierte E-Mail-Accounts auf.
+    - `--list-invoices`: Listet erfasste Rechnungen mit optionalem Filter nach Profil (`--profile`), Status (`--status`) oder Limit (`--limit`) auf.
+    - `--export-csv [ZIELPFAD]`: Exportiert Rechnungen headless als CSV mit Semikolon-Trennzeichen, UTF-8-BOM, Betrag, Währung, Status und Notizen.
+    - `--export-bundle [ZIELPFAD]`: Exportiert Rechnungen headless als portables Austausch-Bundle (`universalinvoicemail-invoicebundle-v1.json`).
+    - `--import-bundle QUELLPFAD [--dry-run]`: Importiert Rechnungsänderungen aus einem Bundle headless mit vollständigem Validierungs- und Kollisionsbericht.
+    - `--validate-datev`: Führt DATEV-Konfigurations- und Buchungsstapelvalidierung headless aus.
+    - `--json`: Ermöglicht strukturierte JSON-Ausgabe aller Listen-, Export-, Import- und Validierungsergebnisse für externe Automatisierungsskripte, n8n und KI-Agenten.
+    - `--config PFAD` & `--invoices-db PFAD`: Ermöglicht Angabe alternativer Konfigurations- und Datenbankdateien für Testisolation.
+    - `--gui`: Expliziter GUI-Start (Standard bei Aufruf ohne Flags).
+  - Delegation in `UniversalInvoiceMail.py::main()`: Erkennt CLI-Flags automatisch vor dem Starten von `QApplication` und führt CLI-Aktionen displaylos aus.
+  - Dokumentation in `README.md` und `README-DE.md` in Abschnitt 10 mit praktischen Beispielen ergänzt.
+- **Test-Suite & Verifikation**:
+  - Neue Testsuite `tests/test_cli.py` mit 12 umfassenden Unit- und Integrationstests angelegt (100% grün).
+  - Gesamtteststand von 220 auf 232 Pytest-Tests gesteigert (100% grün, 0 Fehler, Ausführungszeit ~8.8s).
+  - Badges und Metadaten-Vertragstests in `tests/test_metadata.py` auf 232 bestandene Tests und Stand 2026-09-29 synchronisiert.
+
 ### Pfad B Marketing, Discoverability, Visual Architecture & Bilateral Navigation Parity (2026-09-28)
 - **20-Topic & Keywords Saturation (PEP 621 Parity)**:
   - Synchronized `pyproject.toml` keywords 20/20 with GitHub repository topics: `accounting`, `datev`, `document-archive`, `email`, `email-attachments`, `gmail`, `gmail-api`, `imap`, `invoice`, `invoice-automation`, `json-export`, `local-first`, `ocr`, `offline-first`, `pdf`, `privacy-first`, `pyside6`, `python`, `receipt`, `windows`.

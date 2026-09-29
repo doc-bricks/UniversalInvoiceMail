@@ -3,14 +3,13 @@
 
 AKTUELL: v2.3.0
 ===============
-Status: Stabiler Desktop-Baseline v2.3.0 + Web/PWA Companion (Local-First; 154 Pytest + 10 Node Tests grün)
-Stand: 2026-08-26
+Status: Stabiler Desktop-Baseline v2.3.0 + Web/PWA Companion + Headless CLI (Local-First; 232 Pytest + 10 Node Tests grün)
+Stand: 2026-09-29
 
-### Dokumentations- und Verifikationsstand (2026-08-26)
-- Readback-Basis: `master` bei `107a08353917986d9a43610d53ef41528d38710b`;
-  diese Statuskorrektur baut direkt darauf auf.
-- Plan-D-Readback: `154/154` Pytest-Tests (100% grün), Source-Platform-Smoke und `compileall` grün.
-- Die getrackte Web-Companion-Baseline bleibt bei `10/10` Node-Tests (164 Tests Gesamt-Suite).
+### Dokumentations- und Verifikationsstand (2026-09-29)
+- Plan-D-Readback: `232/232` Pytest-Tests (100% grün), Source-Platform-Smoke und `compileall` grün.
+- Die getrackte Web-Companion-Baseline bleibt bei `10/10` Node-Tests (242 Tests Gesamt-Suite).
+- Headless CLI & Automations-Schnittstelle (`cli.py` & `UniversalInvoiceMail.py`, TW-UIM-08) vollständig umgesetzt und abgesichert.
 - DATEV-Validierung (`TW-UIM-04` / TASKPLAN #1156) und Multi-Language I18N-System (Policy P-006 / 6 Sprachen `de`, `en`, `es`, `zh`, `ja`, `ru`) vollständig umgesetzt und abgesichert.
 
 ## ERLEDIGTE MEILENSTEINE (v1.0 bis v2.3.0)
