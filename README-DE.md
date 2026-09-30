@@ -4,7 +4,7 @@
 
 [![doc-bricks Organisation](https://img.shields.io/badge/Organisation-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ökosystem](https://img.shields.io/badge/%C3%96kosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-232%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-242%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Datenschutz: Local-First](https://img.shields.io/badge/Datenschutz-100%25%20Local--First-brightgreen.svg)](#15-datenschutz--datensicherheit)
@@ -14,7 +14,7 @@
 [![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
-[![Geprüft](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--29-informational.svg)](MARKETING-LOG.txt)
+[![Geprüft](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--30-informational.svg)](MARKETING-LOG.txt)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow.svg)](LICENSE)
 
 Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
@@ -135,7 +135,7 @@ UniversalInvoiceMail richtet sich an vier zentrale Anwendergruppen:
 | **[PERSONA-01]** | **Selbstständige & Kleinunternehmer** | Monatliches manuelles Durchforsten überfüllter Postfächer nach PDF-Rechnungen, Quittungen und Abobestätigungen. | Automatisierter profilbasierter Abruf (IMAP/Gmail), automatische Konvertierung in Standard-PDFs, privates Archiv und DATEV-Export. |
 | **[PERSONA-02]** | **Steuerberater & Buchhalter** | Uneinheitliche Belegformate, fehlende Belegnummern und fehlerhafte Datums-/Dezimalformate, die den Import in DATEV scheitern lassen. | Integrierter DATEV-`cp1252`-EXTF-CSV-Export nach Buchungsstapel-Standard mit Vorab-Kontenvalidierung (4–8 Stellen) und robustem Betragsparser. |
 | **[PERSONA-03]** | **Datenschutzbeauftragte & DSGVO-Verantwortliche** | Cloud-Rechnungssammler verlangen Vollzugriff auf Mailboxen und speichern vertrauliche Finanzunterlagen auf Fremdservern. | 100% Local-First-Betrieb (`INV-LOCAL-01`). Zugangsdaten verbleiben verschlüsselt im Windows Credential Manager (DPAPI), Dokumente auf der SSD. |
-| **[PERSONA-04]** | **Desktop- & Python-Entwickler** | Fragile GUI-Wrapper mit enger Kopplung, blockierenden Dialogen und unzureichenden Testsuiten. | Saubere PySide6-Architektur, entkoppelte headless CSV-Exportroutinen, 232+ automatisierte Tests und transparente MIT-Lizenzierung. |
+| **[PERSONA-04]** | **Desktop- & Python-Entwickler** | Fragile GUI-Wrapper mit enger Kopplung, blockierenden Dialogen und unzureichenden Testsuiten. | Saubere PySide6-Architektur, entkoppelte headless CSV-Exportroutinen, 242+ automatisierte Tests und transparente MIT-Lizenzierung. |
 
 ### Relevante Suchanfragen
 
@@ -166,7 +166,7 @@ UniversalInvoiceMail richtet sich an vier zentrale Anwendergruppen:
 | **7. Offline-Fähigkeit** | **100% Offline-Archiv** | NEIN (Nur Online) | JA | JA | JA |
 | **8. PWA Companion** | **JA (Lokal redigiert)** | Cloud Mobile App | NEIN | NEIN | NEIN |
 | **9. Open Source / MIT** | **JA (Freie MIT-Lizenz)**| NEIN (Proprietär) | Entfällt | Variiert | Variiert |
-| **10. Automatisierte Tests** | **232 Pytest + 10 Node**| Unbekannt / SaaS | 0 | Minimal | 0 – 5 |
+| **10. Automatisierte Tests** | **242 Pytest + 10 Node**| Unbekannt / SaaS | 0 | Minimal | 0 – 5 |
 
 ---
 
@@ -395,7 +395,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-Das Repository enthält gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-Abläufe, Bündel-Export/-Import, Barrierefreiheit, Headless-CLI-Automation, Metadaten-Parität sowie Node-Vertragstests für den Web Companion (232 Pytest + 10 Node-Tests 100% grün).
+Das Repository enthält gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-Abläufe, Bündel-Export/-Import, Barrierefreiheit, Headless-CLI-Automation, Metadaten-Parität sowie Node-Vertragstests für den Web Companion (242 Pytest + 10 Node-Tests 100% grün).
 
 ---
 

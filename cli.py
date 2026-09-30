@@ -30,7 +30,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 # Version and identity constants
 APP_NAME = "UniversalInvoiceMail"
@@ -46,6 +46,80 @@ def get_default_paths(config_path: Optional[str] = None, db_path: Optional[str] 
     c_path = Path(config_path).resolve() if config_path else DEFAULT_CONFIG_FILE
     d_path = Path(db_path).resolve() if db_path else DEFAULT_INVOICES_DB
     return c_path, d_path
+
+
+def _normalize_filter_status(raw_status: Any) -> str:
+    """Returns normalized lower-case review status with default 'unchecked'."""
+    if raw_status is None:
+        return "unchecked"
+    s = str(raw_status).strip().lower()
+    return s if s else "unchecked"
+
+
+def _normalize_filter_profile(raw_profile: Any) -> str:
+    """Returns normalized lower-case profile name."""
+    if raw_profile is None:
+        return ""
+    return str(raw_profile).strip().lower()
+
+
+def _format_display_amount(raw_amt: Any, currency: str = "EUR") -> str:
+    """Formats an invoice amount cleanly for console output without crashing."""
+    if raw_amt is None:
+        return "Kein Betrag"
+    try:
+        from invoice_bundle import _normalize_amount
+        norm = _normalize_amount(raw_amt)
+        if norm is not None:
+            return f"{norm:.2f} {currency}"
+    except Exception:
+        pass
+
+    try:
+        val = float(raw_amt)
+        return f"{val:.2f} {currency}"
+    except (ValueError, TypeError):
+        s = str(raw_amt).strip()
+        return f"{s} {currency}" if s else "Kein Betrag"
+
+
+def _build_datev_config(dc: Optional[dict]) -> Optional[Any]:
+    """Safely builds a DATEVConfig instance from loaded configuration dictionary."""
+    if not isinstance(dc, dict):
+        return None
+    try:
+        from datev_exporter import DATEVConfig
+    except ImportError:
+        return None
+
+    km = dc.get("konten_mapping")
+    parsed_km = None
+    if isinstance(km, dict):
+        parsed_km = {}
+        for k, v in km.items():
+            if isinstance(v, (list, tuple)):
+                parsed_km[k] = tuple(v)
+            else:
+                # Retain non-tuple/list value so validate_datev_config can surface the validation error cleanly
+                parsed_km[k] = v
+    elif km is not None:
+        parsed_km = km  # Retain non-dict value so validate_datev_config can report dictionary error
+
+    berater_val = str(dc.get("berater_nr", "12345") if dc.get("berater_nr") is not None else "12345")
+    mandant_val = str(dc.get("mandant_nr", "67890") if dc.get("mandant_nr") is not None else "67890")
+    wj_val = str(dc.get("wj_beginn", "") or "")
+    sachk_raw = dc.get("sachkontenlänge") if dc.get("sachkontenlänge") is not None else dc.get("sachkontenlaenge")
+    sachk_val = int(sachk_raw) if isinstance(sachk_raw, (int, str)) and str(sachk_raw).strip().isdigit() else 4
+    waehrung_val = str(dc.get("währung") or dc.get("waehrung") or "EUR")
+
+    return DATEVConfig(
+        berater_nr=berater_val,
+        mandant_nr=mandant_val,
+        wj_beginn=wj_val,
+        sachkontenlänge=sachk_val,
+        währung=waehrung_val,
+        konten_mapping=parsed_km,
+    )
 
 
 def load_data(
@@ -64,31 +138,41 @@ def load_data(
     if c_path.exists():
         try:
             data = json.loads(c_path.read_text(encoding="utf-8"))
-            settings = data.get("settings", {})
-            accounts = data.get("accounts", [])
-            profiles = data.get("profiles", [])
-            datev_config = data.get("datev_config", None)
-        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
+            if isinstance(data, dict):
+                settings = data.get("settings", {}) if isinstance(data.get("settings"), dict) else {}
+                accounts = data.get("accounts", []) if isinstance(data.get("accounts"), list) else []
+                profiles = data.get("profiles", []) if isinstance(data.get("profiles"), list) else []
+                dc = data.get("datev_config", None)
+                datev_config = dc if isinstance(dc, dict) else None
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError, AttributeError) as e:
             print(f"[WARNUNG] Konfigurationsdatei konnte nicht vollständig geladen werden: {e}", file=sys.stderr)
 
     if d_path.exists():
         try:
             raw_inv = json.loads(d_path.read_text(encoding="utf-8"))
             if isinstance(raw_inv, list):
-                invoices = raw_inv
-        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
+                invoices = [item for item in raw_inv if isinstance(item, dict)]
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError, AttributeError) as e:
             print(f"[WARNUNG] Rechnungsdatenbank konnte nicht geladen werden: {e}", file=sys.stderr)
 
     return settings, accounts, profiles, invoices, datev_config
 
 
 def save_invoices(invoices: List[dict], db_path: Optional[str] = None) -> None:
-    """Saves updated invoices list to the database JSON file."""
+    """Saves updated invoices list to the database JSON file atomically."""
     _, d_path = get_default_paths(db_path=db_path)
     d_path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = d_path.with_suffix(".tmp")
-    temp_path.write_text(json.dumps(invoices, indent=2, ensure_ascii=False), encoding="utf-8")
-    os.replace(temp_path, d_path)
+    temp_path = d_path.with_name(f"{d_path.name}.tmp")
+    try:
+        temp_path.write_text(json.dumps(invoices, indent=2, ensure_ascii=False), encoding="utf-8")
+        os.replace(temp_path, d_path)
+    except Exception:
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        raise
 
 
 def export_invoices_to_csv(
@@ -102,11 +186,11 @@ def export_invoices_to_csv(
 
     filtered = invoices
     if profile_filter:
-        p_low = profile_filter.lower()
-        filtered = [i for i in filtered if p_low in str(i.get("profile_name", "")).lower()]
+        p_low = profile_filter.strip().lower()
+        filtered = [i for i in filtered if p_low in _normalize_filter_profile(i.get("profile_name"))]
     if status_filter:
-        s_low = status_filter.lower()
-        filtered = [i for i in filtered if s_low == str(i.get("review_status", "")).lower()]
+        s_low = status_filter.strip().lower()
+        filtered = [i for i in filtered if s_low == _normalize_filter_status(i.get("review_status"))]
 
     with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f, delimiter=";")
@@ -119,19 +203,27 @@ def export_invoices_to_csv(
             amt_str = ""
             if raw_amt is not None:
                 try:
-                    amt_str = f"{float(raw_amt):.2f}".replace(".", ",")
-                except (ValueError, TypeError):
-                    amt_str = str(raw_amt)
+                    from invoice_bundle import _normalize_amount
+                    norm = _normalize_amount(raw_amt)
+                    if norm is not None:
+                        amt_str = f"{norm:.2f}".replace(".", ",")
+                    else:
+                        amt_str = str(raw_amt)
+                except Exception:
+                    try:
+                        amt_str = f"{float(raw_amt):.2f}".replace(".", ",")
+                    except (ValueError, TypeError):
+                        amt_str = str(raw_amt)
             curr = inv.get("currency", "EUR") or "EUR"
-            status = inv.get("review_status", "unchecked") or "unchecked"
+            status = _normalize_filter_status(inv.get("review_status"))
             notes = inv.get("notes", "") or ""
             writer.writerow([
-                inv.get("date", ""),
-                inv.get("profile_name", ""),
-                inv.get("sender", ""),
-                inv.get("subject", ""),
-                inv.get("filename", ""),
-                inv.get("path", ""),
+                inv.get("date", "") or "",
+                inv.get("profile_name", "") or "",
+                inv.get("sender", "") or "",
+                inv.get("subject", "") or "",
+                inv.get("filename", "") or "",
+                inv.get("path", "") or "",
                 amt_str,
                 curr,
                 status,
@@ -263,6 +355,7 @@ def has_cli_action(argv: Optional[Sequence[str]] = None) -> bool:
         "--export-bundle",
         "--import-bundle",
         "--validate-datev",
+        "--gui",
     }
     for arg in argv:
         clean_arg = arg.split("=")[0]
@@ -319,11 +412,11 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
     if args.list_invoices:
         filtered = invoices
         if args.filter_profile:
-            p_low = args.filter_profile.lower()
-            filtered = [i for i in filtered if p_low in str(i.get("profile_name", "")).lower()]
+            p_low = args.filter_profile.strip().lower()
+            filtered = [i for i in filtered if p_low in _normalize_filter_profile(i.get("profile_name"))]
         if args.filter_status:
-            s_low = args.filter_status.lower()
-            filtered = [i for i in filtered if s_low == str(i.get("review_status", "")).lower()]
+            s_low = args.filter_status.strip().lower()
+            filtered = [i for i in filtered if s_low == _normalize_filter_status(i.get("review_status"))]
 
         total_matching = len(filtered)
         if args.limit > 0:
@@ -334,19 +427,18 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
                 "total_count": total_matching,
                 "displayed_count": len(filtered),
                 "invoices": filtered,
-            }, indent=2, ensure_ascii=False))
+            }, indent=2, ensure_ascii=False, default=str))
             return 0
 
         print(f"Rechnungen (Zeige {len(filtered)} von {total_matching}):")
         print("-" * 80)
         for inv in filtered:
-            date_str = inv.get("date", "Unbekannt")
-            p_name = inv.get("profile_name", "")
-            fname = inv.get("filename", "")
-            amt = inv.get("amount")
+            date_str = inv.get("date") or "Unbekannt"
+            p_name = inv.get("profile_name") or ""
+            fname = inv.get("filename") or ""
             curr = inv.get("currency", "EUR") or "EUR"
-            status = inv.get("review_status", "unchecked")
-            amt_disp = f"{amt:.2f} {curr}" if amt is not None else "Kein Betrag"
+            status = _normalize_filter_status(inv.get("review_status"))
+            amt_disp = _format_display_amount(inv.get("amount"), curr)
             print(f"[{date_str}] {p_name:<15} | {fname:<30} | {amt_disp:<14} | Status: {status}")
         return 0
 
@@ -356,12 +448,24 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
         if target == "DEFAULT":
             target = str(DEFAULT_BASE_DIR / f"rechnungen_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         out_path = Path(target).resolve()
-        count = export_invoices_to_csv(
-            invoices=invoices,
-            output_path=out_path,
-            profile_filter=args.filter_profile,
-            status_filter=args.filter_status,
-        )
+        try:
+            count = export_invoices_to_csv(
+                invoices=invoices,
+                output_path=out_path,
+                profile_filter=args.filter_profile,
+                status_filter=args.filter_status,
+            )
+        except OSError as e:
+            if args.json_output:
+                print(json.dumps({
+                    "status": "error",
+                    "error": str(e),
+                    "output_path": str(out_path),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"[FEHLER] CSV-Export fehlgeschlagen: {e}", file=sys.stderr)
+            return 1
+
         if args.json_output:
             print(json.dumps({
                 "status": "success",
@@ -386,15 +490,7 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
             target = str(DEFAULT_BASE_DIR / f"invoice_bundle_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         out_path = Path(target).resolve()
 
-        cfg_obj = None
-        if datev_config_dict:
-            km = datev_config_dict.get("konten_mapping")
-            cfg_obj = DATEVConfig(
-                berater_nr=datev_config_dict.get("berater_nr", "12345"),
-                mandant_nr=datev_config_dict.get("mandant_nr", "67890"),
-                konten_mapping={k: tuple(v) for k, v in km.items()} if km else None,
-            )
-
+        cfg_obj = _build_datev_config(datev_config_dict)
         dl_path = settings.get("download_path", str(Path.home() / "Documents" / "Rechnungen"))
         bundle = build_invoice_bundle(
             app_name=APP_NAME,
@@ -405,7 +501,19 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
             download_path=dl_path,
             datev_config=cfg_obj,
         )
-        write_invoice_bundle(bundle, out_path)
+        try:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            write_invoice_bundle(bundle, out_path)
+        except OSError as e:
+            if args.json_output:
+                print(json.dumps({
+                    "status": "error",
+                    "error": str(e),
+                    "output_path": str(out_path),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"[FEHLER] Bundle-Export fehlgeschlagen: {e}", file=sys.stderr)
+            return 1
 
         if args.json_output:
             print(json.dumps({
@@ -445,7 +553,17 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
         invalid_count = len(report.get("invalid_rows", []))
 
         if not args.dry_run:
-            save_invoices(invoices, db_path=args.invoices_db_path)
+            try:
+                save_invoices(invoices, db_path=args.invoices_db_path)
+            except OSError as e:
+                if args.json_output:
+                    print(json.dumps({
+                        "status": "error",
+                        "error": str(e),
+                    }, indent=2, ensure_ascii=False))
+                else:
+                    print(f"[FEHLER] Datenbank konnte nicht gespeichert werden: {e}", file=sys.stderr)
+                return 1
 
         if args.json_output:
             print(json.dumps({
@@ -478,15 +596,7 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
             print(f"[FEHLER] DATEV-Modul nicht verfügbar: {e}", file=sys.stderr)
             return 1
 
-        cfg_obj = DATEVConfig()
-        if datev_config_dict:
-            km = datev_config_dict.get("konten_mapping")
-            cfg_obj = DATEVConfig(
-                berater_nr=datev_config_dict.get("berater_nr", "12345"),
-                mandant_nr=datev_config_dict.get("mandant_nr", "67890"),
-                konten_mapping={k: tuple(v) for k, v in km.items()} if km else None,
-            )
-
+        cfg_obj = _build_datev_config(datev_config_dict) or DATEVConfig()
         report = validate_invoices_for_export(invoices, cfg_obj)
 
         if args.json_output:

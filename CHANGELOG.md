@@ -23,6 +23,18 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### CLI Resilience, Amount Normalization & Error Handling Härtung (2026-09-30)
+- **Headless CLI Robustness & Fehlerbehebung (`cli.py`)**:
+  - `_format_display_amount()`: Robuste Betragsformatierung für `--list-invoices` implementiert; verhindert unhandled `ValueError: Unknown format code 'f' for object of type 'str'` bei Rechnungsbeträgen im String- oder Währungsformat (`42.50`, `19,99 €`).
+  - `_normalize_filter_status()` & `_normalize_filter_profile()`: Filterparität hergestellt; Rechnungen mit `review_status: null` oder fehlendem Feld werden bei `--status unchecked` nicht mehr stillschweigend verworfen; `profile_name: null` wird nicht mehr fälschlich als Wort `'none'` gematcht.
+  - `load_data()`: Defensiver Schutz gegen `config.json` mit `null` oder Non-Dict-Inhalten (`AttributeError` abgefangen), Liste der Rechnungen filtert strikt auf Dict-Elemente.
+  - `_build_datev_config()`: Typsichere `DATEVConfig`-Initialisierung aus Konfigurations-Dicts; verhindert `TypeError: 'int' object is not iterable` bei skalaren Konten-Mappings und erhält Attribute wie `sachkontenlänge`, `währung` und `wj_beginn`.
+  - Directory Creation & Error Handling: `--export-bundle` legt Zielverzeichnisse via `parent.mkdir(parents=True, exist_ok=True)` vorab an; `OSError` bei CSV-Export, Bundle-Export und Datenbank-Schreibvorgängen (`save_invoices`) wird sauber mit Exit-Code 1 und formatierter Fehlermeldung abgefangen.
+  - `has_cli_action()`: `--gui` in CLI-Trigger aufgenommen.
+- **Regressionstests & Metadaten**:
+  - 10 neue Regressionstests in `tests/test_bugsweep_cli_resilience_20260930.py` implementiert (100% grün).
+  - Gesamtteststand auf 242 Pytest-Tests erhöht.
+
 ### Headless CLI & Automation Interface (2026-09-29)
 - **Headless CLI Interface (`cli.py` & `UniversalInvoiceMail.py`)**:
   - Headless CLI-Modul `cli.py` mit `argparse` und Unterstützung für alle Automationsszenarien implementiert:
