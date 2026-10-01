@@ -30,7 +30,9 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Optional, Sequence, Tuple
+
+from csv_export import atomic_csv_output
 
 # Version and identity constants
 APP_NAME = "UniversalInvoiceMail"
@@ -180,11 +182,12 @@ def export_invoices_to_csv(
     output_path: Path,
     profile_filter: Optional[str] = None,
     status_filter: Optional[str] = None,
+    protected_paths: Iterable[Path] = (),
 ) -> int:
     """Exports invoices to a semicolon-separated CSV file with UTF-8 BOM."""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    filtered = invoices
+    originals = list(invoices)
+    protected = [*protected_paths, *(i.get("path") for i in originals if i.get("path"))]
+    filtered = originals
     if profile_filter:
         p_low = profile_filter.strip().lower()
         filtered = [i for i in filtered if p_low in _normalize_filter_profile(i.get("profile_name"))]
@@ -192,7 +195,7 @@ def export_invoices_to_csv(
         s_low = status_filter.strip().lower()
         filtered = [i for i in filtered if s_low == _normalize_filter_status(i.get("review_status"))]
 
-    with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
+    with atomic_csv_output(output_path, protected) as f:
         writer = csv.writer(f, delimiter=";")
         writer.writerow([
             "Datum", "Profil/Shop", "Absender", "Betreff",
@@ -447,15 +450,17 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
         target = args.export_csv
         if target == "DEFAULT":
             target = str(DEFAULT_BASE_DIR / f"rechnungen_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
-        out_path = Path(target).resolve()
+        out_path = Path(target)
         try:
+            out_path = out_path.resolve()
             count = export_invoices_to_csv(
                 invoices=invoices,
                 output_path=out_path,
                 profile_filter=args.filter_profile,
                 status_filter=args.filter_status,
+                protected_paths=get_default_paths(args.config_path, args.invoices_db_path),
             )
-        except OSError as e:
+        except (OSError, ValueError, TypeError, RuntimeError, OverflowError, csv.Error) as e:
             if args.json_output:
                 print(json.dumps({
                     "status": "error",
