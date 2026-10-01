@@ -174,7 +174,11 @@ def test_ci_workflow_hardening_contracts():
     welcome_file = workflows_dir / "welcome.yml"
     assert welcome_file.is_file(), "welcome.yml must exist"
     welcome_text = welcome_file.read_text(encoding="utf-8")
-    assert "actions/first-interaction@v3" in welcome_text
+    assert re.search(r"uses:\s+actions/first-interaction@[0-9a-f]{40}(?:\s|$)", welcome_text)
+    welcome_inputs = welcome_text.split("        with:", 1)[1]
+    assert set(re.findall(r"^\s{10}([a-z_-]+):", welcome_inputs, re.MULTILINE)) == {
+        "repo_token", "issue_message", "pr_message"
+    }
     assert "timeout-minutes: 5" in welcome_text
     assert "cancel-in-progress: true" in welcome_text
 

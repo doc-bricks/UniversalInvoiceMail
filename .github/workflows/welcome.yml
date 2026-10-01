@@ -20,8 +20,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Welcome first-time contributors
-        uses: actions/first-interaction@v3
+        uses: actions/first-interaction@1c4688942c71f71d4f5502a26ea67c331730fa4d # v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first issue. Our maintainers review incoming issues within the documented SLA.'
-          pr-message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first pull request. Please ensure all tests pass and your changes adhere to local-first privacy invariants.'
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first issue. Our maintainers review incoming issues within the documented SLA.'
+          pr_message: 'Welcome to **UniversalInvoiceMail**! Thank you for opening your first pull request. Please ensure all tests pass and your changes adhere to local-first privacy invariants.'
