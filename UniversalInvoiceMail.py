@@ -4003,7 +4003,7 @@ class MainWindow(QMainWindow):
         )
         btn_refresh.setToolTip("Rechnungstabelle mit Ordnerinhalt synchronisieren")
         btn_export_csv = QPushButton("CSV Export")
-        btn_export_csv.clicked.connect(self.export_invoices_csv)
+        btn_export_csv.clicked.connect(lambda _checked=False: self.export_invoices_csv())
         btn_export_csv.setObjectName("export_invoices_csv_button")
         btn_export_csv.setAccessibleName("Rechnungsliste als CSV exportieren")
         btn_export_csv.setAccessibleDescription(
@@ -5381,11 +5381,14 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             return None
 
         # Ausgewaehlte Rechnungen ermitteln (falls Checkboxen in Spalte 0 aktiv sind)
+        original_invoices = list(self.invoices)
+        protected_paths = [CONFIG_FILE, INVOICES_DB]
+        protected_paths.extend(inv.path for inv in original_invoices if inv.path)
         selected_paths = self._get_selected_invoice_paths()
         if selected_paths:
-            source_invoices = [inv for inv in self.invoices if inv.path in selected_paths]
+            source_invoices = [inv for inv in original_invoices if inv.path in selected_paths]
         else:
-            source_invoices = list(self.invoices)
+            source_invoices = original_invoices
 
         if not source_invoices:
             if interactive:
@@ -5408,7 +5411,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             import csv
             from csv_export import atomic_csv_output
             target_path = Path(filepath)
-            protected_paths = [CONFIG_FILE, INVOICES_DB]
+            protected_paths.extend([CONFIG_FILE, INVOICES_DB])
             protected_paths.extend(inv.path for inv in self.invoices if inv.path)
             with atomic_csv_output(target_path, protected_paths) as f:
                 writer = csv.writer(f, delimiter=';')

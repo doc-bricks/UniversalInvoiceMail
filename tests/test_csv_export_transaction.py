@@ -109,9 +109,10 @@ def test_cli_actual_state_paths_protected(tmp_path, capsys, kind, alias):
     assert source.read_bytes() == target.read_bytes() == before
 
 
-def test_cli_encoding_error_is_structured_and_preserves_export(tmp_path, capsys):
+@pytest.mark.parametrize("changes", [{"notes": "\ud800"}, {"amount": 10 ** 400}])
+def test_cli_format_error_is_structured_and_preserves_export(tmp_path, capsys, changes):
     database = tmp_path / "db.json"
-    database.write_text(json.dumps([invoice(tmp_path, notes="\ud800")]), encoding="utf-8")
+    database.write_text(json.dumps([invoice(tmp_path, **changes)]), encoding="utf-8")
     target = tmp_path / "old.csv"
     target.write_bytes(b"old")
     assert cli.run_cli(["--config", str(tmp_path / "absent.json"), "--invoices-db", str(database), "--export-csv", str(target), "--json"]) == 1
@@ -137,3 +138,16 @@ def test_gui_protects_unselected_and_state_files(tmp_path, gui_export, kind):
     fake = SimpleNamespace(invoices=[first, excluded], _get_selected_invoice_paths=lambda: {first.path}, _log=lambda text: None)
     assert gui_export(fake, target) is None
     assert target.read_bytes() == b"protected"
+
+
+def test_gui_original_removed_during_dialog_stays_protected(tmp_path, gui_export):
+    target = tmp_path / "source.pdf"
+    target.write_bytes(b"original")
+    fake = SimpleNamespace(invoices=[SimpleNamespace(**invoice(tmp_path, path=str(target)))], settings=SimpleNamespace(download_path=str(tmp_path)), _get_selected_invoice_paths=lambda: set(), _log=lambda text: None)
+    def choose(*args):
+        fake.invoices = []
+        return str(target), "CSV"
+    gui_export.__globals__["QFileDialog"] = SimpleNamespace(getSaveFileName=choose)
+    gui_export.__globals__["QMessageBox"] = SimpleNamespace(information=lambda *args: None, warning=lambda *args: None)
+    assert gui_export(fake) is None
+    assert target.read_bytes() == b"original"

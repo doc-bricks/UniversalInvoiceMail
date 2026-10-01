@@ -38,6 +38,32 @@ def qapp():
     return app
 
 
+def test_export_button_opens_dialog_without_boolean_filepath(tmp_path, monkeypatch, qapp):
+    """A real Qt clicked(bool) must retain the interactive save dialog."""
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QPushButton
+
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+    window = uim.MainWindow()
+    target = tmp_path / "clicked.csv"
+    calls = []
+    monkeypatch.setattr(uim.QFileDialog, "getSaveFileName", lambda *args, **kwargs: (calls.append("dialog") or (str(target), "CSV")))
+    monkeypatch.setattr(uim.QMessageBox, "information", lambda *args: calls.append("success"))
+    monkeypatch.setattr(uim.QMessageBox, "warning", lambda *args: calls.append("error"))
+    monkeypatch.setattr(window, "_get_selected_invoice_paths", lambda: set())
+    try:
+        window.invoices = [uim.Invoice(id="clicked", profile_name="Prüfung", filename="dummy.pdf", date="2026-10-01", path=str(tmp_path / "dummy.pdf"), amount=12.5)]
+        button = window.findChild(QPushButton, "export_invoices_csv_button")
+        assert button is not None and button.isEnabled()
+        button.click()
+        assert calls == ["dialog", "success"]
+        assert target.read_bytes().startswith(b"\xef\xbb\xbf")
+    finally:
+        window.deleteLater()
+        QCoreApplication.sendPostedEvents(window, QEvent.Type.DeferredDelete)
+
+
 def test_export_invoices_csv_headless_all(tmp_path: Path, monkeypatch, qapp):
     """Test exporting all invoices programmatically with comprehensive columns."""
     invoices_db = tmp_path / "invoices.json"

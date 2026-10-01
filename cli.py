@@ -460,7 +460,7 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
                 status_filter=args.filter_status,
                 protected_paths=get_default_paths(args.config_path, args.invoices_db_path),
             )
-        except (OSError, ValueError, TypeError, RuntimeError) as e:
+        except (OSError, ValueError, TypeError, RuntimeError, OverflowError, csv.Error) as e:
             if args.json_output:
                 print(json.dumps({
                     "status": "error",
