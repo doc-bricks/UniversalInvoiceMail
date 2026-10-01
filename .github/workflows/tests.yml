@@ -41,10 +41,14 @@ jobs:
           python -m pip install -r requirements.txt pytest
 
       - name: Compile Python sources
-        run: python -m py_compile UniversalInvoiceMail.py datev_exporter.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py
+        run: python -m py_compile UniversalInvoiceMail.py datev_exporter.py atomic_io.py manage_translations.py cli.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py
+
+      - name: Run translation check gate
+        run: python manage_translations.py --check
 
       - name: Run tests
         run: python -m pytest -q
+
 
   source-platform-smoke:
     runs-on: ubuntu-latest

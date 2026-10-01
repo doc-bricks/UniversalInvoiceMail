@@ -541,11 +541,10 @@ class DATEVExporter:
 
         # Speichern falls Pfad angegeben
         if output_path:
-            output_path = Path(output_path)
-            # DATEV erwartet Windows ANSI (cp1252)
-            with open(output_path, "w", encoding="cp1252", errors="replace") as f:
-                f.write(csv_content)
-            return str(output_path)
+            from atomic_io import atomic_write_text
+
+            saved_path = atomic_write_text(output_path, csv_content, encoding="cp1252", errors="replace")
+            return str(saved_path)
 
         return csv_content
 

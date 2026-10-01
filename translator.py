@@ -51,9 +51,10 @@ class TranslationSystem:
             self.translations = {}
 
     def _save_translations(self) -> None:
-        self.translations_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.translations_file, 'w', encoding='utf-8') as f:
-            json.dump(self.translations, f, indent=2, ensure_ascii=False)
+        from atomic_io import atomic_write_json
+
+        atomic_write_json(self.translations_file, self.translations, indent=2, ensure_ascii=False)
+
 
     def t(self, key: str, **kwargs: Any) -> str:
         """

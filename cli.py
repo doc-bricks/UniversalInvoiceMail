@@ -38,6 +38,7 @@ from csv_export import atomic_csv_output
 APP_NAME = "UniversalInvoiceMail"
 VERSION = "2.3.0"
 
+REPO_ROOT = Path(__file__).resolve().parent
 DEFAULT_BASE_DIR = Path.home() / ".universal_invoice_mail"
 DEFAULT_CONFIG_FILE = DEFAULT_BASE_DIR / "config.json"
 DEFAULT_INVOICES_DB = DEFAULT_BASE_DIR / "invoices.json"
@@ -234,6 +235,7 @@ def export_invoices_to_csv(
             ])
 
     return len(filtered)
+
 
 
 def build_parser() -> argparse.ArgumentParser:

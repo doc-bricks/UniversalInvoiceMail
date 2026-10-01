@@ -3696,10 +3696,14 @@ class MainWindow(QMainWindow):
                     'mandant_nr': self.datev_config.mandant_nr,
                     'konten_mapping': {k: list(v) for k, v in self.datev_config.konten_mapping.items()},
                 }
-            CONFIG_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
-            INVOICES_DB.write_text(
-                json.dumps([i.to_dict() for i in self.invoices], indent=2, ensure_ascii=False),
-                encoding='utf-8'
+            from atomic_io import atomic_write_json
+
+            atomic_write_json(CONFIG_FILE, data, indent=2, ensure_ascii=False)
+            atomic_write_json(
+                INVOICES_DB,
+                [i.to_dict() for i in self.invoices],
+                indent=2,
+                ensure_ascii=False,
             )
         except (OSError, TypeError, ValueError) as e:
             print(f"Save error: {e}")
@@ -4426,8 +4430,10 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
     def save_invoices_db(self):
         """Speichert die Rechnungsdatenbank"""
         try:
+            from atomic_io import atomic_write_json
+
             data = [inv.to_dict() for inv in self.invoices]
-            INVOICES_DB.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+            atomic_write_json(INVOICES_DB, data, indent=2, ensure_ascii=False)
         except (OSError, TypeError, ValueError) as e:
             print(f"Invoice DB save error: {e}")
 

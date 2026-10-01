@@ -23,12 +23,29 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
-### Fixed
-- CSV-Exporte aus GUI und CLI werden vollständig in einer eigenen temporären Datei
-  vorbereitet. Format-, Schreib- und Ersetzungsfehler erhalten vorhandene Exporte.
-  Rechnungsoriginale sowie Konfiguration und Datenbank sind einschließlich
-  Datei-Aliassen als Exportziel geschützt; auch ausgeschlossene Rechnungen zählen.
-  UTF-8-BOM, Semikolon, Spalten, Auswahl und Filter bleiben erhalten.
+### Atomare Dateisystem-Operationen, Fsync-Durability & Translation-Management CLI Gate (2026-10-02)
+- **Atomare I/O-Architektur (`atomic_io.py`)**:
+  - `atomic_write_text()`: Atomares Schreiben von Textdateien mit kollisionsfreien temporären Dateien (`.{name}.tmp.{pid}_{uuid8}`), explizitem `flush()` und `os.fsync()`, Windows-Dateirechtebehebung (`stat.S_IWRITE`) vor `os.replace` und garantiertem `finally`-Cleanup.
+  - `atomic_write_json()`: Sichere JSON-Serialisierung vor Disk-I/O (verhindert das Beschädigen/Trunkieren bestehender Dateien bei Typ- oder Serialisierungsfehlern).
+  - `atomic_write_bytes()`: Atomares Schreiben binärer Nutzdaten mit Min-Size-Validierung (`min_bytes`).
+  - `atomic_publish_file()`: Atomare Publikation generierter temporärer Zwischendateien.
+  - `is_protected_path()` & `get_default_protected_paths()`: Automatischer Überschreibschutz für interne Konfigurations- und Datenbankdateien (`config.json`, `invoices.json`, `token.json`) bei Exporten.
+- **Refaktorisierung der Persistenz- und Exportroutinen**:
+  - `invoice_bundle.py`: `write_invoice_bundle()` auf `atomic_write_json()` umgestellt (Absturzsicherheit für Austauschbundles).
+  - `datev_exporter.py`: `DATEVExporter.export()` auf `atomic_write_text()` umgestellt (Absturzsicherheit bei DATEV-Buchungsstapel-Exporten).
+  - `UniversalInvoiceMail.py`: `save_config()` und `save_invoices_db()` auf `atomic_write_json()` umgestellt.
+  - `translator.py`: `_save_translations()` auf `atomic_write_json()` umgestellt.
+- **CSV-Export-Schutz (`csv_export.py`)**:
+  - CSV-Exporte aus GUI und CLI werden vollständig in einer eigenen temporären Datei vorbereitet. Format-, Schreib- und Ersetzungsfehler erhalten vorhandene Exporte. Rechnungsoriginale sowie Konfiguration und Datenbank sind einschließlich Datei-Aliassen als Exportziel geschützt; auch ausgeschlossene Rechnungen zählen. UTF-8-BOM, Semikolon, Spalten, Auswahl und Filter bleiben erhalten.
+- **Translation Management & CI Gate (`manage_translations.py`)**:
+  - Eigenständiges CLI-Tool mit `--check`, `--stats`, `--scan` und `--export`.
+  - Prüft 100% Schlüsselparität, Vollständigkeit, leere Übersetzungen und Konsistenz der Format-Platzhalter über alle 6 Zielsprachen (`de`, `en`, `es`, `zh`, `ja`, `ru`).
+  - Integration als Gate-Schritt in GitHub Actions Workflow `.github/workflows/tests.yml`.
+- **Test-Suite & Verifikation**:
+  - Neue Testmodule `tests/test_atomic_io.py` (13 Tests) und `tests/test_manage_translations.py` (3 Tests) implementiert.
+  - Gesamtteststand auf 258+ Pytest-Tests gesteigert (100% grün via pytest in ~10s).
+  - README-Badges, Verifikationsdatum (2026-10-02) und Dokumentationsmetadaten synchronisiert.
+
 
 ### CLI Resilience, Amount Normalization & Error Handling Härtung (2026-09-30)
 - **Headless CLI Robustness & Fehlerbehebung (`cli.py`)**:

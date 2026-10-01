@@ -292,13 +292,13 @@ def test_pytest_hardening_and_cache_defense():
 
 
 def test_readme_badges_and_test_parity():
-    """Verify README badges and comparative matrices reflect 242 passing tests and 2026-09-30."""
+    """Verify README badges and comparative matrices reflect 278 passing tests and 2026-10-02."""
     readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_de = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
 
-    assert "Tests-242%20passed" in readme_en
-    assert "Tests-242%20passed" in readme_de
-    assert "Verified-2026--09--30" in readme_en
-    assert "Gepr%C3%BCft-2026--09--30" in readme_de
-    assert "242 Pytest + 10 Node" in readme_en
-    assert "242 Pytest + 10 Node" in readme_de
+    assert "Tests-278%20passed" in readme_en
+    assert "Tests-278%20passed" in readme_de
+    assert "Verified-2026--10--02" in readme_en
+    assert "Gepr%C3%BCft-2026--10--02" in readme_de
+    assert "278 Pytest + 10 Node" in readme_en
+    assert "278 Pytest + 10 Node" in readme_de

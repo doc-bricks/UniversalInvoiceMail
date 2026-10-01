@@ -299,8 +299,10 @@ def build_invoice_bundle(
 
 
 def write_invoice_bundle(bundle: Mapping[str, Any], output_path: Path) -> Path:
-    output_path.write_text(json.dumps(bundle, indent=2, ensure_ascii=False), encoding="utf-8")
-    return output_path
+    from atomic_io import atomic_write_json
+
+    return atomic_write_json(output_path, bundle, indent=2, ensure_ascii=False, encoding="utf-8")
+
 
 
 def load_invoice_bundle(bundle_path: Path) -> dict[str, Any]:
