@@ -23,6 +23,13 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Fixed
+- CSV-Exporte aus GUI und CLI werden vollständig in einer eigenen temporären Datei
+  vorbereitet. Format-, Schreib- und Ersetzungsfehler erhalten vorhandene Exporte.
+  Rechnungsoriginale sowie Konfiguration und Datenbank sind einschließlich
+  Datei-Aliassen als Exportziel geschützt; auch ausgeschlossene Rechnungen zählen.
+  UTF-8-BOM, Semikolon, Spalten, Auswahl und Filter bleiben erhalten.
+
 ### CLI Resilience, Amount Normalization & Error Handling Härtung (2026-09-30)
 - **Headless CLI Robustness & Fehlerbehebung (`cli.py`)**:
   - `_format_display_amount()`: Robuste Betragsformatierung für `--list-invoices` implementiert; verhindert unhandled `ValueError: Unknown format code 'f' for object of type 'str'` bei Rechnungsbeträgen im String- oder Währungsformat (`42.50`, `19,99 €`).

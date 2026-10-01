@@ -5406,9 +5406,11 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         try:
             import csv
+            from csv_export import atomic_csv_output
             target_path = Path(filepath)
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(target_path, 'w', newline='', encoding='utf-8-sig') as f:
+            protected_paths = [CONFIG_FILE, INVOICES_DB]
+            protected_paths.extend(inv.path for inv in self.invoices if inv.path)
+            with atomic_csv_output(target_path, protected_paths) as f:
                 writer = csv.writer(f, delimiter=';')
                 # Header mit erweiterten Feldern
                 writer.writerow([
