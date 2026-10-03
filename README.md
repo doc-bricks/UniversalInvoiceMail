@@ -4,17 +4,18 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-278%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-282%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Privacy: Local-First](https://img.shields.io/badge/Privacy-100%25%20Local--First-brightgreen.svg)](#15-privacy--data-protection-policy)
 [![Security: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-blue.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/Security%20SLA-48h%20response%20%7C%205d%20triage-blue.svg)](SECURITY.md)
+[![Contributing Guidelines](https://img.shields.io/badge/Contributing-Guidelines-blue.svg)](CONTRIBUTING.md)
 [![Code Style: Ruff](https://img.shields.io/badge/Code%20Style-Ruff-000000.svg)](https://astral.sh/ruff)
 [![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
-[![Verified](https://img.shields.io/badge/Verified-2026--10--02-informational.svg)](MARKETING-LOG.txt)
+[![Verified](https://img.shields.io/badge/Verified-2026--10--03-informational.svg)](MARKETING-LOG.txt)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -136,7 +137,7 @@ UniversalInvoiceMail is tailored for four specific personas:
 | **[PERSONA-01]** | **Freelancers & Small Business Owners** | Monthly manual searching through crowded mailboxes for PDF invoices, receipts, and subscription statements. | Automated profile-based retrieval (IMAP/Gmail), automatic attachment conversion to standardized PDF, private local archive, and DATEV export. |
 | **[PERSONA-02]** | **Tax Advisors & Bookkeepers** | Inconsistent receipt formats, missing document numbers, and broken date or decimal formatting causing imports into DATEV to fail. | Built-in DATEV cp1252 EXTF CSV export compliant with Buchungsstapel guidelines, with pre-save account validation (4-8 digits) and robust amount parsing. |
 | **[PERSONA-03]** | **Privacy Officers & GDPR Advocates** | Cloud invoice aggregation tools require full read access to mailboxes and store financial documents on external third-party servers. | 100% Local-First Execution (`INV-LOCAL-01`). Credentials stay encrypted in Windows Credential Vault (DPAPI), documents reside exclusively on the user's SSD. |
-| **[PERSONA-04]** | **Desktop & Python Developers** | Fragile GUI wrappers with tight coupling, untestable dialog popups, and poorly structured test suites. | Clean PySide6 architecture, decoupled headless CSV export routines, 278+ automated tests, and rich documentation under the permissive MIT license. |
+| **[PERSONA-04]** | **Desktop & Python Developers** | Fragile GUI wrappers with tight coupling, untestable dialog popups, and poorly structured test suites. | Clean PySide6 architecture, decoupled headless CSV export routines, 282+ automated tests, and rich documentation under the permissive MIT license. |
 
 ### High-Intent Search Queries
 
@@ -167,7 +168,7 @@ UniversalInvoiceMail is tailored for four specific personas:
 | **7. Offline Capability** | **100% Offline Archival**| NO (Zero Offline) | YES | YES | YES |
 | **8. PWA Companion** | **YES (Local Redacted)** | Cloud Mobile App | NO | NO | NO |
 | **9. Open Source / MIT** | **YES (Permissive MIT)** | NO (Proprietary) | N/A | Varies | Varies |
-| **10. Automated Tests** | **278 Pytest + 10 Node** | Unknown / SaaS | 0 | Minimal | 0 - 5 |
+| **10. Automated Tests** | **282 Pytest + 10 Node** | Unknown / SaaS | 0 | Minimal | 0 - 5 |
 
 
 ---
@@ -397,7 +398,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, headless CLI automation, metadata parity, plus Node contract tests for the Web Companion (278 Pytest + 10 Node tests passing 100% green).
+The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, headless CLI automation, metadata parity, plus Node contract tests for the Web Companion (282 Pytest + 10 Node tests passing 100% green).
 
 
 ---

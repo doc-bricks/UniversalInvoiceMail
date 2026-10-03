@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """Metadata, Manifest, and Documentation Parity Tests for UniversalInvoiceMail."""
 import json
 import re
@@ -54,10 +54,14 @@ def test_core_documentation_files():
         "THIRD_PARTY_LICENSES.md",
         "THIRD_PARTY_LICENSES.txt",
         "MARKETING-LOG.txt",
+        "CONTRIBUTING.md",
         ".github/workflows/stale.yml",
         ".github/workflows/welcome.yml",
         ".github/workflows/tests.yml",
         ".github/workflows/source-platform-smoke.yml",
+        ".github/workflows/auto-assign.yml",
+        ".github/workflows/label-sync.yml",
+        ".github/labels.yml",
     ]
     for rel_path in required_files:
         file_path = REPO_ROOT / rel_path
@@ -233,13 +237,13 @@ def test_dual_reciprocal_anchors_sec_01_to_sec_18():
 
 
 def test_level_1_sbom_cross_reference_matrix():
-    """Verify THIRD_PARTY_LICENSES.md contains the Invariant Cross-Reference Matrix and 2026-09-28 audit."""
+    """Verify THIRD_PARTY_LICENSES.md contains the Invariant Cross-Reference Matrix and 2026-10-03 audit."""
     sbom_path = REPO_ROOT / "THIRD_PARTY_LICENSES.md"
     assert sbom_path.exists(), "THIRD_PARTY_LICENSES.md must exist"
     sbom_text = sbom_path.read_text(encoding="utf-8")
 
     assert "Level 1 SBOM Invarianten-Kreuzreferenzmatrix" in sbom_text
-    assert "2026-09-28" in sbom_text
+    assert "2026-10-03" in sbom_text
     for i in range(1, 11):
         # Check codes INV-LOCAL-01 through INV-SLA-10
         pattern = re.compile(rf"INV-[A-Z]+-{i:02d}")
@@ -292,13 +296,90 @@ def test_pytest_hardening_and_cache_defense():
 
 
 def test_readme_badges_and_test_parity():
-    """Verify README badges and comparative matrices reflect 278 passing tests and 2026-10-02."""
+    """Verify README badges and comparative matrices reflect 282 passing tests and 2026-10-03."""
     readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_de = (REPO_ROOT / "README-DE.md").read_text(encoding="utf-8")
 
-    assert "Tests-278%20passed" in readme_en
-    assert "Tests-278%20passed" in readme_de
-    assert "Verified-2026--10--02" in readme_en
-    assert "Gepr%C3%BCft-2026--10--02" in readme_de
-    assert "278 Pytest + 10 Node" in readme_en
-    assert "278 Pytest + 10 Node" in readme_de
+    assert "Tests-282%20passed" in readme_en
+    assert "Tests-282%20passed" in readme_de
+    assert "Verified-2026--10--03" in readme_en
+    assert "Gepr%C3%BCft-2026--10--03" in readme_de
+    assert "Contributing-Guidelines" in readme_en
+    assert "Contributing-Guidelines" in readme_de
+    assert "282 Pytest + 10 Node" in readme_en
+    assert "282 Pytest + 10 Node" in readme_de
+
+
+def test_ci_lifecycle_workflows_and_labels():
+    """Verify auto-assign.yml, label-sync.yml, and labels.yml exist with canonical configuration."""
+    workflows_dir = REPO_ROOT / ".github" / "workflows"
+    labels_file = REPO_ROOT / ".github" / "labels.yml"
+
+    # auto-assign.yml
+    auto_assign_file = workflows_dir / "auto-assign.yml"
+    assert auto_assign_file.is_file(), "auto-assign.yml must exist"
+    auto_assign_text = auto_assign_file.read_text(encoding="utf-8")
+    assert "pull_request_target" in auto_assign_text
+    assert "timeout-minutes: 5" in auto_assign_text
+    assert "cancel-in-progress: true" in auto_assign_text
+    assert "pull-requests: write" in auto_assign_text
+    assert "actions/github-script@v7" in auto_assign_text
+
+    # label-sync.yml
+    label_sync_file = workflows_dir / "label-sync.yml"
+    assert label_sync_file.is_file(), "label-sync.yml must exist"
+    label_sync_text = label_sync_file.read_text(encoding="utf-8")
+    assert "workflow_dispatch" in label_sync_text
+    assert "timeout-minutes: 5" in label_sync_text
+    assert "cancel-in-progress: true" in label_sync_text
+    assert "EndBug/label-sync@v2" in label_sync_text
+    assert ".github/labels.yml" in label_sync_text
+
+    # labels.yml
+    assert labels_file.is_file(), ".github/labels.yml must exist"
+    labels_text = labels_file.read_text(encoding="utf-8")
+    for standard_label in ["bug", "enhancement", "good first issue", "help wanted", "documentation", "duplicate", "wontfix", "priority: high", "priority: low", "needs-triage", "stale"]:
+        assert standard_label in labels_text, f"Standard label {standard_label} missing from labels.yml"
+
+
+def test_contributing_guidelines_bilingual_parity():
+    """Verify CONTRIBUTING.md has full bilingual structure, 10 invariants, RunAsInvoker, and § 521 BGB disclaimer."""
+    contrib_path = REPO_ROOT / "CONTRIBUTING.md"
+    assert contrib_path.is_file(), "CONTRIBUTING.md must exist"
+    contrib_text = contrib_path.read_text(encoding="utf-8")
+
+    assert "## Deutsch" in contrib_text
+    assert "## English" in contrib_text
+    assert "RunAsInvoker" in contrib_text
+    assert "521 BGB" in contrib_text
+    assert "Gefälligkeitsrecht" in contrib_text
+    assert "SECURITY.md" in contrib_text
+    assert "T-20260920-167562623" in contrib_text
+
+    for i in range(1, 11):
+        pattern = re.compile(rf"INV-[A-Z]+-{i:02d}")
+        assert pattern.search(contrib_text), f"Invariant index {i:02d} missing from CONTRIBUTING.md"
+
+
+def test_pep621_project_urls_complete_parity():
+    """Verify pyproject.toml defines Contributing, Third-Party Licenses (Text), and Level 1 SBOM URLs."""
+    pyproject_path = REPO_ROOT / "pyproject.toml"
+    assert pyproject_path.is_file(), "pyproject.toml must exist"
+    pyproject_text = pyproject_path.read_text(encoding="utf-8")
+
+    assert "Contributing = " in pyproject_text
+    assert '"Third-Party Licenses (Text)" = ' in pyproject_text
+    assert '"Level 1 SBOM" = ' in pyproject_text
+    assert ".tox" in pyproject_text
+    assert ".turbo" in pyproject_text
+    assert ".nyc_output" in pyproject_text
+
+
+def test_gitignore_multi_host_and_lock_patterns():
+    """Verify .gitignore blocks IDEAPAD tokens and specific lock file prefixes."""
+    gitignore_path = REPO_ROOT / ".gitignore"
+    assert gitignore_path.is_file(), ".gitignore must exist"
+    gitignore_text = gitignore_path.read_text(encoding="utf-8")
+
+    for pat in ["*-IDEAPAD*", "*-IDEAPAD-GEI*", "LOCK.dev.*", "LOCK.antigravity.*", "LOCK.bugsearch.*", "TASKPLAN_*.md", "*-TASKPLAN*", ".tox/"]:
+        assert pat in gitignore_text, f"Pattern {pat} missing from .gitignore"

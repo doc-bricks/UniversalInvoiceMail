@@ -25,14 +25,15 @@ UniversalInvoiceMail is a local-first Windows desktop app for collecting invoice
 - `DATEV Buchungsstapel aus E-Mail`
 - `Rechnungen aus Gmail archivieren`
 
-## Last-checked: 2026-09-30
+## Last-checked: 2026-10-03
 
 Important files:
 
 - `NOTICE`: Canonical root attribution, Lukas Geiger copyright, doc-bricks ecosystem stewardship, and MIT licensing.
-- `THIRD_PARTY_LICENSES.md`: Level 1 SBOM documenting 10 governance invariants (INV-LOCAL-01..INV-SLA-10), invariant cross-reference matrix, and full dependency tree.
-- `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory.
-- `MARKETING-LOG.txt`: Discoverability, target personas, keyword matrix, 5-way comparative matrix, and Pfad B audit baseline.
+- `THIRD_PARTY_LICENSES.md`: Level 1 SBOM documenting 10 governance invariants (INV-LOCAL-01..INV-SLA-10), invariant cross-reference matrix, and full dependency tree (Stand 2026-10-03).
+- `THIRD_PARTY_LICENSES.txt`: Third-party open-source license inventory with component notices.
+- `CONTRIBUTING.md`: Bilingual development guidelines (DE/EN) detailing all 10 invariants, RunAsInvoker unprivileged execution, Plan D local clone workflow, and § 521 BGB disclaimer.
+- `MARKETING-LOG.txt`: Discoverability, target personas, keyword matrix, 5-way comparative matrix, and Pfad A/B audit logs.
 - `README.md`: English user-facing project overview, 18-point bilateral navigation, and ecosystem grid.
 - `README-DE.md`: German project overview, 18-point bilateral navigation, and ecosystem grid.
 - `USER_GUIDE.md`: German setup and workflow guide.
@@ -45,7 +46,8 @@ Important files:
 - `invoice_bundle.py`: Redacted bundle export and import helper (`universalinvoicemail-invoicebundle-v1.json`).
 - `ROADMAP.txt`: Public roadmap and follow-up strands for the desktop and companion workflows.
 - `web_companion/`: local-only PWA review surface with committed install manifest and icons.
-- `tests/`: mocked unit, integration, validation, i18n, metadata parity, accessibility, and security/license contract tests.
+- `.github/workflows/`: hardened CI lifecycle workflows (auto-assign, label-sync, stale, welcome, tests, source-platform-smoke).
+- `tests/`: mocked unit, integration, validation, i18n, metadata parity, accessibility, and security/license contract tests (282 passing).
 - `DATEVSettingsDialog`: editable sender/keyword mapping table with add/remove/reset, pre-save validation against SKR03/SKR04 rules, and `DATEVConfig` persistence.
 - Statutory liability limitation: German Civil Code § 521 BGB (Gefälligkeitsrecht) and 48h Security Response SLA.
 
@@ -58,9 +60,8 @@ Safety boundary:
 
 Verification:
 
-- Run `PYTHONIOENCODING=utf-8 python -m pytest -q`.
-- Run `cd web_companion && npm test`.
-- Run `ruff check .`.
-- Run `PYTHONIOENCODING=utf-8 python -m py_compile UniversalInvoiceMail.py datev_exporter.py translator.py test_helpers.py tests/test_integration.py tests/test_ui_accessibility.py tests/test_datev_validation.py tests/test_i18n.py tests/test_metadata.py`.
-- The current foreign uncommitted `web_companion/manifest.webmanifest` variant reads 9/10 in the Node smoke; it was not adopted, and Android/iOS device or emulator sign-off is separate.
+- Run `PYTHONIOENCODING=utf-8 pytest -ra -v` (282 Pytest tests passing 100% green).
+- Run `node --test web_companion/tests/library.test.mjs web_companion/tests/mobile_pwa_smoke.test.mjs` (10 passed).
+- Run `ruff check .` (0 errors).
+- Run `python -m compileall -q .` (0 bytecode errors).
 

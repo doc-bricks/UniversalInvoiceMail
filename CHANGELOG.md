@@ -23,6 +23,32 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Pfad A Repository-Hygiene, CI-Lifecycle-Workflows, Bilingual CONTRIBUTING & Multi-Host-Härtung (2026-10-03)
+- **CI/CD Lifecycle Workflows & Label-Governance**:
+  - `.github/workflows/auto-assign.yml`: Automatischer Reviewer- & Assignee-Workflow für neue Pull Requests mit `actions/github-script@v7`, `timeout-minutes: 5`, `cancel-in-progress` Concurrency und `pull-requests: write` Rechten.
+  - `.github/workflows/label-sync.yml`: Automatisierter Issue- und PR-Label-Synchronisations-Workflow via `EndBug/label-sync@v2`.
+  - `.github/labels.yml`: Kanonisches Label-Set mit 11 Standard-Labels (`bug`, `enhancement`, `good first issue`, `help wanted`, `documentation`, `duplicate`, `wontfix`, `priority: high`, `priority: low`, `needs-triage`, `stale`) gemäß GOVERNANCE.md §4.2.
+- **Bilinguale CONTRIBUTING.md Guidelines (DE/EN)**:
+  - Vollständige Entwickler- und Beitragsrichtlinien mit Spezifikation aller 10 Systeminvarianten (`INV-LOCAL-01` bis `INV-SLA-10`).
+  - Verankerung des unprivilegierten `RunAsInvoker`-Modus (`asInvoker` Non-Elevation ohne UAC-Adminrechte).
+  - Plan D Local Development Workflow (`C:\_Local_DEV\repos\UniversalInvoiceMail`) und gitloser Multi-Device-Spiegel (`REL-PUB_UniversalInvoiceMail`).
+  - Strikte Version-Freeze-Disziplin per T-20260920-167562623 (Version 2.3.0 eingefroren).
+  - Verbindliche lokale Quality Gates (Pytest, Ruff, Compileall, Web-Companion-Node-Tests).
+  - Gesetzlicher Haftungsausschluss (§ 521 BGB Gefälligkeitsrecht) und 48h Security Response SLA.
+- **PEP 621 Metadaten & Pytest-Härtung (`pyproject.toml`)**:
+  - Registrierung der kanonischen URLs `Contributing`, `Third-Party Licenses (Text)` und `Level 1 SBOM` unter `[project.urls]`.
+  - Erweiterung von `[tool.pytest.ini_options]` `norecursedirs` um `.turbo`, `.nyc_output` und `.tox`.
+- **Multi-Host Cloud-Sync-, Lock- & Cache-Schutz (`.gitignore`)**:
+  - Härtung gegen Ideapad-Synchronisationskonflikte (`*-IDEAPAD*`, `*-IDEAPAD-GEI*`, `*-IDEAPAD-GEI.*`).
+  - Fail-closed Schutz vor Agenten-Locks (`LOCK.dev.*`, `LOCK.antigravity.*`, `LOCK.bugsearch.*`).
+  - Ausschluss von Task-Plänen (`TASKPLAN_*.md`, `*-TASKPLAN*`) und Cache-Ordnern (`.tox/`).
+- **Level 1 SBOM Re-Audit & Lizenzbegleitung (Stand 2026-10-03)**:
+  - `THIRD_PARTY_LICENSES.md` Re-Audit Stand 2026-10-03 mit Bestätigung aller 10 Invarianten, Zero Strong Copyleft und 100% Zero-Egress Core Isolation.
+  - Synchronisation mit kanonischer `THIRD_PARTY_LICENSES.txt` Begleitdatei und `NOTICE`.
+- **Automatisierte Vertragstests & Badges**:
+  - 4 neue Metadaten-Vertragstests in `tests/test_metadata.py` (`test_ci_lifecycle_workflows_and_labels`, `test_contributing_guidelines_bilingual_parity`, `test_pep621_project_urls_complete_parity`, `test_gitignore_multi_host_and_lock_patterns`).
+  - Synchronisation aller README-Badges (282 passing Pytest Tests | 100% grün, 10 Node Web Companion Tests, Verified-2026-10-03, Contributing Guidelines).
+
 ### Atomare Dateisystem-Operationen, Fsync-Durability & Translation-Management CLI Gate (2026-10-02)
 - **Atomare I/O-Architektur (`atomic_io.py`)**:
   - `atomic_write_text()`: Atomares Schreiben von Textdateien mit kollisionsfreien temporären Dateien (`.{name}.tmp.{pid}_{uuid8}`), explizitem `flush()` und `os.fsync()`, Windows-Dateirechtebehebung (`stat.S_IWRITE`) vor `os.replace` und garantiertem `finally`-Cleanup.

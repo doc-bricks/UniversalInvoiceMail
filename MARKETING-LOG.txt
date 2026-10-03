@@ -1,4 +1,4 @@
-# MARKETING-LOG — doc-bricks/UniversalInvoiceMail
+﻿# MARKETING-LOG — doc-bricks/UniversalInvoiceMail
 # Tracked Pfad A Technical Hygiene, CI Lifecycle, Packaging & Governance Milestones
 
 ================================================================================
@@ -246,4 +246,71 @@ Security Contact:  security@doc-bricks.org, security@open-bricks.org
   pytest --basetemp=.pytest_temp and norecursedirs hardening, .gitignore cache defense,
   and German statutory notice (§ 521 BGB) / 48h SLA validation.
 - All test suites passing 100% green (220 Pytest + 10 Node tests).
+- Version 2.3.0 strictly preserved intact per T-20260920-167562623.
+
+================================================================================
+[2026-10-03 04:30 CEST] [PFAD_A_TECHNICAL_HYGIENE_AND_CI_HARDENING]
+Repository:        doc-bricks/UniversalInvoiceMail
+Local Canonical:   C:\_Local_DEV\repos\UniversalInvoiceMail
+Branch:            master
+Version:           2.3.0
+License:           MIT (SPDX-License-Identifier: MIT)
+Maintainer:        Lukas Geiger (support@lukasgeiger.com)
+Security Contact:  security@doc-bricks.org, security@open-bricks.org
+
+1. CI/CD LIFECYCLE WORKFLOWS & LABEL GOVERNANCE
+--------------------------------------------------------------------------------
+- Provisioned .github/workflows/auto-assign.yml:
+  * Trigger: pull_request_target (opened)
+  * Action: actions/github-script@v7, timeout-minutes: 5, cancel-in-progress concurrency
+  * Least-privilege permissions: pull-requests: write, issues: write
+- Provisioned .github/workflows/label-sync.yml:
+  * Trigger: workflow_dispatch
+  * Action: EndBug/label-sync@v2 with .github/labels.yml configuration
+  * Concurrency cancel-in-progress, timeout-minutes: 5, least-privilege issues: write
+- Canonical .github/labels.yml established:
+  * 11 standard labels per GOVERNANCE.md §4.2: bug, enhancement, good first issue,
+    help wanted, documentation, duplicate, wontfix, priority: high, priority: low,
+    needs-triage, stale.
+
+2. BILINGUAL CONTRIBUTING GUIDELINES (DE/EN)
+--------------------------------------------------------------------------------
+- Complete revision of CONTRIBUTING.md covering German and English sections:
+  * Direct specification of all 10 project invariants (INV-LOCAL-01 to INV-SLA-10)
+  * Explicit RunAsInvoker non-elevation mode requirement (standard user permissions)
+  * Plan D local development workflow (C:\_Local_DEV\repos\UniversalInvoiceMail)
+    and gitless OneDrive mirror (REL-PUB_UniversalInvoiceMail)
+  * Version-freeze discipline (T-20260920-167562623, Version 2.3.0 frozen)
+  * Local quality gates (pytest, ruff, compileall, web_companion node tests)
+  * Statutory liability disclaimer (§ 521 BGB Gefälligkeitsrecht) and 48h Security SLA.
+
+3. PEP 621 METADATA & PYTEST NORECURSEDIRS HARDENING
+--------------------------------------------------------------------------------
+- Extended pyproject.toml [project.urls]:
+  * Contributing, Third-Party Licenses (Text), and Level 1 SBOM registered.
+- Hardened [tool.pytest.ini_options] norecursedirs:
+  * Added .turbo, .nyc_output, and .tox to prevent transient runner contamination.
+
+4. MULTI-HOST CLOUD-SYNC & LOCK DEFENSE
+--------------------------------------------------------------------------------
+- Hardened .gitignore:
+  * Multi-host tokens: *-IDEAPAD*, *-IDEAPAD-GEI*, *-IDEAPAD-GEI.*
+  * Agent lock tokens: LOCK.dev.*, LOCK.antigravity.*, LOCK.bugsearch.*
+  * Internal control files: TASKPLAN_*.md, *-TASKPLAN*
+  * Cache tooling: .tox/
+
+5. LEVEL 1 SBOM RE-AUDIT (STAND 2026-10-03)
+--------------------------------------------------------------------------------
+- THIRD_PARTY_LICENSES.md re-audited with confirmation of all 10 invariants,
+  unprivileged RunAsInvoker non-elevation, Zero-Copyleft & 100% Zero-Egress isolation.
+- THIRD_PARTY_LICENSES.txt text companion verified and synchronized.
+
+6. AUTOMATED CONTRACT TESTS & VERIFICATION
+--------------------------------------------------------------------------------
+- 4 new contract tests added in tests/test_metadata.py:
+  * test_ci_lifecycle_workflows_and_labels
+  * test_contributing_guidelines_bilingual_parity
+  * test_pep621_project_urls_complete_parity
+  * test_gitignore_multi_host_and_lock_patterns
+- Total test suite: 282 Pytest passed + 10 Node Web Companion passed = 292 total (100% green).
 - Version 2.3.0 strictly preserved intact per T-20260920-167562623.
