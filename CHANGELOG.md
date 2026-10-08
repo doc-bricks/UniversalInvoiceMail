@@ -23,6 +23,23 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Asset- und Icon-Suite Erweiterung, PWA Mobile Suite & App-Icon-Loader (2026-10-08) [APP_ICON_GENERATOR]
+- **Master-Icons & Multi-Resolution Windows ICOs**:
+  - Generierung verlustfreier 1024x1024 Master-PNGs (`UniversalInvoiceMail.png`, `DesktopIcon.png`, `icon.png`, `UniversalInvoiceMail_icon.png`) im Projekt-Root und in `assets/`.
+  - Vollwertige 7-Layer-ICOs (16x16, 24x24, 32x32, 48x48, 64x64, 128x128, 256x256 Pixel @ 32bpp RGBA) für `UniversalInvoiceMail.ico`, `DesktopIcon.ico`, `icon.ico`, `ICO.ico`, `UniversalInvoiceMail_icon.ico` sowie in `assets/`.
+  - Web- und Anwendungs-Favicons: 5-Layer `favicon.ico` (16, 24, 32, 48, 64 px) und 64x64 `favicon.png` im Root, in `assets/` und in `mobile_icons/`.
+- **PWA Mobile Suite (`mobile_icons/`)**:
+  - Vollständiges Paket unter `mobile_icons/` (`icon.png` [1024x1024], `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` [180x180], `apple-touch-icon-180.png`, `favicon.png`, `favicon.ico`, `manifest.json`).
+  - Standardkonformes `manifest.json` mit Theme-Farbe `#14b8a6`, Background `#10203a` und maskierbaren Icons (`icon-maskable-192.png`, `icon-maskable-512.png`) mit 80%-Safe-Zone und Unterordner `icons/`.
+- **Microsoft Store Kacheln (`store_assets/` & `store_package/`)**:
+  - Kachel- und Store-Icons (`icon_44x44.png`, `Square44x44Logo.png`, `icon_50x50.png`, `Square50x50Logo.png`, `StoreLogo.png`, `icon_150x150.png`, `Square150x150Logo.png`, `icon_310x150.png`, `Wide310x150Logo.png`, `icon_310x310.png`, `Square310x310Logo.png`) und Dokumentation `store_assets/README.md`.
+  - Synchronisation nach `store_package/UniversalInvoiceMail/icons/`.
+- **Laufzeit-Loader & Integration (`app_icon_loader.py`)**:
+  - Robuster, headless-sicherer App-Icon-Loader mit Multi-Pfad-Auflösung (`sys._MEIPASS`, `assets/`, Root-ICOs und PNG-Fallback).
+  - Anbindung in `UniversalInvoiceMail.py` und `UniversalInvoiceMail.spec`.
+- **Vertragstests (`tests/test_assets_and_icons.py`)**:
+  - 5 neue hermetische Vertragstests implementiert (Master-Icons, Multi-Layer ICOs, Assets-Parität, PWA-Manifest und Store-Kacheln sowie QIcon-Laufzeitloader).
+
 ### Pfad A Repository-Hygiene, CI-Lifecycle-Workflows, Bilingual CONTRIBUTING & Multi-Host-Härtung (2026-10-03)
 - **CI/CD Lifecycle Workflows & Label-Governance**:
   - `.github/workflows/auto-assign.yml`: Automatischer Reviewer- & Assignee-Workflow für neue Pull Requests mit `actions/github-script@v7`, `timeout-minutes: 5`, `cancel-in-progress` Concurrency und `pull-requests: write` Rechten.

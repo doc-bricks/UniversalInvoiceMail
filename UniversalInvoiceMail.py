@@ -5506,10 +5506,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
 
-    # Icon setzen (falls vorhanden)
-    icon_path = Path(__file__).parent / "icon.ico"
-    if icon_path.exists():
-        app.setWindowIcon(QIcon(str(icon_path)))
+    # Icon setzen (via app_icon_loader mit Fallback)
+    try:
+        from app_icon_loader import load_app_icon
+        q_icon = load_app_icon()
+        if q_icon is not None and not q_icon.isNull():
+            app.setWindowIcon(q_icon)
+        else:
+            icon_path = Path(__file__).parent / "icon.ico"
+            if icon_path.exists():
+                app.setWindowIcon(QIcon(str(icon_path)))
+    except Exception:
+        icon_path = Path(__file__).parent / "icon.ico"
+        if icon_path.exists():
+            app.setWindowIcon(QIcon(str(icon_path)))
 
     window = MainWindow()
     window.show()

@@ -11,6 +11,12 @@ Kompatibel mit Windows Store / MSIX Packaging und WACK-Kriterien.
 - icon_44x44.png
 - icon_50x50.png
 - SplashScreen.png
+- Square150x150Logo.png
+- Square310x310Logo.png
+- Square44x44Logo.png
+- Square50x50Logo.png
+- StoreLogo.png
+- Wide310x150Logo.png
 
 ## Legacy-/MSIX-Asset-Namen (store_assets/)
 

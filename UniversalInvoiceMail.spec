@@ -11,7 +11,19 @@ project_root = Path(SPECPATH).resolve()
 datas = [
     (str(project_root / "UniversalInvoiceMail_icon.ico"), "."),
     (str(project_root / "UniversalInvoiceMail_icon.png"), "."),
+    (str(project_root / "UniversalInvoiceMail.ico"), "."),
+    (str(project_root / "UniversalInvoiceMail.png"), "."),
+    (str(project_root / "DesktopIcon.ico"), "."),
+    (str(project_root / "DesktopIcon.png"), "."),
+    (str(project_root / "icon.ico"), "."),
+    (str(project_root / "icon.png"), "."),
+    (str(project_root / "favicon.ico"), "."),
+    (str(project_root / "favicon.png"), "."),
 ]
+
+assets_dir = project_root / "assets"
+if assets_dir.exists():
+    datas.append((str(assets_dir), "assets"))
 
 locales_dir = project_root / "locales"
 if locales_dir.exists():
