@@ -23,6 +23,23 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Bugsweep Iteration: DATEV-Export-Pipeline, Betragsnormalisierung, Schema-Resilienz, Beleg-Formatierung & Dataclass-Kompatibilität (2026-11-01) [SOFTWARE_BUGSEARCH]
+- **DATEV-Export & Dataclass-Kompatibilität (`datev_exporter.py`)**:
+  - `_get_inv_attr()` implementiert: `validate_invoices_for_export()` und `DATEVExporter.export()` unterstützen nahtlos sowohl `dict`-Strukturen als auch `Invoice`-Dataclass-Instanzen und gemischte Kollektionen; behebt `AttributeError: 'Invoice' object has no attribute 'get'`.
+  - Defensives `filename=None`-Handling: `str(raw_filename)[:36]` schützt vor `TypeError: 'NoneType' object is not subscriptable` bei Slicing von Belegfeld 1.
+  - `_safe_konten_tuple()` & robuste Kontenauflösung: `_get_konten()` fängt defekte/korrupte Mappings (Singletons, None, Strings) ab und garantiert ein valides 2-Tupel von Integer-Konten (schützt vor `ValueError: not enough values to unpack`).
+  - Integer- & String-Coercion in `DATEVConfig`: `validate_datev_config()` und `_build_header()` wandeln Beraternummer, Mandantennummer und Sachkontenlänge typensicher um und verhindern `TypeError` bei String-Vergleichen oder Header-Generierung.
+- **Internationale Betragsnormalisierung & Inf/NaN-Schutz (`datev_exporter.py`, `invoice_bundle.py`)**:
+  - `parse_datev_amount()` in `datev_exporter.py`: Erkennt mehrfache Tausendertrennpunkte (`1.234.567` und `1,234,567`), internationale Währungszeichen und ISO-Codes (CHF, USD, GBP) und weist `float('nan')`, `float('inf')` sowie String-Repräsentationen von Unendlichkeit sicher ab.
+  - `_normalize_amount()` in `invoice_bundle.py`: Fängt `float('nan')`, `float('inf')`, `float('-inf')` und `infinity` defensiv ab und liefert `None`.
+- **Windows-Gerätenamen & Order-ID-Resilienz (`UniversalInvoiceMail.py`)**:
+  - `sanitize_filename()`: `_WIN_RESERVED_DEVICE_NAMES` um reservierten Windows-Gerätenamen `CLOCK$` erweitert (`CLOCK$.pdf` wird sicher zu `_CLOCK$.pdf` bereinigt).
+  - `extract_order_id()`: Prüft Eingabetext defensiv auf `None` und Nicht-Strings vor Regex-Suche und verhindert `TypeError: expected string or bytes-like object, got 'NoneType'`.
+- **Vertragstests (`tests/test_bugsweep_datev_and_schema_resilience_20261101.py`)**:
+  - 9 neue hermetische Regressionstests für Order-ID, CLOCK$-Gerätenamen, DATEV-Config-Coercion, None-Filename-Slicing, Dataclass-Kompatibilität, gemischte Listen, internationale Währungsbeträge, NaN/Inf-Schutz und Konten-Mapping-Härtung (9/9 passed).
+  - Pytest-Gesamtsuite auf 234 passed ausgebaut (100% grün).
+
+
 ### Asset- und Icon-Suite Erweiterung, PWA Mobile Suite & App-Icon-Loader (2026-10-08) [APP_ICON_GENERATOR]
 - **Master-Icons & Multi-Resolution Windows ICOs**:
   - Generierung verlustfreier 1024x1024 Master-PNGs (`UniversalInvoiceMail.png`, `DesktopIcon.png`, `icon.png`, `UniversalInvoiceMail_icon.png`) im Projekt-Root und in `assets/`.

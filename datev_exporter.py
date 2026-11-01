@@ -14,6 +14,8 @@ Version: 2.0.0
 
 import csv
 import io
+import math
+import re
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -22,6 +24,15 @@ from typing import List, Dict, Tuple, Optional, Union, Any
 # ==================== KONFIGURATION ====================
 
 # Standard SKR03-Konten-Mapping
+
+def _get_inv_attr(inv: Any, attr: str, default: Any = None) -> Any:
+    """Extrahiert ein Attribut aus einem Dict oder einer Invoice-Instanz."""
+    if isinstance(inv, dict):
+        val = inv.get(attr, default)
+    else:
+        val = getattr(inv, attr, default)
+    return default if val is None else val
+
 DEFAULT_KONTEN_MAPPING: Dict[str, Tuple[int, int]] = {
     "Amazon": (70001, 4930),      # Bürobedarf
     "Vodafone": (70002, 4920),    # Telefon
@@ -74,16 +85,21 @@ def validate_account_number(account: Union[int, str], min_digits: int = 4, max_d
 @dataclass
 class DATEVConfig:
     """Konfiguration für DATEV-Export."""
-    berater_nr: str = "12345"
-    mandant_nr: str = "67890"
+    berater_nr: Union[str, int] = "12345"
+    mandant_nr: Union[str, int] = "67890"
     wj_beginn: str = ""  # YYYYMMDD, leer = dynamisch nach Buchungsdatum (oder aktuelles Jahr)
-    sachkontenlänge: int = 4
+    sachkontenlänge: Union[int, str] = 4
     währung: str = "EUR"
     konten_mapping: Dict[str, Tuple[int, int]] = None
 
     def __post_init__(self):
         if self.konten_mapping is None:
             self.konten_mapping = DEFAULT_KONTEN_MAPPING.copy()
+        if isinstance(self.sachkontenlänge, str):
+            try:
+                self.sachkontenlänge = int(self.sachkontenlänge.strip())
+            except (ValueError, TypeError):
+                pass
 
 
 def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
@@ -106,7 +122,11 @@ def validate_datev_config(config: DATEVConfig) -> Tuple[bool, List[str]]:
         errors.append(f"Ungültige Mandantennummer '{m_nr}': Erwartet werden 1 bis 5 Ziffern.")
 
     # Sachkontenlänge (4-8)
-    if config.sachkontenlänge < 4 or config.sachkontenlänge > 8:
+    try:
+        sk_len = int(config.sachkontenlänge)
+    except (ValueError, TypeError):
+        sk_len = 0
+    if sk_len < 4 or sk_len > 8:
         errors.append(f"Sachkontenlänge {config.sachkontenlänge} ungültig (erlaubt: 4 bis 8).")
 
     # Konten-Mapping
@@ -144,7 +164,10 @@ def parse_datev_amount(amount: Any) -> Optional[float]:
         return None
     if isinstance(amount, (int, float)):
         try:
-            val = round(float(amount), 2)
+            f_val = float(amount)
+            if math.isnan(f_val) or math.isinf(f_val):
+                return None
+            val = round(f_val, 2)
             return val if val > 0 else None
         except (ValueError, OverflowError):
             return None
@@ -153,8 +176,10 @@ def parse_datev_amount(amount: Any) -> Optional[float]:
         s = amount.strip()
         if not s:
             return None
-        # Vorzeichen und Währungszeichen säubern
-        s = s.replace("€", "").replace("EUR", "").replace("eur", "").strip()
+        if s.lower() in ("nan", "inf", "-inf", "+inf", "infinity", "-infinity"):
+            return None
+        # Vorzeichen und Währungszeichen säubern (€, $, £, ¥, ₹, EUR, USD, CHF, GBP)
+        s = re.sub(r"[€$£¥₹]|(?i:\b(eur|usd|chf|gbp)\b)", "", s).strip()
         if not s:
             return None
         # Buchhaltungsklammern (12.34) oder Minus -> überspringen
@@ -169,24 +194,36 @@ def parse_datev_amount(amount: Any) -> Optional[float]:
             else:
                 s = s.replace(",", "")
         elif "," in s:
-            parts = s.split(",")
-            if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+            if s.count(",") > 1:
                 s = s.replace(",", "")
             else:
-                s = s.replace(",", ".")
+                parts = s.split(",")
+                if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+                    s = s.replace(",", "")
+                else:
+                    s = s.replace(",", ".")
         elif "." in s:
-            parts = s.split(".")
-            if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+            if s.count(".") > 1:
                 s = s.replace(".", "")
+            else:
+                parts = s.split(".")
+                if len(parts) == 2 and len(parts[1]) == 3 and parts[0] != "0" and parts[0].isdigit() and parts[1].isdigit():
+                    s = s.replace(".", "")
 
         try:
-            val = round(float(s), 2)
+            f_val = float(s)
+            if math.isnan(f_val) or math.isinf(f_val):
+                return None
+            val = round(f_val, 2)
             return val if val > 0 else None
         except (ValueError, OverflowError):
             return None
 
     try:
-        val = round(float(amount), 2)
+        f_val = float(amount)
+        if math.isnan(f_val) or math.isinf(f_val):
+            return None
+        val = round(f_val, 2)
         return val if val > 0 else None
     except (ValueError, TypeError, OverflowError):
         return None
@@ -318,9 +355,10 @@ def validate_invoices_for_export(invoices: List[dict], config: Optional[DATEVCon
         return report
 
     for idx, inv in enumerate(invoices, start=1):
-        raw_amount = inv.get("amount", None)
+        raw_amount = _get_inv_attr(inv, "amount", None)
         parsed_amount = parse_datev_amount(raw_amount)
-        filename = inv.get("filename", f"Rechnung #{idx}")
+        raw_filename = _get_inv_attr(inv, "filename", None)
+        filename = str(raw_filename) if raw_filename is not None else f"Rechnung #{idx}"
 
         # Betragsprüfung mit robuster Normalisierung
         if parsed_amount is None:
@@ -330,7 +368,7 @@ def validate_invoices_for_export(invoices: List[dict], config: Optional[DATEVCon
             report.valid_invoices += 1
 
         # Datumsprüfung mit robuster Multi-Format-Erkennung
-        date_str = inv.get("date", "")
+        date_str = _get_inv_attr(inv, "date", "")
         parsed = parse_datev_datetime(date_str) if date_str else None
         if parsed is None and date_str:
             report.invalid_date_count += 1
@@ -410,8 +448,8 @@ class DATEVExporter:
             '"UIM"',            # 8 Kürzel
             '"UniversalInvoiceMail"', # 9 Bezeichnung Herkunft
             '',                 # 10 (reserviert)
-            self.config.berater_nr,   # 11 Beraternummer
-            self.config.mandant_nr,   # 12 Mandantennummer
+            str(self.config.berater_nr),   # 11 Beraternummer
+            str(self.config.mandant_nr),   # 12 Mandantennummer
             wj_beginn,          # 13 WJ-Beginn
             str(self.config.sachkontenlänge), # 14 Sachkontenlänge
             datum_von,          # 15 Datum von
@@ -431,14 +469,35 @@ class DATEVExporter:
 
         return ";".join(header)
 
+    @staticmethod
+    def _safe_konten_tuple(val: Any, fallback: Tuple[int, int]) -> Tuple[int, int]:
+        """Validiert und normalisiert ein (Konto, Gegenkonto)-Paar defensiv."""
+        if isinstance(val, (tuple, list)) and len(val) == 2:
+            try:
+                k = int(val[0])
+                gk = int(val[1])
+                return (k, gk)
+            except (ValueError, TypeError):
+                pass
+        return fallback
+
     def _get_konten(self, provider: str) -> Tuple[int, int]:
         """Ermittelt Konto und Gegenkonto für einen Provider."""
+        default_pair = (70000, 4900)
+        if not isinstance(self.config.konten_mapping, dict):
+            return default_pair
+
+        sonstige = self._safe_konten_tuple(
+            self.config.konten_mapping.get("Sonstige", default_pair),
+            default_pair
+        )
+
         if not provider:
-            return self.config.konten_mapping.get("Sonstige", (70000, 4900))
+            return sonstige
 
         # Exakte Übereinstimmung
         if provider in self.config.konten_mapping:
-            return self.config.konten_mapping[provider]
+            return self._safe_konten_tuple(self.config.konten_mapping[provider], sonstige)
 
         # Teilübereinstimmung (case-insensitive)
         provider_clean = str(provider).strip()
@@ -450,10 +509,10 @@ class DATEVExporter:
                     continue
                 key_lower = key_clean.lower()
                 if key_lower in provider_lower or provider_lower in key_lower:
-                    return konten
+                    return self._safe_konten_tuple(konten, sonstige)
 
         # Fallback
-        return self.config.konten_mapping.get("Sonstige", (70000, 4900))
+        return sonstige
 
     def _parse_invoice_date(self, date_str: str) -> str:
         """Konvertiert Datum zu TTMM Format."""
@@ -489,7 +548,7 @@ class DATEVExporter:
         # Datum-Range ermitteln
         dates = []
         for inv in invoices:
-            date_str = inv.get("date", "")
+            date_str = _get_inv_attr(inv, "date", "")
             parsed = self._parse_invoice_datetime(date_str)
             if parsed is not None:
                 dates.append(parsed)
@@ -514,14 +573,19 @@ class DATEVExporter:
 
         # Ab Zeile 3: Buchungen
         for inv in invoices:
-            parsed_amount = parse_datev_amount(inv.get("amount", 0.0))
+            raw_amount = _get_inv_attr(inv, "amount", 0.0)
+            parsed_amount = parse_datev_amount(raw_amount)
             if parsed_amount is None:
                 continue  # Überspringe Rechnungen ohne Betrag
 
-            provider = inv.get("provider", "Sonstige") or "Sonstige"
-            category = inv.get("category", provider) or provider
+            provider = _get_inv_attr(inv, "provider") or _get_inv_attr(inv, "profile_name") or "Sonstige"
+            category = _get_inv_attr(inv, "category") or provider
 
             konto, gegenkonto = self._get_konten(category or provider)
+
+            raw_fn = _get_inv_attr(inv, "filename", None)
+            belegfeld1 = str(raw_fn)[:36] if raw_fn is not None else ""
+            date_val = _get_inv_attr(inv, "date", "")
 
             buchung = DATEVBuchung(
                 umsatz=parsed_amount,
@@ -529,8 +593,8 @@ class DATEVExporter:
                 wkz=self.config.währung,
                 konto=konto,
                 gegenkonto=gegenkonto,
-                belegdatum=self._parse_invoice_date(inv.get("date", "")),
-                belegfeld1=inv.get("filename", "")[:36],
+                belegdatum=self._parse_invoice_date(date_val),
+                belegfeld1=belegfeld1,
                 buchungstext=f"{provider} Rechnung"[:60]
             )
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -30,12 +31,16 @@ def _normalize_amount(value: Any) -> Optional[float]:
     if value is None:
         return None
     if isinstance(value, (int, float)):
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            return None
         return round(float(value), 2)
     if not isinstance(value, str):
         value = str(value)
 
     text = value.strip()
     if not text:
+        return None
+    if text.lower() in ("nan", "inf", "-inf", "+inf", "infinity", "-infinity"):
         return None
 
     is_negative = False
@@ -100,7 +105,10 @@ def _normalize_amount(value: Any) -> Optional[float]:
                 text = text.replace(".", "")
 
     try:
-        res = round(float(text), 2)
+        f = float(text)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        res = round(f, 2)
         return -res if is_negative else res
     except ValueError:
         raise ValueError(f"could not convert string to float: {value!r}")

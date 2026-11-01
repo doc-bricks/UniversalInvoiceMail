@@ -371,7 +371,7 @@ class AppSettings:
 # ==================== HILFSFUNKTIONEN ====================
 
 _WIN_RESERVED_DEVICE_NAMES = {
-    "CON", "PRN", "AUX", "NUL",
+    "CON", "PRN", "AUX", "NUL", "CLOCK$",
     "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
     "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 }
@@ -1623,6 +1623,8 @@ def extract_order_id(text: str) -> str:
 
     Fix #14: Tightened regex — requires context keywords to avoid matching UUIDs.
     """
+    if not text or not isinstance(text, str):
+        return ""
     patterns = [
         # Deutsche Formate - MUSS Keyword haben
         r'(?:Bestellnummer|Bestell-Nr\.?|Bestellnr\.?|Auftragsnummer|Auftrags-Nr\.?)\s*[:.]?\s*([A-Z0-9-]{5,20})',
