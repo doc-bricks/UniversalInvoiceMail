@@ -23,6 +23,27 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### WCAG 2.1 AA / BITV 2.0 Barrierefreiheit, Tastatur-Ergonomie, Menüleiste, Statusbar & Dialog-Härtung (2026-11-02) [SOFTWARE_UX_AND_ACCESSIBILITY_REVIEW]
+- **Barrierefreie Menüleiste & Alt-Mnemonics (`UniversalInvoiceMail.py`)**:
+  - `MainWindow.menuBar()` mit barrierefreiem Namen ("Hauptmenü") und 4 Hauptmenüs strukturiert: `&Datei` (Alt+D), `&Bearbeiten` (Alt+B), `&Ansicht` (Alt+A) und `&Hilfe` (Alt+H).
+  - Globale Tastaturkürzel und Accelerators für Kernaktionen: Rechnungen abrufen (`Ctrl+Return`), CSV exportieren (`Ctrl+E`), DATEV exportieren, Bundle exportieren/importieren, Speicherordner öffnen (`Ctrl+O`), Tabelle aktualisieren (`F5`), Beenden (`Ctrl+Q`), Alle auswählen (`Ctrl+A`), Auswahl aufheben (`Ctrl+Shift+A`), Löschen (`Delete`), Einstellungen speichern (`Ctrl+S`), Tastaturkürzel & Hilfe (`F1`), Über UniversalInvoiceMail (`Shift+F1`).
+- **Tab-Navigation & Tastaturbedienung (`UniversalInvoiceMail.py`)**:
+  - `self.tabs` als Instanzattribut gebunden; Tastaturnavigation via `Ctrl+1`..`Ctrl+4` für direkte Wahl von Rechnungen, Einstellungen, Log und Info sowie zyklischer Reiterwechsel via `Ctrl+Tab` und `Ctrl+Shift+Tab`.
+- **Statusleiste mit Screenreader-Rückmeldung (`UniversalInvoiceMail.py`)**:
+  - `self.statusBar()` mit barrierefreiem Namen ("Statusleiste") eingerichtet; liefert visuelle und Screenreader-gerechte Statusmeldungen bei Reiterwechsel, Tabellenaktualisierung und Einstellungs-Speicherung.
+- **Barrierefreier Über-Dialog (`AboutDialog` in `UniversalInvoiceMail.py`)**:
+  - Neuer modaler Dialog mit Version (v2.3.0), App-Icon, Lizenzangabe (MIT License), Local-First / Zero-Egress Reassurance (100% lokal, kein Tracking, keine Telemetrie) und BITV 2.0 / WCAG 2.1 AA Barrierefreiheitsdeklaration inklusive Escape-Key-Handling.
+- **ShortcutsDialog-Härtung & dynamische Retranslation (`UniversalInvoiceMail.py`)**:
+  - `ShortcutsDialog` um Escape-Key-Schließlogik und 5 neue Navigations- und Menükürzel erweitert.
+  - `retranslate_ui()` für dynamische Live-Neuübersetzung aller Menüs, Reiter und Texte implementiert.
+- **Lokalisierung & Tier-2 6-Sprachen-Parität (`locales/translations.json`)**:
+  - 10 neue Lokalisierungsschlüssel mit 100% Parität über Deutsch, Englisch, Spanisch, Chinesisch, Japanisch und Russisch (69/69 Keys; `manage_translations.py --check` bestanden).
+  - Echte deutsche Umlaute (ä, ö, ü, Ä, Ö, Ü, ß) in allen Texten.
+- **Vertragstests & Verifikation (`tests/test_ui_accessibility.py`)**:
+  - 6 neue hermetische Vertragstests (Menüstruktur, Shortcuts, Tab-Navigation, Statusbar, AboutDialog, Escape-Handling, dynamische Retranslation und Umlaut-Prüfung).
+  - Pytest-Gesamtsuite auf 240 passed ausgebaut (100% grün).
+
+
 ### Bugsweep Iteration: DATEV-Export-Pipeline, Betragsnormalisierung, Schema-Resilienz, Beleg-Formatierung & Dataclass-Kompatibilität (2026-11-01) [SOFTWARE_BUGSEARCH]
 - **DATEV-Export & Dataclass-Kompatibilität (`datev_exporter.py`)**:
   - `_get_inv_attr()` implementiert: `validate_invoices_for_export()` und `DATEVExporter.export()` unterstützen nahtlos sowohl `dict`-Strukturen als auch `Invoice`-Dataclass-Instanzen und gemischte Kollektionen; behebt `AttributeError: 'Invoice' object has no attribute 'get'`.

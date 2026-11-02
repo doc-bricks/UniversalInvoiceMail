@@ -3387,6 +3387,97 @@ class ShortcutsDialog(QDialog):
             self.close_btn.setFocus()
         layout.addWidget(btn_box)
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.reject()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+
+class AboutDialog(QDialog):
+    """Barrierefreier Über-Dialog mit Version, Lizenz, Local-First Invariante und WCAG 2.1 AA Erklärung."""
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        title = t("dlg_about_title", default="Über UniversalInvoiceMail")
+        self.setWindowTitle(title)
+        self.setObjectName("about_dialog")
+        self.setAccessibleName(title)
+        desc = t("dlg_about_subtitle", default="Vereinfachte Desktop-App zum Extrahieren und Verwalten von Rechnungen aus E-Mails.")
+        self.setAccessibleDescription(desc)
+        self.setMinimumWidth(560)
+        self.setMinimumHeight(420)
+        self.resize(580, 440)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
+
+        header_layout = QHBoxLayout()
+        icon_label = QLabel()
+        icon_label.setObjectName("about_dialog_icon_label")
+        try:
+            from app_icon_loader import get_app_icon
+            icon = get_app_icon()
+            if icon and not icon.isNull():
+                icon_label.setPixmap(icon.pixmap(48, 48))
+        except Exception:
+            pass
+        header_layout.addWidget(icon_label)
+
+        title_layout = QVBoxLayout()
+        title_label = QLabel(f"<h2>{APP_NAME} v{VERSION}</h2>")
+        title_label.setObjectName("about_dialog_title_label")
+        title_layout.addWidget(title_label)
+        sub_label = QLabel(desc)
+        sub_label.setObjectName("about_dialog_subtitle_label")
+        sub_label.setWordWrap(True)
+        sub_label.setStyleSheet("color: #cccccc; font-weight: bold;")
+        title_layout.addWidget(sub_label)
+        header_layout.addLayout(title_layout)
+        header_layout.addStretch()
+        layout.addLayout(header_layout)
+
+        info_group = QGroupBox("Architektur, Lizenz & Datenschutz")
+        info_group.setObjectName("about_dialog_info_group")
+        info_layout = QVBoxLayout(info_group)
+        info_layout.setSpacing(8)
+
+        lbl_license = QLabel(t("about_license_label", default="<b>Lizenz:</b> MIT License (Open Source) — Frei nutzbar und anpassbar."))
+        lbl_license.setObjectName("about_license_label")
+        lbl_license.setWordWrap(True)
+        info_layout.addWidget(lbl_license)
+
+        lbl_egress = QLabel(t("about_egress_label", default="<b>Datenschutz & Privatsphäre:</b> 100% Local-First / Zero-Egress. Alle Rechnungsdaten und Zugangsdaten verbleiben vollständig lokal auf Ihrem Gerät. Keine Telemetrie, kein Tracking, kein unbefugter externer Netzwerk-Egress."))
+        lbl_egress.setObjectName("about_egress_label")
+        lbl_egress.setWordWrap(True)
+        info_layout.addWidget(lbl_egress)
+
+        lbl_a11y = QLabel(t("about_a11y_label", default="<b>Barrierefreiheit (WCAG 2.1 AA / BITV 2.0):</b> Vollständige Tastaturbedienung über Shortcuts, zugängliche Screenreader-Namen und barrierefreie Tabellennavigation."))
+        lbl_a11y.setObjectName("about_a11y_label")
+        lbl_a11y.setWordWrap(True)
+        info_layout.addWidget(lbl_a11y)
+
+        layout.addWidget(info_group)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        btn_box.rejected.connect(self.reject)
+        self.close_btn = btn_box.button(QDialogButtonBox.StandardButton.Close)
+        if self.close_btn:
+            self.close_btn.setObjectName("about_dialog_close_button")
+            self.close_btn.setText(t("btn_close", default="Schließen"))
+            self.close_btn.setAccessibleName("Dialog schließen")
+            self.close_btn.setFocus()
+        layout.addWidget(btn_box)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.reject()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
 
 # ==================== DATEV-DIALOG ====================
 
@@ -3654,6 +3745,7 @@ class MainWindow(QMainWindow):
 
         self.load_config()
         self.setup_ui()
+        self.setup_menu_bar()
 
     def load_config(self):
         """Lädt Konfiguration"""
@@ -3936,10 +4028,10 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(left_panel)
 
         # === RECHTE SEITE: Tabs ===
-        tabs = QTabWidget()
-        tabs.setObjectName("main_workspace_tabs")
-        tabs.setAccessibleName("Arbeitsbereiche")
-        tabs.setAccessibleDescription(
+        self.tabs = QTabWidget()
+        self.tabs.setObjectName("main_workspace_tabs")
+        self.tabs.setAccessibleName("Arbeitsbereiche")
+        self.tabs.setAccessibleDescription(
             "Wechselt zwischen Rechnungen, Einstellungen, Protokoll und Informationen."
         )
 
@@ -4067,7 +4159,7 @@ class MainWindow(QMainWindow):
         inv_btn_row.addStretch()
         invoice_layout.addLayout(inv_btn_row)
 
-        tabs.addTab(invoice_tab, "📄 Rechnungen")
+        self.tabs.addTab(invoice_tab, "📄 Rechnungen")
 
         # Tab: Einstellungen
         settings_tab = QWidget()
@@ -4239,7 +4331,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         settings_layout.addWidget(btn_save)
         settings_layout.addStretch()
 
-        tabs.addTab(settings_tab, "⚙️ Einstellungen")
+        self.tabs.addTab(settings_tab, "⚙️ Einstellungen")
 
         # Tab: Log
         log_tab = QWidget()
@@ -4257,7 +4349,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         )
         log_layout.addWidget(self.log_output)
 
-        tabs.addTab(log_tab, "📝 Log")
+        self.tabs.addTab(log_tab, "📝 Log")
 
         # Tab: Info
         info_tab = QWidget()
@@ -4296,9 +4388,16 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         info_layout.addWidget(info_label)
         info_layout.addStretch()
 
-        tabs.addTab(info_tab, "ℹ️ Info")
+        self.tabs.addTab(info_tab, "ℹ️ Info")
 
-        main_layout.addWidget(tabs, stretch=1)
+        main_layout.addWidget(self.tabs, stretch=1)
+
+        # Statusleiste (WCAG 2.1 AA / Screenreader-Feedback)
+        self.status_bar = self.statusBar()
+        self.status_bar.setObjectName("main_status_bar")
+        self.status_bar.setAccessibleName("Statusleiste")
+        self.status_bar.setAccessibleDescription("Status- und Rückmeldebereich der Anwendung")
+        self.status_bar.showMessage("Bereit")
 
         # Tastatur-Navigation & Shortcuts
         self.setup_shortcuts()
@@ -4340,7 +4439,7 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         # Strg+E: Rechnungsliste als CSV exportieren
         self.shortcut_export_csv = QShortcut(QKeySequence("Ctrl+E"), self)
-        self.shortcut_export_csv.activated.connect(self.export_invoices_csv)
+        self.shortcut_export_csv.activated.connect(lambda: self.export_invoices_csv())
 
         # Strg+S: Einstellungen speichern
         self.shortcut_save_settings = QShortcut(QKeySequence("Ctrl+S"), self)
@@ -4349,6 +4448,30 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
         # F1: Hilfe & Tastaturkürzel
         self.shortcut_help_f1 = QShortcut(QKeySequence("F1"), self)
         self.shortcut_help_f1.activated.connect(self.show_shortcuts_dialog)
+
+        # Umschalt+F1: Über UniversalInvoiceMail
+        self.shortcut_about_shift_f1 = QShortcut(QKeySequence("Shift+F1"), self)
+        self.shortcut_about_shift_f1.activated.connect(self.show_about_dialog)
+
+        # Strg+1..Strg+4: Direkte Reiter-Auswahl
+        self.shortcut_tab1 = QShortcut(QKeySequence("Ctrl+1"), self)
+        self.shortcut_tab1.activated.connect(lambda: self.select_tab(0))
+        self.shortcut_tab2 = QShortcut(QKeySequence("Ctrl+2"), self)
+        self.shortcut_tab2.activated.connect(lambda: self.select_tab(1))
+        self.shortcut_tab3 = QShortcut(QKeySequence("Ctrl+3"), self)
+        self.shortcut_tab3.activated.connect(lambda: self.select_tab(2))
+        self.shortcut_tab4 = QShortcut(QKeySequence("Ctrl+4"), self)
+        self.shortcut_tab4.activated.connect(lambda: self.select_tab(3))
+
+        # Strg+Tab / Strg+Umschalt+Tab: Zyklischer Reiterwechsel
+        self.shortcut_tab_next = QShortcut(QKeySequence("Ctrl+Tab"), self)
+        self.shortcut_tab_next.activated.connect(self.next_tab)
+        self.shortcut_tab_prev = QShortcut(QKeySequence("Ctrl+Shift+Tab"), self)
+        self.shortcut_tab_prev.activated.connect(self.prev_tab)
+
+        # Strg+Q: Anwendung beenden
+        self.shortcut_quit = QShortcut(QKeySequence("Ctrl+Q"), self)
+        self.shortcut_quit.activated.connect(self.close)
 
     def refresh_ui(self):
         """Aktualisiert alle Listen"""
@@ -4971,11 +5094,225 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
 
         self.save_config()
 
+    def setup_menu_bar(self):
+        """Erstellt die barrierefreie Menüleiste mit Alt-Mnemonics und Tastaturkürzeln (WCAG 2.1 AA)."""
+        menu_bar = self.menuBar()
+        menu_bar.setObjectName("main_menu_bar")
+        menu_bar.setAccessibleName("Hauptmenü")
+        menu_bar.setAccessibleDescription("Menüleiste zur barrierefreien Steuerung aller Anwendungsfunktionen")
+
+        # --- Menü: &Datei (Alt+D) ---
+        self.menu_file = menu_bar.addMenu(t("menu_file", default="&Datei"))
+        self.menu_file.setObjectName("menu_file")
+        self.menu_file.setAccessibleName("Datei-Menü")
+
+        self.act_start = self.menu_file.addAction("Rechnungen &abrufen")
+        self.act_start.setObjectName("action_start_grabbing")
+        self.act_start.setShortcut(QKeySequence("Ctrl+Return"))
+        self.act_start.triggered.connect(self.start_grabbing)
+        self.act_start.setToolTip("Rechnungsabruf starten (Strg+Eingabe)")
+
+        self.act_export_csv = self.menu_file.addAction("Rechnungen als &CSV exportieren")
+        self.act_export_csv.setObjectName("action_export_csv")
+        self.act_export_csv.setShortcut(QKeySequence("Ctrl+E"))
+        self.act_export_csv.triggered.connect(lambda _checked=False: self.export_invoices_csv())
+        self.act_export_csv.setToolTip("Markierte oder alle Rechnungen als CSV exportieren (Strg+E)")
+
+        self.act_bundle_export = self.menu_file.addAction("Rechnungs-&Bundle exportieren")
+        self.act_bundle_export.setObjectName("action_bundle_export")
+        self.act_bundle_export.triggered.connect(self.export_invoice_bundle)
+        self.act_bundle_export.setToolTip("Redigiertes Rechnungs-Bundle für Companion oder Prüfung exportieren")
+
+        self.act_bundle_import = self.menu_file.addAction("Companion-Bundle &importieren")
+        self.act_bundle_import.setObjectName("action_bundle_import")
+        self.act_bundle_import.triggered.connect(self.import_invoice_bundle)
+        self.act_bundle_import.setToolTip("Companion-Änderungen reimportieren")
+
+        self.act_datev = self.menu_file.addAction("DATE&V-Buchungsstapel exportieren")
+        self.act_datev.setObjectName("action_export_datev")
+        self.act_datev.triggered.connect(self._export_datev)
+        self.act_datev.setEnabled(DATEV_AVAILABLE)
+        self.act_datev.setToolTip("DATEV-Buchungsstapel exportieren")
+
+        self.menu_file.addSeparator()
+
+        self.act_open_folder = self.menu_file.addAction("Speicher&ordner öffnen")
+        self.act_open_folder.setObjectName("action_open_download_folder")
+        self.act_open_folder.setShortcut(QKeySequence("Ctrl+O"))
+        self.act_open_folder.triggered.connect(self.open_download_folder)
+        self.act_open_folder.setToolTip("Speicherordner für Rechnungen im Dateimanager öffnen (Strg+O)")
+
+        self.act_refresh = self.menu_file.addAction("Rechnungsliste &aktualisieren")
+        self.act_refresh.setObjectName("action_refresh_invoice_table")
+        self.act_refresh.setShortcut(QKeySequence("F5"))
+        self.act_refresh.triggered.connect(self.refresh_invoice_table)
+        self.act_refresh.setToolTip("Tabelle mit Ordnerinhalt synchronisieren (F5)")
+
+        self.menu_file.addSeparator()
+
+        self.act_exit = self.menu_file.addAction("&Beenden")
+        self.act_exit.setObjectName("action_exit")
+        self.act_exit.setShortcut(QKeySequence("Ctrl+Q"))
+        self.act_exit.triggered.connect(self.close)
+        self.act_exit.setToolTip("Anwendung beenden (Strg+Q)")
+
+        # --- Menü: &Bearbeiten (Alt+B) ---
+        self.menu_edit = menu_bar.addMenu(t("menu_edit", default="&Bearbeiten"))
+        self.menu_edit.setObjectName("menu_edit")
+        self.menu_edit.setAccessibleName("Bearbeiten-Menü")
+
+        self.act_select_all = self.menu_edit.addAction("&Alle auswählen")
+        self.act_select_all.setObjectName("action_select_all")
+        self.act_select_all.setShortcut(QKeySequence("Ctrl+A"))
+        self.act_select_all.triggered.connect(self.select_all_invoices)
+        self.act_select_all.setToolTip("Alle sichtbaren Rechnungen in der Tabelle markieren (Strg+A)")
+
+        self.act_select_none = self.menu_edit.addAction("Auswahl &aufheben")
+        self.act_select_none.setObjectName("action_select_none")
+        self.act_select_none.setShortcut(QKeySequence("Ctrl+Shift+A"))
+        self.act_select_none.triggered.connect(self.select_no_invoices)
+        self.act_select_none.setToolTip("Markierungen in der Rechnungstabelle aufheben (Escape / Strg+Umschalt+A)")
+
+        self.act_delete_selected = self.menu_edit.addAction("Ausgewählte &löschen")
+        self.act_delete_selected.setObjectName("action_delete_selected")
+        self.act_delete_selected.setShortcut(QKeySequence("Delete"))
+        self.act_delete_selected.triggered.connect(self.delete_selected_invoices)
+        self.act_delete_selected.setToolTip("Ausgewählte Rechnungen und Dateien löschen (Entf)")
+
+        self.menu_edit.addSeparator()
+
+        self.act_add_profile = self.menu_edit.addAction("Neues &Suchprofil anlegen...")
+        self.act_add_profile.setObjectName("action_add_profile")
+        self.act_add_profile.triggered.connect(self.add_profile)
+        self.act_add_profile.setToolTip("Neues Rechnungs-Suchprofil erstellen")
+
+        self.act_add_account = self.menu_edit.addAction("Neues E-Mail-&Konto anlegen...")
+        self.act_add_account.setObjectName("action_add_account")
+        self.act_add_account.triggered.connect(self.add_account)
+        self.act_add_account.setToolTip("Neues E-Mail-Konto hinzufügen")
+
+        self.menu_edit.addSeparator()
+
+        self.act_save_settings = self.menu_edit.addAction("&Einstellungen speichern")
+        self.act_save_settings.setObjectName("action_save_settings")
+        self.act_save_settings.setShortcut(QKeySequence("Ctrl+S"))
+        self.act_save_settings.triggered.connect(self.save_settings)
+        self.act_save_settings.setToolTip("Anwendungseinstellungen dauerhaft speichern (Strg+S)")
+
+        # --- Menü: &Ansicht (Alt+A) ---
+        self.menu_view = menu_bar.addMenu(t("menu_view", default="&Ansicht"))
+        self.menu_view.setObjectName("menu_view")
+        self.menu_view.setAccessibleName("Ansicht-Menü")
+
+        self.act_tab_invoices = self.menu_view.addAction("Reiter &Rechnungen")
+        self.act_tab_invoices.setObjectName("action_tab_invoices")
+        self.act_tab_invoices.setShortcut(QKeySequence("Ctrl+1"))
+        self.act_tab_invoices.triggered.connect(lambda: self.select_tab(0))
+        self.act_tab_invoices.setToolTip("Zum Reiter Rechnungen wechseln (Strg+1)")
+
+        self.act_tab_settings = self.menu_view.addAction("Reiter &Einstellungen")
+        self.act_tab_settings.setObjectName("action_tab_settings")
+        self.act_tab_settings.setShortcut(QKeySequence("Ctrl+2"))
+        self.act_tab_settings.triggered.connect(lambda: self.select_tab(1))
+        self.act_tab_settings.setToolTip("Zum Reiter Einstellungen wechseln (Strg+2)")
+
+        self.act_tab_log = self.menu_view.addAction("Reiter &Log")
+        self.act_tab_log.setObjectName("action_tab_log")
+        self.act_tab_log.setShortcut(QKeySequence("Ctrl+3"))
+        self.act_tab_log.triggered.connect(lambda: self.select_tab(2))
+        self.act_tab_log.setToolTip("Zum Reiter Log wechseln (Strg+3)")
+
+        self.act_tab_info = self.menu_view.addAction("Reiter &Info")
+        self.act_tab_info.setObjectName("action_tab_info")
+        self.act_tab_info.setShortcut(QKeySequence("Ctrl+4"))
+        self.act_tab_info.triggered.connect(lambda: self.select_tab(3))
+        self.act_tab_info.setToolTip("Zum Reiter Info wechseln (Strg+4)")
+
+        self.menu_view.addSeparator()
+
+        self.act_next_tab = self.menu_view.addAction("&Nächster Reiter")
+        self.act_next_tab.setObjectName("action_next_tab")
+        self.act_next_tab.setShortcut(QKeySequence("Ctrl+Tab"))
+        self.act_next_tab.triggered.connect(self.next_tab)
+        self.act_next_tab.setToolTip("Zum nächsten Reiter wechseln (Strg+Tab)")
+
+        self.act_prev_tab = self.menu_view.addAction("&Vorheriger Reiter")
+        self.act_prev_tab.setObjectName("action_prev_tab")
+        self.act_prev_tab.setShortcut(QKeySequence("Ctrl+Shift+Tab"))
+        self.act_prev_tab.triggered.connect(self.prev_tab)
+        self.act_prev_tab.setToolTip("Zum vorherigen Reiter wechseln (Strg+Umschalt+Tab)")
+
+        # --- Menü: &Hilfe (Alt+H) ---
+        self.menu_help = menu_bar.addMenu(t("menu_help", default="&Hilfe"))
+        self.menu_help.setObjectName("menu_help")
+        self.menu_help.setAccessibleName("Hilfe-Menü")
+
+        self.act_shortcuts = self.menu_help.addAction("&Tastaturkürzel & Hilfe...")
+        self.act_shortcuts.setObjectName("action_shortcuts_dialog")
+        self.act_shortcuts.setShortcut(QKeySequence("F1"))
+        self.act_shortcuts.triggered.connect(self.show_shortcuts_dialog)
+        self.act_shortcuts.setToolTip("Übersicht aller Tastaturkürzel und Barrierefreiheitsfunktionen (F1)")
+
+        self.act_about = self.menu_help.addAction("&Über UniversalInvoiceMail...")
+        self.act_about.setObjectName("action_about_dialog")
+        self.act_about.setShortcut(QKeySequence("Shift+F1"))
+        self.act_about.triggered.connect(self.show_about_dialog)
+        self.act_about.setToolTip("Informationen zu Version, Lizenz, Datenschutz und Barrierefreiheit (Umschalt+F1)")
+
+    def select_tab(self, index: int):
+        """Wechselt direkt zum Tab mit angegebenem Index."""
+        if hasattr(self, "tabs") and self.tabs is not None and 0 <= index < self.tabs.count():
+            self.tabs.setCurrentIndex(index)
+            if hasattr(self, "status_bar") and self.status_bar is not None:
+                tab_name = self.tabs.tabText(index)
+                self.status_bar.showMessage(f"Reiter gewechselt: {tab_name}")
+
+    def next_tab(self):
+        """Wechselt zyklisch zum nächsten Tab."""
+        if hasattr(self, "tabs") and self.tabs is not None and self.tabs.count() > 0:
+            idx = (self.tabs.currentIndex() + 1) % self.tabs.count()
+            self.select_tab(idx)
+
+    def prev_tab(self):
+        """Wechselt zyklisch zum vorherigen Tab."""
+        if hasattr(self, "tabs") and self.tabs is not None and self.tabs.count() > 0:
+            idx = (self.tabs.currentIndex() - 1) % self.tabs.count()
+            self.select_tab(idx)
+
+    def show_about_dialog(self):
+        """Öffnet den modalen Über-Dialog mit Version, Lizenz, Datenschutz und Barrierefreiheit."""
+        if os.environ.get("QT_QPA_PLATFORM") == "offscreen" and not getattr(self, "_allow_modal_dialog_in_test", False):
+            return "Über UniversalInvoiceMail", VERSION
+
+        dlg = AboutDialog(parent=self)
+        return dlg.exec()
+
+    def retranslate_ui(self):
+        """Aktualisiert alle Menüs, Reiter und dynamischen Texte nach Sprachwechsel."""
+        self.setWindowTitle(f"{APP_NAME} v{VERSION}")
+        if hasattr(self, "tabs") and self.tabs is not None:
+            if self.tabs.count() >= 4:
+                self.tabs.setTabText(0, f"📄 {t('th_invoices', default='Rechnungen')}")
+                self.tabs.setTabText(1, f"⚙️ {t('btn_settings', default='Einstellungen')}")
+                self.tabs.setTabText(2, "📝 Log")
+                self.tabs.setTabText(3, "ℹ️ Info")
+        if hasattr(self, "menu_file") and self.menu_file is not None:
+            self.menu_file.setTitle(t("menu_file", default="&Datei"))
+        if hasattr(self, "menu_edit") and self.menu_edit is not None:
+            self.menu_edit.setTitle(t("menu_edit", default="&Bearbeiten"))
+        if hasattr(self, "menu_view") and self.menu_view is not None:
+            self.menu_view.setTitle(t("menu_view", default="&Ansicht"))
+        if hasattr(self, "menu_help") and self.menu_help is not None:
+            self.menu_help.setTitle(t("menu_help", default="&Hilfe"))
+
     def show_shortcuts_dialog(self):
         """Öffnet den Dialog zur Übersicht aller Tastaturkürzel und Barrierefreiheitsfunktionen."""
         shortcuts = [
-            ("F1", "Tastaturkürzel & Barrierefreiheits-Hilfe anzeigen", "Global"),
-            ("Strg+Eingabe / Strg+Enter", "Rechnungen abrufen (Start)", "Global"),
+            ("F1", "Tastaturkürzel & Barrierefreiheits-Hilfe anzeigen", "Global / Hilfe"),
+            ("Umschalt+F1", "Über UniversalInvoiceMail (Version, Lizenz, Datenschutz, WCAG)", "Global / Hilfe"),
+            ("Strg+1 .. Strg+4", "Reiter Rechnungen (1), Einstellungen (2), Log (3), Info (4) wählen", "Navigation"),
+            ("Strg+Tab / Strg+Umschalt+Tab", "Zyklisch zum nächsten bzw. vorherigen Reiter wechseln", "Navigation"),
+            ("Strg+Eingabe / Strg+Enter", "Rechnungen abrufen (Start)", "Global / Rechnungen"),
             ("F5 / Strg+R", "Rechnungstabelle mit Ordnerinhalt aktualisieren", "Global / Rechnungen"),
             ("Strg+O", "Speicherordner für Rechnungen im Dateimanager öffnen", "Global / Rechnungen"),
             ("Strg+A", "Alle sichtbaren Rechnungen in der Tabelle markieren", "Rechnungen"),
@@ -4985,6 +5322,8 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
             ("Entf / Backspace", "Ausgewählte Rechnungen, Profile oder Konten löschen", "Tabelle / Listen"),
             ("Strg+E", "Rechnungsliste als CSV exportieren", "Rechnungen"),
             ("Strg+S", "Einstellungen speichern", "Einstellungen"),
+            ("Strg+Q", "Anwendung beenden", "System"),
+            ("Alt+D / Alt+B / Alt+A / Alt+H", "Menüleiste ansteuern (Datei, Bearbeiten, Ansicht, Hilfe)", "Menü"),
             ("Alt+B", "Fokus auf Beraternummer setzen", "DATEV-Dialog"),
             ("Alt+M", "Fokus auf Mandantennummer setzen", "DATEV-Dialog"),
             ("Alt+Z / Einfg", "Neue Zeile im Konten-Mapping hinzufügen", "DATEV-Dialog"),
@@ -5000,6 +5339,8 @@ PDFs die manuell in Profilordner gelegt werden, erscheinen nach
     def save_settings(self):
         """Speichert Einstellungen (mit Benutzer-Feedback)"""
         self._apply_settings()
+        if hasattr(self, "status_bar") and self.status_bar is not None:
+            self.status_bar.showMessage("Einstellungen erfolgreich gespeichert.")
         QMessageBox.information(self, "OK", "Einstellungen gespeichert!")
 
     def open_datev_settings_dialog(self):

@@ -1,16 +1,47 @@
 {
   "_meta": {
     "version": "2.0.0",
-    "languages": ["de", "en", "es", "zh", "ja", "ru"],
+    "languages": [
+      "de",
+      "en",
+      "es",
+      "zh",
+      "ja",
+      "ru"
+    ],
     "description": "Translations for UniversalInvoiceMail"
   },
-  "app_title": {
-    "de": "UniversalInvoiceMail",
-    "en": "UniversalInvoiceMail",
-    "es": "UniversalInvoiceMail",
-    "zh": "UniversalInvoiceMail",
-    "ja": "UniversalInvoiceMail",
-    "ru": "UniversalInvoiceMail"
+  "a11y_wcag_reference": {
+    "de": "Barrierefreiheit nach WCAG 2.1 AA / BITV 2.0: Alle Funktionen sind vollständig per Tastatur bedienbar.",
+    "en": "Accessibility according to WCAG 2.1 AA / BITV 2.0: All functions can be operated entirely via keyboard.",
+    "es": "Accesibilidad según WCAG 2.1 AA / BITV 2.0: Todas las funciones son totalmente accesibles mediante teclado.",
+    "zh": "符合 WCAG 2.1 AA / BITV 2.0 无障碍标准：所有功能均可完全通过键盘操作。",
+    "ja": "WCAG 2.1 AA / BITV 2.0 に準拠したアクセシビリティ: すべての機能はキーボードのみで完全に操作可能です。",
+    "ru": "Доступность по стандартам WCAG 2.1 AA / BITV 2.0: Все функции полностью доступны с клавиатуры."
+  },
+  "about_a11y_label": {
+    "de": "<b>Barrierefreiheit (WCAG 2.1 AA / BITV 2.0):</b> Vollständige Tastaturbedienung über Shortcuts, zugängliche Screenreader-Namen und barrierefreie Tabellennavigation.",
+    "en": "<b>Accessibility (WCAG 2.1 AA / BITV 2.0):</b> Full keyboard navigation via shortcuts, accessible screen reader names, and accessible table navigation.",
+    "es": "<b>Accesibilidad (WCAG 2.1 AA / BITV 2.0):</b> Navegación completa por teclado mediante atajos, nombres accesibles para lectores de pantalla y navegación de tablas accesible.",
+    "zh": "<b>无障碍访问（WCAG 2.1 AA / BITV 2.0）：</b>支持全局快捷键完全键盘控制、屏幕阅读器无障碍名称与无障碍表格导航。",
+    "ja": "<b>アクセシビリティ (WCAG 2.1 AA / BITV 2.0):</b> ショートカットによる完全なキーボード操作、スクリーンリーダー用アクセシブルネーム、アクセシブルなテーブルナビゲーション。",
+    "ru": "<b>Доступность (WCAG 2.1 AA / BITV 2.0):</b> Полное управление с клавиатуры с помощью сочетаний клавиш, доступные имена для чтения с экрана и доступная навигация по таблицам."
+  },
+  "about_egress_label": {
+    "de": "<b>Datenschutz & Privatsphäre:</b> 100% Local-First / Zero-Egress. Alle Rechnungsdaten und Zugangsdaten verbleiben vollständig lokal auf Ihrem Gerät. Keine Telemetrie, kein Tracking, kein unbefugter externer Netzwerk-Egress.",
+    "en": "<b>Privacy & Data Protection:</b> 100% Local-First / Zero-Egress. All invoice and credential data remain strictly local on your device. No telemetry, no tracking, no unauthorized network egress.",
+    "es": "<b>Privacidad y protección de datos:</b> 100% local / Zero-Egress. Todos los datos de facturas y credenciales permanecen estrictamente en su dispositivo. Sin telemetría ni rastreo.",
+    "zh": "<b>数据隐私保护：</b>100% 本地优先 / 零外泄（Zero-Egress）。所有发票与凭证数据完全保留在本地设备上，无遥测、无追踪、无未经授权的网络外发。",
+    "ja": "<b>プライバシーとデータ保護:</b> 100% ローカルファースト / Zero-Egress。すべての請求書データと認証情報はデバイス上に完全に保持されます。テレメトリやトラッキングはありません。",
+    "ru": "<b>Конфиденциальность:</b> 100% Local-First / Zero-Egress. Все данные счетов и учетные записи остаются строго локально на вашем устройстве. Никакой телеметрии и отслеживания."
+  },
+  "about_license_label": {
+    "de": "<b>Lizenz:</b> MIT License (Open Source) — Frei nutzbar und anpassbar.",
+    "en": "<b>License:</b> MIT License (Open Source) — Freely usable and customizable.",
+    "es": "<b>Licencia:</b> MIT License (Código abierto) — Libremente utilizable y personalizable.",
+    "zh": "<b>许可证：</b>MIT 许可证（开源）— 可自由使用和自定义。",
+    "ja": "<b>ライセンス:</b> MIT License (オープンソース) — 自由に使用およびカスタマイズ可能。",
+    "ru": "<b>Лицензия:</b> MIT License (Открытый исходный код) — Свободное использование и модификация."
   },
   "app_subtitle": {
     "de": "Rechnungen automatisiert aus E-Mails sammeln und für DATEV exportieren",
@@ -20,29 +51,29 @@
     "ja": "電子メールからの請求書自動抽出とDATEVエクスポート",
     "ru": "Автоматическое извлечение счетов из электронной почты и экспорт в DATEV"
   },
-  "btn_fetch_invoices": {
-    "de": "Rechnungen abrufen",
-    "en": "Fetch Invoices",
-    "es": "Obtener facturas",
-    "zh": "获取发票",
-    "ja": "請求書を取得",
-    "ru": "Получить счета"
+  "app_title": {
+    "de": "UniversalInvoiceMail",
+    "en": "UniversalInvoiceMail",
+    "es": "UniversalInvoiceMail",
+    "zh": "UniversalInvoiceMail",
+    "ja": "UniversalInvoiceMail",
+    "ru": "UniversalInvoiceMail"
   },
-  "btn_datev_export": {
-    "de": "DATEV-Export",
-    "en": "DATEV Export",
-    "es": "Exportación DATEV",
-    "zh": "DATEV 导出",
-    "ja": "DATEVエクスポート",
-    "ru": "Экспорт DATEV"
+  "btn_add": {
+    "de": "Hinzufügen",
+    "en": "Add",
+    "es": "Añadir",
+    "zh": "添加",
+    "ja": "追加",
+    "ru": "Добавить"
   },
-  "btn_export_csv": {
-    "de": "CSV-Export",
-    "en": "CSV Export",
-    "es": "Exportación CSV",
-    "zh": "CSV 导出",
-    "ja": "CSVエクスポート",
-    "ru": "Экспорт в CSV"
+  "btn_add_row": {
+    "de": "Zeile hinzufügen",
+    "en": "Add Row",
+    "es": "Añadir fila",
+    "zh": "添加行",
+    "ja": "行を追加",
+    "ru": "Добавить строку"
   },
   "btn_bundle_export": {
     "de": "Bundle exportieren",
@@ -60,22 +91,6 @@
     "ja": "バンドルをインポート",
     "ru": "Импорт пакета"
   },
-  "btn_settings": {
-    "de": "Einstellungen",
-    "en": "Settings",
-    "es": "Configuración",
-    "zh": "设置",
-    "ja": "設定",
-    "ru": "Настройки"
-  },
-  "btn_save": {
-    "de": "Speichern",
-    "en": "Save",
-    "es": "Guardar",
-    "zh": "保存",
-    "ja": "保存",
-    "ru": "Сохранить"
-  },
   "btn_cancel": {
     "de": "Abbrechen",
     "en": "Cancel",
@@ -92,29 +107,13 @@
     "ja": "閉じる",
     "ru": "Закрыть"
   },
-  "btn_add": {
-    "de": "Hinzufügen",
-    "en": "Add",
-    "es": "Añadir",
-    "zh": "添加",
-    "ja": "追加",
-    "ru": "Добавить"
-  },
-  "btn_remove": {
-    "de": "Entfernen",
-    "en": "Remove",
-    "es": "Eliminar",
-    "zh": "删除",
-    "ja": "削除",
-    "ru": "Удалить"
-  },
-  "btn_reset": {
-    "de": "Standard wiederherstellen",
-    "en": "Reset to Default",
-    "es": "Restaurar predeterminado",
-    "zh": "恢复默认值",
-    "ja": "デフォルトに戻す",
-    "ru": "Сбросить по умолчанию"
+  "btn_datev_export": {
+    "de": "DATEV-Export",
+    "en": "DATEV Export",
+    "es": "Exportación DATEV",
+    "zh": "DATEV 导出",
+    "ja": "DATEVエクスポート",
+    "ru": "Экспорт DATEV"
   },
   "btn_edit": {
     "de": "Bearbeiten",
@@ -124,13 +123,29 @@
     "ja": "編集",
     "ru": "Редактировать"
   },
-  "btn_add_row": {
-    "de": "Zeile hinzufügen",
-    "en": "Add Row",
-    "es": "Añadir fila",
-    "zh": "添加行",
-    "ja": "行を追加",
-    "ru": "Добавить строку"
+  "btn_export_csv": {
+    "de": "CSV-Export",
+    "en": "CSV Export",
+    "es": "Exportación CSV",
+    "zh": "CSV 导出",
+    "ja": "CSVエクスポート",
+    "ru": "Экспорт в CSV"
+  },
+  "btn_fetch_invoices": {
+    "de": "Rechnungen abrufen",
+    "en": "Fetch Invoices",
+    "es": "Obtener facturas",
+    "zh": "获取发票",
+    "ja": "請求書を取得",
+    "ru": "Получить счета"
+  },
+  "btn_remove": {
+    "de": "Entfernen",
+    "en": "Remove",
+    "es": "Eliminar",
+    "zh": "删除",
+    "ja": "削除",
+    "ru": "Удалить"
   },
   "btn_remove_row": {
     "de": "Zeile entfernen",
@@ -140,117 +155,37 @@
     "ja": "行を削除",
     "ru": "Удалить строку"
   },
-  "status_ready": {
-    "de": "Bereit",
-    "en": "Ready",
-    "es": "Listo",
-    "zh": "就绪",
-    "ja": "準備完了",
-    "ru": "Готово"
+  "btn_reset": {
+    "de": "Standard wiederherstellen",
+    "en": "Reset to Default",
+    "es": "Restaurar predeterminado",
+    "zh": "恢复默认值",
+    "ja": "デフォルトに戻す",
+    "ru": "Сбросить по умолчанию"
   },
-  "status_fetching": {
-    "de": "Rufe E-Mails ab...",
-    "en": "Fetching emails...",
-    "es": "Obteniendo correos electrónicos...",
-    "zh": "正在获取电子邮件...",
-    "ja": "電子メールを取得中...",
-    "ru": "Получение писем..."
+  "btn_save": {
+    "de": "Speichern",
+    "en": "Save",
+    "es": "Guardar",
+    "zh": "保存",
+    "ja": "保存",
+    "ru": "Сохранить"
   },
-  "status_processing": {
-    "de": "Verarbeite Anhänge...",
-    "en": "Processing attachments...",
-    "es": "Procesando adjuntos...",
-    "zh": "正在处理附件...",
-    "ja": "添付ファイルを処理中...",
-    "ru": "Обработка вложений..."
+  "btn_settings": {
+    "de": "Einstellungen",
+    "en": "Settings",
+    "es": "Configuración",
+    "zh": "设置",
+    "ja": "設定",
+    "ru": "Настройки"
   },
-  "status_success": {
-    "de": "Vorgang erfolgreich abgeschlossen.",
-    "en": "Operation completed successfully.",
-    "es": "Operación completada con éxito.",
-    "zh": "操作成功完成。",
-    "ja": "操作が正常に完了しました。",
-    "ru": "Операция успешно завершена."
-  },
-  "status_error": {
-    "de": "Fehler beim Ausführen des Vorgangs.",
-    "en": "Error while executing operation.",
-    "es": "Error al ejecutar la operación.",
-    "zh": "执行操作时出错。",
-    "ja": "操作の実行中にエラーが発生しました。",
-    "ru": "Ошибка при выполнении операции."
-  },
-  "th_select": {
-    "de": "Auswahl",
-    "en": "Select",
-    "es": "Seleccionar",
-    "zh": "选择",
-    "ja": "選択",
-    "ru": "Выбор"
-  },
-  "th_provider": {
-    "de": "Absender / Anbieter",
-    "en": "Sender / Provider",
-    "es": "Remitente / Proveedor",
-    "zh": "发件人 / 供应商",
-    "ja": "送信者 / プロバイダー",
-    "ru": "Отправитель / Поставщик"
-  },
-  "th_filename": {
-    "de": "Dateiname",
-    "en": "Filename",
-    "es": "Nombre de archivo",
-    "zh": "文件名",
-    "ja": "ファイル名",
-    "ru": "Имя файла"
-  },
-  "th_date": {
-    "de": "Datum",
-    "en": "Date",
-    "es": "Fecha",
-    "zh": "日期",
-    "ja": "日付",
-    "ru": "Дата"
-  },
-  "th_amount": {
-    "de": "Betrag (EUR)",
-    "en": "Amount (EUR)",
-    "es": "Importe (EUR)",
-    "zh": "金额 (EUR)",
-    "ja": "金額 (EUR)",
-    "ru": "Сумма (EUR)"
-  },
-  "th_status": {
-    "de": "Status",
-    "en": "Status",
-    "es": "Estado",
-    "zh": "状态",
-    "ja": "ステータス",
-    "ru": "Статус"
-  },
-  "th_notes": {
-    "de": "Notizen",
-    "en": "Notes",
-    "es": "Notas",
-    "zh": "备注",
-    "ja": "メモ",
-    "ru": "Примечания"
-  },
-  "th_path": {
-    "de": "Pfad",
-    "en": "Path",
-    "es": "Ruta",
-    "zh": "路径",
-    "ja": "パス",
-    "ru": "Путь"
-  },
-  "datev_title": {
-    "de": "DATEV-Export Einstellungen & Konten-Mapping",
-    "en": "DATEV Export Settings & Account Mapping",
-    "es": "Configuración de exportación DATEV y asignación de cuentas",
-    "zh": "DATEV 导出设置与账户映射",
-    "ja": "DATEVエクスポート設定と勘定科目マッピング",
-    "ru": "Настройки экспорта DATEV и сопоставление счетов"
+  "btn_shortcuts": {
+    "de": "❓ Hilfe & Kürzel",
+    "en": "❓ Help & Shortcuts",
+    "es": "❓ Ayuda y atajos",
+    "zh": "❓ 帮助与快捷键",
+    "ja": "❓ ヘルプとショートカット",
+    "ru": "❓ Справка и клавиши"
   },
   "datev_berater_nr": {
     "de": "Beraternummer:",
@@ -260,69 +195,13 @@
     "ja": "顧問番号：",
     "ru": "Номер консультанта:"
   },
-  "datev_mandant_nr": {
-    "de": "Mandantennummer:",
-    "en": "Client Number:",
-    "es": "Número de cliente:",
-    "zh": "客户编号：",
-    "ja": "クライアント番号：",
-    "ru": "Номер клиента:"
-  },
-  "datev_mapping_title": {
-    "de": "Konten-Mapping (Kreditoren & Gegenkonten per Absender):",
-    "en": "Account Mapping (Creditors & Counter Accounts per Sender):",
-    "es": "Asignación de cuentas (Acreedores y contrapartidas por remitente):",
-    "zh": "账户映射（按发件人的债权人及对应科目）：",
-    "ja": "勘定科目マッピング（送信者ごとの買掛金と相手勘定）：",
-    "ru": "Сопоставление счетов (Кредиторы и корреспондирующие счета по отправителю):"
-  },
-  "datev_th_keyword": {
-    "de": "Absender / Schlüsselwort",
-    "en": "Sender / Keyword",
-    "es": "Remitente / Palabra clave",
-    "zh": "发件人 / 关键字",
-    "ja": "送信者 / キーワード",
-    "ru": "Отправитель / Ключевое слово"
-  },
-  "datev_th_konto": {
-    "de": "Konto (Kreditor)",
-    "en": "Account (Creditor)",
-    "es": "Cuenta (Acreedor)",
-    "zh": "账户 (债权人)",
-    "ja": "勘定科目 (買掛金)",
-    "ru": "Счет (Кредитор)"
-  },
-  "datev_th_gegenkonto": {
-    "de": "Gegenkonto (Aufwand)",
-    "en": "Counter Account (Expense)",
-    "es": "Contrapartida (Gasto)",
-    "zh": "对应科目 (费用)",
-    "ja": "相手勘定 (経費)",
-    "ru": "Корр. счет (Расходы)"
-  },
-  "datev_hint_amount": {
-    "de": "Hinweis: Rechnungsbeträge werden aus dem Feld 'Betrag' gelesen. Rechnungen ohne eingetragenen Betrag werden übersprungen.",
-    "en": "Note: Invoice amounts are read from the 'Amount' field. Invoices without an amount entered will be skipped.",
-    "es": "Nota: Los importes de las facturas se leen del campo 'Importe'. Las facturas sin importe introducido se omitirán.",
-    "zh": "提示：发票金额从“金额”字段中读取。未输入金额的发票将被跳过。",
-    "ja": "注：請求金額は「金額」フィールドから読み取られます。金額が入力されていない請求書はスキップされます。",
-    "ru": "Примечание: Суммы счетов считываются из поля «Сумма». Счета без указания суммы будут пропущены."
-  },
-  "datev_export_success": {
-    "de": "DATEV-Export erfolgreich:\n{filepath}\n\n{count} Buchungen exportiert.",
-    "en": "DATEV export successful:\n{filepath}\n\n{count} bookings exported.",
-    "es": "Exportación DATEV exitosa:\n{filepath}\n\n{count} asientos exportados.",
-    "zh": "DATEV 导出成功：\n{filepath}\n\n已导出 {count} 条记账。",
-    "ja": "DATEVエクスポートに成功しました：\n{filepath}\n\n{count} 件の仕訳をエクスポートしました。",
-    "ru": "Экспорт DATEV успешен:\n{filepath}\n\nЭкспортировано проводок: {count}."
-  },
-  "datev_export_failed": {
-    "de": "DATEV-Export fehlgeschlagen:\n{error}",
-    "en": "DATEV export failed:\n{error}",
-    "es": "Error en la exportación DATEV:\n{error}",
-    "zh": "DATEV 导出失败：\n{error}",
-    "ja": "DATEVエクスポートに失敗しました：\n{error}",
-    "ru": "Ошибка экспорта DATEV:\n{error}"
+  "datev_err_duplicate_keyword": {
+    "de": "Doppelter Absender-Schlüssel '{key}' gefunden.",
+    "en": "Duplicate sender key '{key}' found.",
+    "es": "Clave de remitente duplicada '{key}' encontrada.",
+    "zh": "找到重复的发件人键 '{key}'。",
+    "ja": "重複する送信者キー '{key}' が見つかりました。",
+    "ru": "Обнаружен дубликат ключа отправителя '{key}'."
   },
   "datev_err_invalid_account": {
     "de": "Ungültige Kontonummer in Zeile {row}: '{value}'. Erwartet wird eine {digits}-stellige Nummer.",
@@ -331,14 +210,6 @@
     "zh": "第 {row} 行中的账户编号无效：'{value}'。应为 {digits} 位数字。",
     "ja": "行 {row} の無効な勘定科目番号：'{value}'。{digits} 桁の数字が必要です。",
     "ru": "Неверный номер счета в строке {row}: '{value}'. Ожидается {digits}-значное число."
-  },
-  "datev_err_duplicate_keyword": {
-    "de": "Doppelter Absender-Schlüssel '{key}' gefunden.",
-    "en": "Duplicate sender key '{key}' found.",
-    "es": "Clave de remitente duplicada '{key}' encontrada.",
-    "zh": "找到重复的发件人键 '{key}'。",
-    "ja": "重複する送信者キー '{key}' が見つかりました。",
-    "ru": "Обнаружен дубликат ключа отправителя '{key}'."
   },
   "datev_err_invalid_berater": {
     "de": "Ungültige Beraternummer '{value}'. Erlaubt sind 1 bis 7 Ziffern.",
@@ -356,6 +227,78 @@
     "ja": "無効なクライアント番号 '{value}'。1〜5桁の数字を入力してください。",
     "ru": "Неверный номер клиента '{value}'. Допустимо от 1 до 5 цифр."
   },
+  "datev_export_failed": {
+    "de": "DATEV-Export fehlgeschlagen:\n{error}",
+    "en": "DATEV export failed:\n{error}",
+    "es": "Error en la exportación DATEV:\n{error}",
+    "zh": "DATEV 导出失败：\n{error}",
+    "ja": "DATEVエクスポートに失敗しました：\n{error}",
+    "ru": "Ошибка экспорта DATEV:\n{error}"
+  },
+  "datev_export_success": {
+    "de": "DATEV-Export erfolgreich:\n{filepath}\n\n{count} Buchungen exportiert.",
+    "en": "DATEV export successful:\n{filepath}\n\n{count} bookings exported.",
+    "es": "Exportación DATEV exitosa:\n{filepath}\n\n{count} asientos exportados.",
+    "zh": "DATEV 导出成功：\n{filepath}\n\n已导出 {count} 条记账。",
+    "ja": "DATEVエクスポートに成功しました：\n{filepath}\n\n{count} 件の仕訳をエクスポートしました。",
+    "ru": "Экспорт DATEV успешен:\n{filepath}\n\nЭкспортировано проводок: {count}."
+  },
+  "datev_hint_amount": {
+    "de": "Hinweis: Rechnungsbeträge werden aus dem Feld 'Betrag' gelesen. Rechnungen ohne eingetragenen Betrag werden übersprungen.",
+    "en": "Note: Invoice amounts are read from the 'Amount' field. Invoices without an amount entered will be skipped.",
+    "es": "Nota: Los importes de las facturas se leen del campo 'Importe'. Las facturas sin importe introducido se omitirán.",
+    "zh": "提示：发票金额从“金额”字段中读取。未输入金额的发票将被跳过。",
+    "ja": "注：請求金額は「金額」フィールドから読み取られます。金額が入力されていない請求書はスキップされます。",
+    "ru": "Примечание: Суммы счетов считываются из поля «Сумма». Счета без указания суммы будут пропущены."
+  },
+  "datev_mandant_nr": {
+    "de": "Mandantennummer:",
+    "en": "Client Number:",
+    "es": "Número de cliente:",
+    "zh": "客户编号：",
+    "ja": "クライアント番号：",
+    "ru": "Номер клиента:"
+  },
+  "datev_mapping_title": {
+    "de": "Konten-Mapping (Kreditoren & Gegenkonten per Absender):",
+    "en": "Account Mapping (Creditors & Counter Accounts per Sender):",
+    "es": "Asignación de cuentas (Acreedores y contrapartidas por remitente):",
+    "zh": "账户映射（按发件人的债权人及对应科目）：",
+    "ja": "勘定科目マッピング（送信者ごとの買掛金と相手勘定）：",
+    "ru": "Сопоставление счетов (Кредиторы и корреспондирующие счета по отправителю):"
+  },
+  "datev_th_gegenkonto": {
+    "de": "Gegenkonto (Aufwand)",
+    "en": "Counter Account (Expense)",
+    "es": "Contrapartida (Gasto)",
+    "zh": "对应科目 (费用)",
+    "ja": "相手勘定 (経費)",
+    "ru": "Корр. счет (Расходы)"
+  },
+  "datev_th_keyword": {
+    "de": "Absender / Schlüsselwort",
+    "en": "Sender / Keyword",
+    "es": "Remitente / Palabra clave",
+    "zh": "发件人 / 关键字",
+    "ja": "送信者 / キーワード",
+    "ru": "Отправитель / Ключевое слово"
+  },
+  "datev_th_konto": {
+    "de": "Konto (Kreditor)",
+    "en": "Account (Creditor)",
+    "es": "Cuenta (Acreedor)",
+    "zh": "账户 (债权人)",
+    "ja": "勘定科目 (買掛金)",
+    "ru": "Счет (Кредитор)"
+  },
+  "datev_title": {
+    "de": "DATEV-Export Einstellungen & Konten-Mapping",
+    "en": "DATEV Export Settings & Account Mapping",
+    "es": "Configuración de exportación DATEV y asignación de cuentas",
+    "zh": "DATEV 导出设置与账户映射",
+    "ja": "DATEVエクスポート設定と勘定科目マッピング",
+    "ru": "Настройки экспорта DATEV и сопоставление счетов"
+  },
   "datev_warn_zero_amount": {
     "de": "{count} Rechnungen übersprungen (kein Betrag eingetragen).",
     "en": "{count} invoices skipped (no amount entered).",
@@ -364,37 +307,21 @@
     "ja": "{count} 件の請求書をスキップしました（金額が未入力）。",
     "ru": "Пропущено счетов: {count} (сумма не указана)."
   },
-  "filter_sender": {
-    "de": "Absender:",
-    "en": "Sender:",
-    "es": "Remitente:",
-    "zh": "发件人：",
-    "ja": "送信者：",
-    "ru": "Отправитель:"
+  "dlg_about_subtitle": {
+    "de": "Vereinfachte Desktop-App zum Extrahieren und Verwalten von Rechnungen aus E-Mails.",
+    "en": "Streamlined desktop app for extracting and managing invoices from emails.",
+    "es": "Aplicación de escritorio simplificada para extraer y gestionar facturas de correos.",
+    "zh": "用于从电子邮件中提取和管理发票的轻便桌面应用。",
+    "ja": "メールから請求書を抽出および管理するためのシンプルなデスクトップアプリ。",
+    "ru": "Упрощенное настольное приложение для извлечения и управления счетами из электронной почты."
   },
-  "filter_subject": {
-    "de": "Betreff:",
-    "en": "Subject:",
-    "es": "Asunto:",
-    "zh": "主题：",
-    "ja": "件名：",
-    "ru": "Тема:"
-  },
-  "filter_date_from": {
-    "de": "Datum von:",
-    "en": "Date from:",
-    "es": "Fecha desde:",
-    "zh": "起始日期：",
-    "ja": "開始日：",
-    "ru": "Дата с:"
-  },
-  "filter_date_to": {
-    "de": "Datum bis:",
-    "en": "Date to:",
-    "es": "Fecha hasta:",
-    "zh": "截止日期：",
-    "ja": "終了日：",
-    "ru": "Дата по:"
+  "dlg_about_title": {
+    "de": "Über UniversalInvoiceMail",
+    "en": "About UniversalInvoiceMail",
+    "es": "Acerca de UniversalInvoiceMail",
+    "zh": "关于 UniversalInvoiceMail",
+    "ja": "UniversalInvoiceMail について",
+    "ru": "О программе UniversalInvoiceMail"
   },
   "dlg_confirm_delete": {
     "de": "Möchten Sie diesen Eintrag wirklich löschen?",
@@ -420,21 +347,69 @@
     "ja": "キーボードショートカットとヘルプ",
     "ru": "Сочетания клавиш и справка"
   },
-  "btn_shortcuts": {
-    "de": "❓ Hilfe & Kürzel",
-    "en": "❓ Help & Shortcuts",
-    "es": "❓ Ayuda y atajos",
-    "zh": "❓ 帮助与快捷键",
-    "ja": "❓ ヘルプとショートカット",
-    "ru": "❓ Справка и клавиши"
+  "filter_date_from": {
+    "de": "Datum von:",
+    "en": "Date from:",
+    "es": "Fecha desde:",
+    "zh": "起始日期：",
+    "ja": "開始日：",
+    "ru": "Дата с:"
   },
-  "shortcuts_col_key": {
-    "de": "Tastenkombination",
-    "en": "Shortcut",
-    "es": "Combinación de teclas",
-    "zh": "按键组合",
-    "ja": "キーの組み合わせ",
-    "ru": "Сочетание клавиш"
+  "filter_date_to": {
+    "de": "Datum bis:",
+    "en": "Date to:",
+    "es": "Fecha hasta:",
+    "zh": "截止日期：",
+    "ja": "終了日：",
+    "ru": "Дата по:"
+  },
+  "filter_sender": {
+    "de": "Absender:",
+    "en": "Sender:",
+    "es": "Remitente:",
+    "zh": "发件人：",
+    "ja": "送信者：",
+    "ru": "Отправитель:"
+  },
+  "filter_subject": {
+    "de": "Betreff:",
+    "en": "Subject:",
+    "es": "Asunto:",
+    "zh": "主题：",
+    "ja": "件名：",
+    "ru": "Тема:"
+  },
+  "menu_edit": {
+    "de": "&Bearbeiten",
+    "en": "&Edit",
+    "es": "&Editar",
+    "zh": "编辑(&E)",
+    "ja": "編集(&E)",
+    "ru": "&Правка"
+  },
+  "menu_file": {
+    "de": "&Datei",
+    "en": "&File",
+    "es": "&Archivo",
+    "zh": "文件(&F)",
+    "ja": "ファイル(&F)",
+    "ru": "&Файл"
+  },
+  "menu_help": {
+    "de": "&Hilfe",
+    "en": "&Help",
+    "es": "A&yuda",
+    "zh": "帮助(&H)",
+    "ja": "ヘルプ(&H)",
+    "ru": "&Справка"
+  },
+  "menu_view": {
+    "de": "&Ansicht",
+    "en": "&View",
+    "es": "&Ver",
+    "zh": "视图(&V)",
+    "ja": "表示(&V)",
+    "ru": "&Вид"
   },
   "shortcuts_col_action": {
     "de": "Aktion / Funktion",
@@ -444,6 +419,14 @@
     "ja": "アクション / 機能",
     "ru": "Действие / Функция"
   },
+  "shortcuts_col_key": {
+    "de": "Tastenkombination",
+    "en": "Shortcut",
+    "es": "Combinación de teclas",
+    "zh": "按键组合",
+    "ja": "キーの組み合わせ",
+    "ru": "Сочетание клавиш"
+  },
   "shortcuts_col_scope": {
     "de": "Bereich",
     "en": "Scope",
@@ -451,14 +434,6 @@
     "zh": "作用范围",
     "ja": "スコープ",
     "ru": "Область"
-  },
-  "shortcuts_table_name": {
-    "de": "Tabelle aller Tastaturkürzel",
-    "en": "Table of all keyboard shortcuts",
-    "es": "Tabla de todos los atajos de teclado",
-    "zh": "所有键盘快捷键表格",
-    "ja": "すべてのキーボードショートカットの表",
-    "ru": "Таблица всех сочетаний клавиш"
   },
   "shortcuts_table_desc": {
     "de": "Übersicht aller verfügbaren Tastenkombinationen zur barrierefreien Bedienung.",
@@ -468,12 +443,124 @@
     "ja": "アクセシブルな操作のための利用可能なすべてのキーボードショートカットの概要。",
     "ru": "Обзор всех доступных сочетаний клавиш для удобного управления."
   },
-  "a11y_wcag_reference": {
-    "de": "Barrierefreiheit nach WCAG 2.1 AA / BITV 2.0: Alle Funktionen sind vollständig per Tastatur bedienbar.",
-    "en": "Accessibility according to WCAG 2.1 AA / BITV 2.0: All functions can be operated entirely via keyboard.",
-    "es": "Accesibilidad según WCAG 2.1 AA / BITV 2.0: Todas las funciones son totalmente accesibles mediante teclado.",
-    "zh": "符合 WCAG 2.1 AA / BITV 2.0 无障碍标准：所有功能均可完全通过键盘操作。",
-    "ja": "WCAG 2.1 AA / BITV 2.0 に準拠したアクセシビリティ: すべての機能はキーボードのみで完全に操作可能です。",
-    "ru": "Доступность по стандартам WCAG 2.1 AA / BITV 2.0: Все функции полностью доступны с клавиатуры."
+  "shortcuts_table_name": {
+    "de": "Tabelle aller Tastaturkürzel",
+    "en": "Table of all keyboard shortcuts",
+    "es": "Tabla de todos los atajos de teclado",
+    "zh": "所有键盘快捷键表格",
+    "ja": "すべてのキーボードショートカットの表",
+    "ru": "Таблица всех сочетаний клавиш"
+  },
+  "status_error": {
+    "de": "Fehler beim Ausführen des Vorgangs.",
+    "en": "Error while executing operation.",
+    "es": "Error al ejecutar la operación.",
+    "zh": "执行操作时出错。",
+    "ja": "操作の実行中にエラーが発生しました。",
+    "ru": "Ошибка при выполнении операции."
+  },
+  "status_fetching": {
+    "de": "Rufe E-Mails ab...",
+    "en": "Fetching emails...",
+    "es": "Obteniendo correos electrónicos...",
+    "zh": "正在获取电子邮件...",
+    "ja": "電子メールを取得中...",
+    "ru": "Получение писем..."
+  },
+  "status_processing": {
+    "de": "Verarbeite Anhänge...",
+    "en": "Processing attachments...",
+    "es": "Procesando adjuntos...",
+    "zh": "正在处理附件...",
+    "ja": "添付ファイルを処理中...",
+    "ru": "Обработка вложений..."
+  },
+  "status_ready": {
+    "de": "Bereit",
+    "en": "Ready",
+    "es": "Listo",
+    "zh": "就绪",
+    "ja": "準備完了",
+    "ru": "Готово"
+  },
+  "status_success": {
+    "de": "Vorgang erfolgreich abgeschlossen.",
+    "en": "Operation completed successfully.",
+    "es": "Operación completada con éxito.",
+    "zh": "操作成功完成。",
+    "ja": "操作が正常に完了しました。",
+    "ru": "Операция успешно завершена."
+  },
+  "th_amount": {
+    "de": "Betrag (EUR)",
+    "en": "Amount (EUR)",
+    "es": "Importe (EUR)",
+    "zh": "金额 (EUR)",
+    "ja": "金額 (EUR)",
+    "ru": "Сумма (EUR)"
+  },
+  "th_date": {
+    "de": "Datum",
+    "en": "Date",
+    "es": "Fecha",
+    "zh": "日期",
+    "ja": "日付",
+    "ru": "Дата"
+  },
+  "th_filename": {
+    "de": "Dateiname",
+    "en": "Filename",
+    "es": "Nombre de archivo",
+    "zh": "文件名",
+    "ja": "ファイル名",
+    "ru": "Имя файла"
+  },
+  "th_invoices": {
+    "de": "Rechnungen",
+    "en": "Invoices",
+    "es": "Facturas",
+    "zh": "发票",
+    "ja": "請求書",
+    "ru": "Счета"
+  },
+  "th_notes": {
+    "de": "Notizen",
+    "en": "Notes",
+    "es": "Notas",
+    "zh": "备注",
+    "ja": "メモ",
+    "ru": "Примечания"
+  },
+  "th_path": {
+    "de": "Pfad",
+    "en": "Path",
+    "es": "Ruta",
+    "zh": "路径",
+    "ja": "パス",
+    "ru": "Путь"
+  },
+  "th_provider": {
+    "de": "Absender / Anbieter",
+    "en": "Sender / Provider",
+    "es": "Remitente / Proveedor",
+    "zh": "发件人 / 供应商",
+    "ja": "送信者 / プロバイダー",
+    "ru": "Отправитель / Поставщик"
+  },
+  "th_select": {
+    "de": "Auswahl",
+    "en": "Select",
+    "es": "Seleccionar",
+    "zh": "选择",
+    "ja": "選択",
+    "ru": "Выбор"
+  },
+  "th_status": {
+    "de": "Status",
+    "en": "Status",
+    "es": "Estado",
+    "zh": "状态",
+    "ja": "ステータス",
+    "ru": "Статус"
   }
 }

@@ -554,7 +554,7 @@ def test_mainwindow_shortcuts_f1_and_help_button(tmp_path, monkeypatch, qapp):
         # show_shortcuts_dialog() offscreen bypass returns title and list of shortcuts
         title, sc_list = window.show_shortcuts_dialog()
         assert title == "Tastaturkürzel & Hilfe"
-        assert len(sc_list) == 16
+        assert len(sc_list) == 21
         keys = [sc[0] for sc in sc_list]
         assert "F1" in keys
         assert "Strg+Eingabe / Strg+Enter" in keys
@@ -719,3 +719,187 @@ def test_accessible_list_widget_keyboard_navigation(qapp):
         assert deleted == [True]
     finally:
         list_widget.close()
+
+
+# ==================== WCAG 2.1 AA / BITV 2.0 ERWEITERTE VERTRAGSTESTS ====================
+
+def test_main_window_menu_bar_structure_and_mnemonics(tmp_path, monkeypatch, qapp):
+    """MainWindow menu bar exposes &Datei, &Bearbeiten, &Ansicht, &Hilfe with shortcuts."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        menu_bar = window.menuBar()
+        assert menu_bar is not None
+        assert menu_bar.objectName() == "main_menu_bar"
+        assert menu_bar.accessibleName() == "Hauptmenü"
+
+        # Check menus
+        assert hasattr(window, "menu_file") and window.menu_file.title() == "&Datei"
+        assert hasattr(window, "menu_edit") and window.menu_edit.title() == "&Bearbeiten"
+        assert hasattr(window, "menu_view") and window.menu_view.title() == "&Ansicht"
+        assert hasattr(window, "menu_help") and window.menu_help.title() == "&Hilfe"
+
+        # Check action shortcuts
+        assert window.act_start.shortcut().toString() == "Ctrl+Return"
+        assert window.act_export_csv.shortcut().toString() == "Ctrl+E"
+        assert window.act_open_folder.shortcut().toString() == "Ctrl+O"
+        assert window.act_refresh.shortcut().toString() == "F5"
+        assert window.act_exit.shortcut().toString() == "Ctrl+Q"
+        assert window.act_select_all.shortcut().toString() == "Ctrl+A"
+        assert window.act_select_none.shortcut().toString() == "Ctrl+Shift+A"
+        assert window.act_delete_selected.shortcut().toString() == "Del"
+        assert window.act_save_settings.shortcut().toString() == "Ctrl+S"
+        assert window.act_tab_invoices.shortcut().toString() == "Ctrl+1"
+        assert window.act_tab_settings.shortcut().toString() == "Ctrl+2"
+        assert window.act_tab_log.shortcut().toString() == "Ctrl+3"
+        assert window.act_tab_info.shortcut().toString() == "Ctrl+4"
+        assert window.act_next_tab.shortcut().toString() == "Ctrl+Tab"
+        assert window.act_prev_tab.shortcut().toString() in ("Ctrl+Shift+Backtab", "Ctrl+Shift+Tab")
+        assert window.act_shortcuts.shortcut().toString() == "F1"
+        assert window.act_about.shortcut().toString() == "Shift+F1"
+    finally:
+        window.close()
+
+
+def test_main_window_tab_navigation_and_status_bar(tmp_path, monkeypatch, qapp):
+    """MainWindow tabs allow direct (Ctrl+1..4) and cyclic (next/prev) switching with status feedback."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        assert hasattr(window, "tabs")
+        assert window.tabs.count() == 4
+        assert window.tabs.currentIndex() == 0
+
+        # Status bar verification
+        assert hasattr(window, "status_bar")
+        assert window.status_bar.objectName() == "main_status_bar"
+        assert window.status_bar.accessibleName() == "Statusleiste"
+
+        # Select tab 1 directly
+        window.select_tab(1)
+        assert window.tabs.currentIndex() == 1
+        assert "Einstellungen" in window.status_bar.currentMessage()
+
+        # Next tab -> 2 (Log)
+        window.next_tab()
+        assert window.tabs.currentIndex() == 2
+        assert "Log" in window.status_bar.currentMessage()
+
+        # Next tab -> 3 (Info)
+        window.next_tab()
+        assert window.tabs.currentIndex() == 3
+
+        # Wrap around -> 0 (Rechnungen)
+        window.next_tab()
+        assert window.tabs.currentIndex() == 0
+
+        # Prev tab wraps -> 3 (Info)
+        window.prev_tab()
+        assert window.tabs.currentIndex() == 3
+    finally:
+        window.close()
+
+
+def test_about_dialog_accessibility_attributes_and_escape(qapp):
+    """AboutDialog provides metadata, license, local-first assurance, and closes on Escape."""
+    from PySide6.QtGui import QKeyEvent
+
+    dialog = uim.AboutDialog()
+    try:
+        assert dialog.objectName() == "about_dialog"
+        assert dialog.windowTitle() == "Über UniversalInvoiceMail"
+        assert dialog.accessibleName() == "Über UniversalInvoiceMail"
+        assert "Desktop-App" in dialog.accessibleDescription()
+
+        assert dialog.close_btn is not None
+        assert dialog.close_btn.accessibleName() == "Dialog schließen"
+
+        # Content verification
+        info_group = dialog.findChild(uim.QGroupBox, "about_dialog_info_group")
+        assert info_group is not None
+        assert "Architektur" in info_group.title()
+
+        lbl_license = dialog.findChild(uim.QLabel, "about_license_label")
+        assert lbl_license is not None and "MIT License" in lbl_license.text()
+
+        lbl_egress = dialog.findChild(uim.QLabel, "about_egress_label")
+        assert lbl_egress is not None and "Zero-Egress" in lbl_egress.text()
+
+        lbl_a11y = dialog.findChild(uim.QLabel, "about_a11y_label")
+        assert lbl_a11y is not None and "WCAG 2.1 AA" in lbl_a11y.text()
+
+        # Test Escape key handling
+        rejected = []
+        dialog.rejected.connect(lambda: rejected.append(True))
+        esc_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier)
+        dialog.keyPressEvent(esc_event)
+        assert rejected == [True]
+    finally:
+        dialog.close()
+
+
+def test_shortcuts_dialog_escape_handling_and_extended_shortcuts(tmp_path, monkeypatch, qapp):
+    """ShortcutsDialog closes on Escape and includes tab navigation and about shortcuts."""
+    from PySide6.QtGui import QKeyEvent
+
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        title, shortcuts = window.show_shortcuts_dialog()
+        assert title == "Tastaturkürzel & Hilfe"
+        keys = [s[0] for s in shortcuts]
+        assert any("Strg+1 .. Strg+4" in k for k in keys)
+        assert any("Umschalt+F1" in k for k in keys)
+        assert any("Strg+Q" in k for k in keys)
+        assert any("Alt+D" in k for k in keys)
+
+        # Test Escape on dialog instance
+        dlg = uim.ShortcutsDialog(shortcuts)
+        try:
+            rejected = []
+            dlg.rejected.connect(lambda: rejected.append(True))
+            esc_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier)
+            dlg.keyPressEvent(esc_event)
+            assert rejected == [True]
+        finally:
+            dlg.close()
+    finally:
+        window.close()
+
+
+def test_retranslate_ui_dynamic_language_switch(tmp_path, monkeypatch, qapp):
+    """MainWindow.retranslate_ui() updates tab text and menu titles without error."""
+    monkeypatch.setattr(uim, "CONFIG_FILE", tmp_path / "config.json")
+    monkeypatch.setattr(uim, "INVOICES_DB", tmp_path / "invoices.json")
+
+    window = uim.MainWindow()
+    try:
+        window.retranslate_ui()
+        assert window.tabs.tabText(0).startswith("📄")
+        assert window.tabs.tabText(1).startswith("⚙️")
+        assert window.menu_file.title() == "&Datei"
+    finally:
+        window.close()
+
+
+def test_german_ui_texts_use_real_umlauts():
+    """Verify all German translation strings use real umlauts and no digraph substitutes."""
+    import json
+    trans_file = Path("C:/_Local_DEV/repos/UniversalInvoiceMail/locales/translations.json")
+    data = json.load(trans_file.open("r", encoding="utf-8"))
+
+    # Common prohibited digraphs in German end-user text
+    forbidden_digraphs = ["Ueber", "waehlen", "Loeschen", "Schliessen", "vollstaendig"]
+
+    for key, lang_map in data.items():
+        if key.startswith("_"):
+            continue
+        de_text = lang_map.get("de", "")
+        for bad in forbidden_digraphs:
+            assert bad not in de_text, f"Key '{key}' contains digraph '{bad}' instead of real umlauts: {de_text}"
