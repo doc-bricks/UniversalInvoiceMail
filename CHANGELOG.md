@@ -23,6 +23,14 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Pfad B: Sequenzdiagramme, visuelle Benutzeroberflächen-Tour & Test-Badge-Parität (2026-11-03) [GITHUBBOT_ONE_REPO_MARKETING_AND_DESIGN]
+- **Sequenzdiagramm-Architektur (`README.md`, `README-DE.md`)**:
+  - Neues zweisprachiges Mermaid-`sequenceDiagram` in Abschnitt 3 für den vollständigen End-to-End-Lebenszyklus: E-Mail-Abruf (IMAP SSL / Gmail OAuth2), PDF-Konvertierung, OCR-Extraktion, SHA-256 Hashdeduplikation, optionales Offline-Prüfbündel mit Web Companion PWA und normierte DATEV EXTF CSV Buchungsstapel-Erzeugung.
+- **Visuelle Benutzeroberflächen-Tour & Screenshot-Galerie (`README.md`, `README-DE.md`)**:
+  - Strukturierte 2x2-Galerie in Abschnitt 1 mit hochauflösenden Store-Screenshots: Rechnungsübersicht & Betragserfassung, Postfach-Konfiguration, DATEV-Export und Offline Web Companion PWA.
+- **Verifikation & Test-Parität (`README.md`, `README-DE.md`, `llms.txt`, `tests/test_metadata.py`)**:
+  - Test-Badges und Verifikationsangaben auf 302/302 Pytest-Tests + 10/10 Node-Tests (100% grün) und Stempel `2026-11-03` synchronisiert.
+
 ### WCAG 2.1 AA / BITV 2.0 Barrierefreiheit, Tastatur-Ergonomie, Menüleiste, Statusbar & Dialog-Härtung (2026-11-02) [SOFTWARE_UX_AND_ACCESSIBILITY_REVIEW]
 - **Barrierefreie Menüleiste & Alt-Mnemonics (`UniversalInvoiceMail.py`)**:
   - `MainWindow.menuBar()` mit barrierefreiem Namen ("Hauptmenü") und 4 Hauptmenüs strukturiert: `&Datei` (Alt+D), `&Bearbeiten` (Alt+B), `&Ansicht` (Alt+A) und `&Hilfe` (Alt+H).

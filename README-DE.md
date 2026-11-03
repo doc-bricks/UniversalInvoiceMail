@@ -4,7 +4,7 @@
 
 [![doc-bricks Organisation](https://img.shields.io/badge/Organisation-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ökosystem](https://img.shields.io/badge/%C3%96kosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-282%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-302%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Datenschutz: Local-First](https://img.shields.io/badge/Datenschutz-100%25%20Local--First-brightgreen.svg)](#15-datenschutz--datensicherheit)
@@ -15,7 +15,7 @@
 [![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
-[![Geprüft](https://img.shields.io/badge/Gepr%C3%BCft-2026--10--03-informational.svg)](MARKETING-LOG.txt)
+[![Geprüft](https://img.shields.io/badge/Gepr%C3%BCft-2026--11--03-informational.svg)](MARKETING-LOG.txt)
 
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow.svg)](LICENSE)
 
@@ -66,6 +66,18 @@ Kommerzielle Cloud-Dienste verlangen dafür permanente Zugriffsrechte auf privat
 
 ![UniversalInvoiceMail Vorschau](README/screenshots/main.png)
 
+### 📸 Visueller Rundgang & Benutzeroberfläche
+
+| 1. Rechnungsübersicht & Betragserfassung | 2. Sichere Postfach-Konfiguration |
+|---|---|
+| ![Rechnungsübersicht](README/screenshots/store/01_rechnungsuebersicht.png) | ![Postfach-Konfiguration](README/screenshots/store/02_postfach_konfiguration.png) |
+| *Sortierbare Tabelle mit Status, erfassten Beträgen, Vorschau & Tastatur-Ergonomie.* | *Direkter SSL-IMAP-Zugriff (Port 993) & Google Gmail OAuth2 mit minimalen Berechtigungen.* |
+
+| 3. Vorab validierter DATEV-Export | 4. Offline Web Companion PWA |
+|---|---|
+| ![DATEV-Export Dialog](README/screenshots/store/03_datev_export.png) | ![Web Companion PWA](README/screenshots/store/04_bundle_companion.png) |
+| *Normierte cp1252-EXTF-CSV-Buchungsstapel mit Vorab-Kontenvalidierung (SKR03/SKR04).* | *Datenschutzkonforme Belegprüfung und Änderungsabgleich im lokalen Webbrowser.* |
+
 ---
 
 <a id="sec-02"></a><a id="2-key-capabilities--architecture"></a><a id="key-capabilities--architecture"></a><a id="2-kernfaehigkeiten--architektur"></a><a id="kernfaehigkeiten--architektur"></a>
@@ -86,6 +98,8 @@ Kommerzielle Cloud-Dienste verlangen dafür permanente Zugriffsrechte auf privat
 
 <a id="sec-03"></a><a id="3-visual-architecture--flowchart"></a><a id="visual-architecture--flowchart"></a><a id="3-visuelle-systemarchitektur--ablaufdiagramm"></a><a id="visuelle-systemarchitektur--ablaufdiagramm"></a>
 ## 3. Visuelle Systemarchitektur & Ablaufdiagramm
+
+### 🧩 Komponenten-Pipeline Ablaufdiagramm
 
 ```mermaid
 flowchart TD
@@ -123,6 +137,42 @@ flowchart TD
     BundleExp --> WebComp
     WebComp --> BundleImp
     BundleImp --> Config
+```
+
+### 🔄 End-to-End Verarbeitungs- & Prüfsequenz
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Anwender / Buchhaltung
+    participant App as UniversalInvoiceMail (Desktop)
+    participant Mail as Mail-Server (IMAP / Gmail API)
+    participant Engine as Verarbeitungs-Engine (PDF & OCR)
+    participant Storage as Lokale Speicherung (%USERPROFILE%)
+    participant PWA as Web Companion (Offline PWA)
+    participant DATEV as Steuerberater / DATEV EXTF
+
+    User->>App: Abruf starten (Suchprofil & Zeitraum)
+    App->>Mail: Nachrichten abfragen (IMAP SSL 993 oder Gmail API OAuth2)
+    Mail-->>App: E-Mails & Rechnungsanhänge übertragen
+    App->>Engine: Anhänge zur Standardisierung übergeben
+    Engine->>Engine: Bilder, DOCX, XLSX in Archiv-PDF konvertieren
+    opt Reine Bildscans & Faxbelege
+        Engine->>Engine: OCR-Textebene via Tesseract & pypdfium2 extrahieren
+    end
+    Engine->>Storage: Normierte PDFs ablegen & SHA-256 Hash berechnen
+    App->>Storage: Lokale Rechnungsmetadaten & Beträge zwischenspeichern
+    opt Optionale Offline-Prüfung via Web Companion
+        App->>Storage: Redigiertes Prüfbündel exportieren (JSON ohne Mailbody)
+        User->>PWA: Prüfbündel im lokalen Browser öffnen
+        User->>PWA: Beträge, Freigabestatus & Notizen bearbeiten
+        PWA-->>User: Minimales Änderungsbündel exportieren
+        User->>App: Änderungsbündel in Desktop-App importieren
+        App->>Storage: Freigabestatus & Betragsabgleich synchronisieren
+    end
+    User->>App: DATEV-Export anfordern (Berater- & Mandanten-Nr)
+    App->>App: Vorab-Validierung ausführen (Kontenlänge 4-8 Ziffern, Eindeutigkeit)
+    App->>DATEV: Normierten cp1252-EXTF-CSV-Buchungsstapel erzeugen (SKR03/SKR04)
 ```
 
 ---
@@ -168,7 +218,7 @@ UniversalInvoiceMail richtet sich an vier zentrale Anwendergruppen:
 | **7. Offline-Fähigkeit** | **100% Offline-Archiv** | NEIN (Nur Online) | JA | JA | JA |
 | **8. PWA Companion** | **JA (Lokal redigiert)** | Cloud Mobile App | NEIN | NEIN | NEIN |
 | **9. Open Source / MIT** | **JA (Freie MIT-Lizenz)**| NEIN (Proprietär) | Entfällt | Variiert | Variiert |
-| **10. Automatisierte Tests** | **282 Pytest + 10 Node**| Unbekannt / SaaS | 0 | Minimal | 0 – 5 |
+| **10. Automatisierte Tests** | **302 Pytest + 10 Node**| Unbekannt / SaaS | 0 | Minimal | 0 – 5 |
 
 
 ---
@@ -398,7 +448,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-Das Repository enthält gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-Abläufe, Bündel-Export/-Import, Barrierefreiheit, Headless-CLI-Automation, Metadaten-Parität sowie Node-Vertragstests für den Web Companion (282 Pytest + 10 Node-Tests 100% grün).
+Das Repository enthält gemockte Python-Tests für Hilfsfunktionen, IMAP-/Gmail-Workflows, DATEV-Abläufe, Bündel-Export/-Import, Barrierefreiheit, Headless-CLI-Automation, Metadaten-Parität sowie Node-Vertragstests für den Web Companion (302 Pytest + 10 Node-Tests 100% grün).
 
 
 ---
