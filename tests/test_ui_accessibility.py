@@ -891,7 +891,7 @@ def test_retranslate_ui_dynamic_language_switch(tmp_path, monkeypatch, qapp):
 def test_german_ui_texts_use_real_umlauts():
     """Verify all German translation strings use real umlauts and no digraph substitutes."""
     import json
-    trans_file = Path("C:/_Local_DEV/repos/UniversalInvoiceMail/locales/translations.json")
+    trans_file = Path(__file__).resolve().parents[1] / "locales" / "translations.json"
     data = json.load(trans_file.open("r", encoding="utf-8"))
 
     # Common prohibited digraphs in German end-user text
