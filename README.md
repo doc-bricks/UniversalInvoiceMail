@@ -4,7 +4,7 @@
 
 [![doc-bricks Organization](https://img.shields.io/badge/Organization-doc--bricks-blue.svg)](https://github.com/doc-bricks)
 [![open-bricks Ecosystem](https://img.shields.io/badge/Ecosystem-open--bricks-4A154B.svg)](https://github.com/open-bricks)
-[![Pytest](https://img.shields.io/badge/Tests-282%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
+[![Pytest](https://img.shields.io/badge/Tests-302%20passed%20%7C%20100%25%20green-brightgreen.svg)](https://github.com/doc-bricks/UniversalInvoiceMail)
 [![Web Companion](https://img.shields.io/badge/Web%20Companion-10%20passed-brightgreen.svg)](web_companion/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Privacy: Local-First](https://img.shields.io/badge/Privacy-100%25%20Local--First-brightgreen.svg)](#15-privacy--data-protection-policy)
@@ -15,7 +15,7 @@
 [![Level 1 SBOM](https://img.shields.io/badge/SBOM-Level%201-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Notice: Lukas Geiger](https://img.shields.io/badge/Notice-Lukas%20Geiger-blue.svg)](NOTICE)
 [![LLMs.txt Discovery](https://img.shields.io/badge/LLMs.txt-Discovery-blue.svg)](llms.txt)
-[![Verified](https://img.shields.io/badge/Verified-2026--10--03-informational.svg)](MARKETING-LOG.txt)
+[![Verified](https://img.shields.io/badge/Verified-2026--11--03-informational.svg)](MARKETING-LOG.txt)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -66,6 +66,18 @@ Commercial cloud aggregators require granting third parties ongoing access to pe
 
 ![UniversalInvoiceMail Preview](README/screenshots/main.png)
 
+### 📸 Visual Interface Tour
+
+| 1. Invoice Overview & Inline Editing | 2. Secure Mailbox Configuration |
+|---|---|
+| ![Invoice Overview Table](README/screenshots/store/01_rechnungsuebersicht.png) | ![Mailbox Configuration](README/screenshots/store/02_postfach_konfiguration.png) |
+| *Sortable table with review status, parsed amounts, PDF preview & keyboard navigation.* | *Direct SSL IMAP (Port 993) & Google Gmail OAuth2 configuration with least privilege.* |
+
+| 3. Pre-Validated DATEV Export | 4. Offline Web Companion PWA |
+|---|---|
+| ![DATEV Export Dialog](README/screenshots/store/03_datev_export.png) | ![Web Companion PWA](README/screenshots/store/04_bundle_companion.png) |
+| *Standardized cp1252 EXTF CSV booking batch generation with pre-save account syntax checks.* | *Privacy-first redacted invoice review and delta synchronization in any local browser.* |
+
 ---
 
 <a id="sec-02"></a><a id="2-key-capabilities--architecture"></a><a id="key-capabilities--architecture"></a><a id="2-kernfaehigkeiten--architektur"></a><a id="kernfaehigkeiten--architektur"></a>
@@ -86,6 +98,8 @@ Commercial cloud aggregators require granting third parties ongoing access to pe
 
 <a id="sec-03"></a><a id="3-visual-architecture--flowchart"></a><a id="visual-architecture--flowchart"></a><a id="3-visuelle-systemarchitektur--ablaufdiagramm"></a><a id="visuelle-systemarchitektur--ablaufdiagramm"></a>
 ## 3. Visual Architecture & Flowchart
+
+### 🧩 Component Pipeline Flowchart
 
 ```mermaid
 flowchart TD
@@ -123,6 +137,42 @@ flowchart TD
     BundleExp --> WebComp
     WebComp --> BundleImp
     BundleImp --> Config
+```
+
+### 🔄 End-to-End Processing & Review Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Finance Staff
+    participant App as UniversalInvoiceMail (Desktop)
+    participant Mail as Mail Server (IMAP / Gmail API)
+    participant Engine as Processing Pipeline (PDF & OCR)
+    participant Storage as Local Storage (%USERPROFILE%)
+    participant PWA as Web Companion (Offline PWA)
+    participant DATEV as Accounting / DATEV EXTF
+
+    User->>App: Launch fetch with profile & date range
+    App->>Mail: Query messages (IMAP SSL 993 or Gmail API OAuth2)
+    Mail-->>App: Return emails & raw invoice attachments
+    App->>Engine: Stream attachments for normalization
+    Engine->>Engine: Convert Images, DOCX, XLSX to archival PDF
+    opt Scanned image-only receipts
+        Engine->>Engine: Extract OCR text layer via Tesseract & pypdfium2
+    end
+    Engine->>Storage: Save standard PDFs & compute SHA-256 hash
+    App->>Storage: Cache local invoice metadata and amounts
+    opt Optional offline review via Web Companion
+        App->>Storage: Export redacted bundle (universalinvoicemail-invoicebundle-v1.json)
+        User->>PWA: Load redacted JSON bundle in offline browser
+        User->>PWA: Verify amounts, status & bookkeeping notes
+        PWA-->>User: Export minimal companion delta bundle
+        User->>App: Import delta bundle into desktop app
+        App->>Storage: Synchronize amounts & verification status
+    end
+    User->>App: Request DATEV export (Advisor & Client ID)
+    App->>App: Pre-validate account mappings (4-8 digits, unique keys)
+    App->>DATEV: Generate compliant cp1252 EXTF CSV booking batch (SKR03/SKR04)
 ```
 
 ---
@@ -168,7 +218,7 @@ UniversalInvoiceMail is tailored for four specific personas:
 | **7. Offline Capability** | **100% Offline Archival**| NO (Zero Offline) | YES | YES | YES |
 | **8. PWA Companion** | **YES (Local Redacted)** | Cloud Mobile App | NO | NO | NO |
 | **9. Open Source / MIT** | **YES (Permissive MIT)** | NO (Proprietary) | N/A | Varies | Varies |
-| **10. Automated Tests** | **282 Pytest + 10 Node** | Unknown / SaaS | 0 | Minimal | 0 - 5 |
+| **10. Automated Tests** | **302 Pytest + 10 Node** | Unknown / SaaS | 0 | Minimal | 0 - 5 |
 
 
 ---
@@ -398,7 +448,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, headless CLI automation, metadata parity, plus Node contract tests for the Web Companion (282 Pytest + 10 Node tests passing 100% green).
+The repository includes mocked Python tests for helper functions, IMAP/Gmail workflows, DATEV-adjacent behavior, bundle export/import, compact UI control accessibility, headless CLI automation, metadata parity, plus Node contract tests for the Web Companion (302 Pytest + 10 Node tests passing 100% green).
 
 
 ---
