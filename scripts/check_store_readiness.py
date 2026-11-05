@@ -41,6 +41,10 @@ REQUIRED_RELEASE_STAGING_FILES = [
     "store_settings.json",
     "store_listing_de.md",
     "store_listing_en.md",
+    "store_listing_es.md",
+    "store_listing_zh.md",
+    "store_listing_ja.md",
+    "store_listing_ru.md",
     "WACK_PROTOCOL.md",
     "StoreLogo.png",
 ]
@@ -128,8 +132,9 @@ def run_store_readiness_check(
                 findings.append("Fehlende Berechtigung runFullTrust in store_package.json")
 
             languages = package_data.get("languages", [])
-            if len(languages) < 2:
-                findings.append("Mindestens 2 Sprachen (de-DE, en-US) in store_package.json gefordert")
+            for req_lang in ["de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"]:
+                if req_lang not in languages:
+                    findings.append(f"Fehlende Tier-2 Sprache in store_package.json: {req_lang}")
 
             license_val = package_data.get("license")
             if license_val != "MIT":
@@ -152,10 +157,9 @@ def run_store_readiness_check(
     if store_listing_path.exists():
         content = store_listing_path.read_text(encoding="utf-8")
 
-        if "## Deutsch" not in content and "## German" not in content and "# Deutsch" not in content:
-            findings.append("STORE_LISTING.md: Deutscher Abschnitt fehlt")
-        if "## English" not in content and "# English" not in content:
-            findings.append("STORE_LISTING.md: Englischer Abschnitt fehlt")
+        for lang_header in ["## Deutsch", "## English", "## Español", "## 简体中文", "## 日本語", "## Русский"]:
+            if lang_header not in content:
+                findings.append(f"STORE_LISTING.md: Abschnitt {lang_header} fehlt")
 
         # Policy 10.1.3 Keywords Audit
         de_match = re.search(r"### Schlüsselwörter[^\n]*\n+([^\n#]+)", content)

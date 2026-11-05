@@ -16,10 +16,74 @@
   ],
   "languages": [
     "de-DE",
-    "en-US"
+    "en-US",
+    "es-ES",
+    "zh-CN",
+    "ja-JP",
+    "ru-RU"
   ],
   "category": "Productivity",
   "license": "MIT",
   "privacy_url": "https://github.com/doc-bricks/UniversalInvoiceMail/blob/master/PRIVACY_POLICY.md",
-  "support_url": "https://github.com/doc-bricks/UniversalInvoiceMail/issues"
+  "support_url": "https://github.com/doc-bricks/UniversalInvoiceMail/issues",
+  "description_de": "Lokale Rechnungszentrale: E-Mails abrufen, Belege als PDF ablegen und DATEV-Buchungsstapel exportieren.",
+  "description_en": "Local invoice hub: fetch emails, archive receipts as PDF and export DATEV-compatible booking batches.",
+  "description_es": "Centro local de facturas: obtener correos, archivar recibos en PDF y exportar asientos para DATEV.",
+  "description_zh": "本地发票中心：自动收取电子邮件，将单据归档为PDF，并导出兼容DATEV的记账凭证批次。",
+  "description_ja": "ローカル請求書ハブ：メール受信、領収書のPDF保存、DATEV互換仕訳バッチのエクスポート。",
+  "description_ru": "Локальный центр счетов: сбор почты, сохранение квитанций в PDF и экспорт проводок для DATEV.",
+  "keywords_de": [
+    "rechnungsverwaltung",
+    "mailabruf",
+    "datev export",
+    "rechnungsarchiv",
+    "pdf konverter",
+    "belegerfassung",
+    "buchhaltung"
+  ],
+  "keywords_en": [
+    "invoice manager",
+    "email fetcher",
+    "datev export",
+    "invoice archive",
+    "pdf converter",
+    "receipt capture",
+    "accounting tool"
+  ],
+  "keywords_es": [
+    "gestion facturas",
+    "descarga correo",
+    "exportacion datev",
+    "archivo facturas",
+    "conversor pdf",
+    "captura recibos",
+    "contabilidad"
+  ],
+  "keywords_zh": [
+    "发票管理",
+    "邮件抓取",
+    "datev导出",
+    "发票归档",
+    "pdf转换",
+    "单据录入",
+    "财务记账"
+  ],
+  "keywords_ja": [
+    "請求書管理",
+    "メール取得",
+    "datev出力",
+    "請求書アーカイブ",
+    "pdf変換",
+    "領収書保存",
+    "会計管理"
+  ],
+  "keywords_ru": [
+    "учет счетов",
+    "сбор почты",
+    "экспорт datev",
+    "архив счетов",
+    "конвертер pdf",
+    "захват чеков",
+    "бухгалтерия"
+  ]
 }

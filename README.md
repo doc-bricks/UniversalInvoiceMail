@@ -21,7 +21,7 @@
 
 Local-first Windows desktop tool for collecting invoices and receipts from email accounts, converting attachments to PDF, keeping a private archive, and preparing DATEV-style CSV exports.
 
-**[English](README.md)** | **[Deutsch](README-DE.md)**
+**[English](README.md)** | **[Deutsch](README-DE.md)** | **[Español](README_es.md)**
 
 > [!NOTE]
 > **AI / LLM Discovery:** Machine-readable index and architecture context are available in [llms.txt](llms.txt).

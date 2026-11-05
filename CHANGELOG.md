@@ -23,6 +23,28 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ## [Unreleased]
 
+### Windows Store & Web-Companion Tier-2 6-Sprachen-Harmonisierung (2026-11-05) [TW-UIM-10] [SOFTWARE_ENTWICKLUNG]
+- **Windows Store Packaging & Manifest-Harmonisierung (Tier-2 P-006)**:
+  - `store_package.json`: Vollständiges Sprachen-Array für alle 6 Zielsprachen (`de-DE`, `en-US`, `es-ES`, `zh-CN`, `ja-JP`, `ru-RU`), Kurzbeschreibungen (`description_<lang>`) strikt <= 100 Zeichen und exakt 7 Richtlinien-konforme Keywords (`keywords_<lang>`) je Sprache nach Microsoft Store Policy 10.1.3 (max. 30 Zeichen, keine verbotenen Markennamen).
+  - `releases/windowsstore/store_settings.json`: Synchronisiert mit allen 6 Tier-2 Zielsprachen, Beschreibungen und Schlüsselwörtern.
+  - `AppxManifest.xml` (`store_assets/` und `store_package/UniversalInvoiceMail/`): Vollständiger `<Resources>`-Block mit expliziten `<Resource Language="..." />`-Tags für alle 6 Sprachen (`de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`).
+  - `STORE_LISTING.md`: Vollständige, authentische Store-Listing-Abschnitte für ## Español, ## 简体中文, ## 日本語 und ## Русский mit Kurzbeschreibungen (<= 100 Zeichen), strukturierten Feature-Listen, Screenshot-Tabellen und jeweils exakt 7 konformen Keywords.
+  - Staging-Dateien: `releases/windowsstore/` um `store_listing_es.md`, `store_listing_zh.md`, `store_listing_ja.md` und `store_listing_ru.md` erweitert; `.gitignore` für `store_listing_*.md` freigegeben.
+  - `scripts/check_store_readiness.py`: Auf 6 Sprachen in `store_package.json`, `AppxManifest.xml`, Staging-Dateien und Keyword-Längen <= 30 Zeichen gehärtet (Preflight-Store-Audit PASS, 25/25 Kriterien erfüllt, 0 Findings).
+- **Web-Companion PWA Tier-2 6-Sprachen-Parität (`web_companion/`)**:
+  - Clientseitiges I18N-Wörterbuch (`TRANSLATIONS`) in `web_companion/app.js` mit allen 33 semantischen Schlüsseln über alle 6 Sprachen mit 100% Parität implementiert.
+  - HTML5-Sprachauswahl (`#lang-select`) in der Topbar von `web_companion/index.html` mit dynamischer Live-Umschaltung ohne Neuladen und `localStorage`-Persistenz (`uim_lang`).
+  - Styling für `.lang-select` in `web_companion/styles.css` harmonisiert.
+  - Service Worker Cache-Name in `web_companion/sw.js` auf `universalinvoicemail-companion-v2` gehalten (100% Cache-Integrität).
+  - Neue Node.js-Testsuite `web_companion/tests/pwa_i18n.test.mjs`: Testet 100% Key-Parität, Parameter-Interpolation und Sprachintegrität (alle 13/13 Node-Tests bestanden).
+- **Spanische Gesamtdokumentation (`README_es.md` & `README.es.md`)**:
+  - Vollständige spanische Gesamtdokumentation mit 1:1 Abschnittsparität zu `README.md` und `README-DE.md` (18 nummerierte Abschnitte), Mermaid-Architekturdiagramm, Governance-Invarianten (INV-LOCAL-01 bis INV-SLA-10) und trilingualer Sprachleiste (`English` · `Deutsch` · `Español`).
+- **Vertragstests & Testausbau**:
+  - Neue hermetische Testsuite `tests/test_web_companion.py` (6 Tests: Core Files, Zero-Egress, 100% Key-Parität über 6 Sprachen, Selector, Offline Cache, Node Test Suite).
+  - `tests/test_store_materials.py` und `tests/test_store_readiness.py` auf alle 6 Zielsprachen ausgebaut.
+  - `tests/test_metadata.py` auf `README_es.md` und `README.es.md` erweitert.
+  - Pytest-Gesamtsuite auf 309 Tests ausgebaut (100% grün via pytest); `manage_translations.py --check` 100% Parität; Ruff 0 Fehler; Compileall fehlerfrei; Git Diff fehlerfrei; Version 2.3.0 strikt eingefroren.
+
 ### WCAG 2.1 AA / BITV 2.0 Barrierefreiheit, Tastatur-Ergonomie, Menüleiste, Statusbar & Dialog-Härtung (2026-11-02) [SOFTWARE_UX_AND_ACCESSIBILITY_REVIEW]
 - **Barrierefreie Menüleiste & Alt-Mnemonics (`UniversalInvoiceMail.py`)**:
   - `MainWindow.menuBar()` mit barrierefreiem Namen ("Hauptmenü") und 4 Hauptmenüs strukturiert: `&Datei` (Alt+D), `&Bearbeiten` (Alt+B), `&Ansicht` (Alt+A) und `&Hilfe` (Alt+H).

@@ -1,8 +1,8 @@
 # Portierungsplan — UniversalInvoiceMail
 
-Stand: 2026-09-13
+Stand: 2026-11-05
 
-Status: Pfad A, Web/PWA-Companion lokal umgesetzt; lokaler Android-/iOS-naher Contract-Smoke ergänzt; Windows Store Release-Readiness & Packaging abgeschlossen.
+Status: Pfad A, Web/PWA-Companion lokal umgesetzt; Tier-2 6-Sprachen-Harmonisierung (DE, EN, ES, ZH, JA, RU nach Policy P-006) für Windows Store Packaging, Store Listings, PWA Companion und spanische Gesamtdokumentation (README_es.md) vollständig abgeschlossen.
 
 ## Entscheidung
 

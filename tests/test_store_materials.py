@@ -18,17 +18,18 @@ def test_store_package_json_exists_and_valid():
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["app_name"] == "UniversalInvoiceMail"
     assert "Geiger" in data["identity_name"]
-    assert "languages" in data and len(data["languages"]) >= 2
+    assert "languages" in data
+    assert set(data["languages"]) == {"de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"}
     assert "runFullTrust" in data["capabilities"]
     assert data.get("license") == "MIT"
 
 
-def test_store_listing_has_de_and_en():
+def test_store_listing_has_six_tier2_languages():
     path = PROJECT_ROOT / "STORE_LISTING.md"
     assert path.exists(), "STORE_LISTING.md fehlt"
     content = path.read_text(encoding="utf-8")
-    assert "Deutsch" in content or "## DE" in content or "German" in content
-    assert "English" in content or "## EN" in content
+    for heading in ["## Deutsch", "## English", "## Español", "## 简体中文", "## 日本語", "## Русский"]:
+        assert heading in content, f"Abschnitt {heading} fehlt in STORE_LISTING.md"
 
 
 def test_privacy_policy_mentions_local_and_keyring():

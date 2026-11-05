@@ -320,3 +320,18 @@ textarea {
     border-bottom: 1px solid var(--line);
   }
 }
+
+.lang-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-select:focus {
+  outline: 2px solid var(--brand);
+}

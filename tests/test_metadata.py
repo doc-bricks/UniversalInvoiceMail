@@ -38,6 +38,8 @@ def test_core_documentation_files():
     required_files = [
         "README.md",
         "README-DE.md",
+        "README_es.md",
+        "README.es.md",
         "llms.txt",
         "LICENSE",
         "CHANGELOG.md",

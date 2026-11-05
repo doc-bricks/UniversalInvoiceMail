@@ -21,7 +21,7 @@
 
 Local-first Windows-Desktop-Tool zum Abrufen, Konvertieren und Archivieren von Rechnungen und Belegen aus E-Mails, inklusive privatem Rechnungsarchiv und DATEV-nahem CSV-Export.
 
-**[English](README.md)** | **[Deutsch](README-DE.md)**
+**[English](README.md)** | **[Deutsch](README-DE.md)** | **[Español](README_es.md)**
 
 > [!NOTE]
 > **KI / LLM-Integration:** Maschinenlesbarer Index und Architekturkontext sind unter [llms.txt](llms.txt) verfügbar.
