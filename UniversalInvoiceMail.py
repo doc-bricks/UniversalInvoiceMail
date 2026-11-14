@@ -1822,10 +1822,48 @@ class InvoiceWorker(QThread):
 
         return " ".join(part for part in query_parts if part).strip()
 
-    def _build_imap_search_args(self, profile: InvoiceProfile) -> List[str]:
-        """Builds standard IMAP search arguments for servers without X-GM-RAW."""
-        search_args: List[str] = []
+    def _imap_filter_values(self, profile: InvoiceProfile):
+        """Absender- und Betreff-Werte (ohne Anführungszeichen) je Profil."""
+        senders = [s.strip().replace('"', '') for s in (profile.sender_filter or "").split(",") if s.strip()]
+        subjects = [s.strip().replace('"', '') for s in (profile.subject_filter or "").split(",") if s.strip()]
+        return senders, subjects
 
+    def _uid_search_profile(self, mail, profile: InvoiceProfile):
+        """UID SEARCH für ein Profil, auch mit Umlauten in Absender/Betreff.
+
+        imaplib kodiert Suchargumente als ASCII — „Rückerstattung“ oder „Müller GmbH“ ließen die ganze
+        Suche scheitern. Im UTF8=ACCEPT-Modus (nach dem Login eingeschaltet) gehen die Werte direkt;
+        sonst je Wert eine Suche mit CHARSET UTF-8 + Literal (imaplib: ein Literal pro Befehl),
+        innerhalb einer Gruppe vereinigt (OR), zwischen Absender- und Betreffgruppe geschnitten (AND).
+        """
+        args = self._build_imap_search_args(profile)
+        if all(arg.isascii() for arg in args) or getattr(mail, "utf8_enabled", False):
+            return mail.uid('search', None, *args)  # None = kein CHARSET (wie bisher)
+        senders, subjects = self._imap_filter_values(profile)
+        date_args = self._imap_date_args()
+
+        def search_one(key, value):
+            if value.isascii():
+                return mail.uid('search', *date_args, key, self._quote_imap_string(value))
+            mail.literal = value.encode("utf-8")
+            return mail.uid('search', 'CHARSET', 'UTF-8', *date_args, key)
+
+        matched = None
+        for key, values in (("FROM", senders), ("SUBJECT", subjects)):
+            if not values:
+                continue
+            union = set()
+            for value in values:
+                typ, data = search_one(key, value)
+                if typ != 'OK':
+                    return typ, data
+                union |= set((data[0] or b"").split()) if data else set()
+            matched = union if matched is None else matched & union
+        return 'OK', [b" ".join(sorted(matched or set(), key=int))]
+
+    def _imap_date_args(self) -> List[str]:
+        """Datumskriterien (SINCE/BEFORE) aus den Einstellungen."""
+        search_args: List[str] = []
         if self.settings.date_from:
             try:
                 from_date = datetime.strptime(self.settings.date_from, "%Y-%m-%d")
@@ -1844,36 +1882,18 @@ class InvoiceWorker(QThread):
         if not search_args and self.settings.date_filter_months > 0:
             since = datetime.now() - timedelta(days=self.settings.date_filter_months * 30)
             search_args.extend(["SINCE", format_imap_date(since)])
+        return search_args
 
-        if profile.sender_filter:
-            senders = [s.strip() for s in profile.sender_filter.split(",") if s.strip()]
-            if len(senders) == 1:
-                safe_sender = senders[0].replace('"', '')
-                search_args.extend(["FROM", self._quote_imap_string(safe_sender)])
-            elif len(senders) > 1:
-                # IMAP OR: OR FROM "a" FROM "b" for 2; OR FROM "a" OR FROM "b" FROM "c" for 3+
-                or_args: List[str] = []
-                for i, sender in enumerate(senders):
-                    safe = sender.replace('"', '')
-                    if i < len(senders) - 1:
-                        or_args.append("OR")
-                    or_args.extend(["FROM", self._quote_imap_string(safe)])
-                search_args.extend(or_args)
-
-        subjects = [s.strip() for s in profile.subject_filter.split(",") if s.strip()]
-        if len(subjects) == 1:
-            safe_subject = subjects[0].replace('"', '')
-            search_args.extend(["SUBJECT", self._quote_imap_string(safe_subject)])
-        elif len(subjects) > 1:
-            # IMAP OR: OR SUBJECT "a" SUBJECT "b" for 2; nested for 3+
-            or_args: List[str] = []
-            for i, subj in enumerate(subjects):
-                safe = subj.replace('"', '')
-                if i < len(subjects) - 1:
-                    or_args.append("OR")
-                or_args.extend(["SUBJECT", self._quote_imap_string(safe)])
-            search_args.extend(or_args)
-
+    def _build_imap_search_args(self, profile: InvoiceProfile) -> List[str]:
+        """Builds standard IMAP search arguments for servers without X-GM-RAW."""
+        search_args = self._imap_date_args()
+        senders, subjects = self._imap_filter_values(profile)
+        for key, values in (("FROM", senders), ("SUBJECT", subjects)):
+            # IMAP OR: OR KEY "a" KEY "b" for 2; OR KEY "a" OR KEY "b" KEY "c" for 3+
+            for i, value in enumerate(values):
+                if i < len(values) - 1:
+                    search_args.append("OR")
+                search_args.extend([key, self._quote_imap_string(value)])
         return search_args or ["ALL"]
 
     def _search_gmail(self, service, profile: InvoiceProfile):
@@ -2399,6 +2419,13 @@ class InvoiceWorker(QThread):
 
             mail = imaplib.IMAP4_SSL(account.host, account.port)
             mail.login(account.username, password)
+            # UTF8=ACCEPT (RFC 6855) vor SELECT einschalten, wo verfügbar: dann kodiert imaplib
+            # Suchbegriffe mit Umlauten als UTF-8 (ENABLE nur im authentifizierten Zustand erlaubt).
+            if "ENABLE" in getattr(mail, "capabilities", ()):
+                try:
+                    mail.enable("UTF8=ACCEPT")
+                except (imaplib.IMAP4.error, OSError):
+                    pass
 
             # Ordner zum Durchsuchen ermitteln
             folders_to_search = self._get_imap_folders(mail, account.host)
@@ -2452,19 +2479,23 @@ class InvoiceWorker(QThread):
         use_gmail_raw = bool(getattr(profile, "gmail_query", "").strip()) and self._supports_gmail_raw(mail)
 
         if use_gmail_raw:
-            search_args = (None, "X-GM-RAW", self._quote_imap_string(gmail_query))
             self.log.emit(f"   Gmail-RAW Suche: {gmail_query}")
         else:
             if getattr(profile, "gmail_query", "").strip():
                 self.log.emit("   Gmail-Query gespeichert, aber Server unterstützt kein X-GM-RAW. Fallback auf IMAP-Filter.")
-            imap_args = self._build_imap_search_args(profile)
-            search_args = (None, *imap_args)
-            self.log.emit(f"   IMAP Suche: {' '.join(imap_args)}")
+            self.log.emit(f"   IMAP Suche: {' '.join(self._build_imap_search_args(profile))}")
 
         try:
             # UIDs verwenden statt MSN: UIDs bleiben stabil auch wenn andere
             # Clients gleichzeitig Mails verschieben oder löschen (RFC 3501 §2.3.1.1).
-            _, message_ids = mail.uid('search', *search_args)
+            if use_gmail_raw:
+                if gmail_query.isascii() or getattr(mail, "utf8_enabled", False):
+                    _, message_ids = mail.uid('search', None, "X-GM-RAW", self._quote_imap_string(gmail_query))
+                else:  # Umlaute ohne UTF8=ACCEPT: als UTF-8-Literal
+                    mail.literal = gmail_query.encode("utf-8")
+                    _, message_ids = mail.uid('search', 'CHARSET', 'UTF-8', "X-GM-RAW")
+            else:
+                _, message_ids = self._uid_search_profile(mail, profile)
             ids = message_ids[0].split()
 
             # Limit
