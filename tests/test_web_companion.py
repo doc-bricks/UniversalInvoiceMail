@@ -30,8 +30,9 @@ def test_web_companion_core_files_exist():
         WEB_DIR / "manifest.webmanifest",
         WEB_DIR / "package.json",
         WEB_DIR / "README.md",
-        WEB_DIR / "favicon.png",
-        WEB_DIR / "favicon.ico",
+        # index.html, sw.js und manifest.webmanifest referenzieren das Favicon unter icons/.
+        # favicon.png/.ico im Wurzelordner von web_companion/ sind per .gitignore lokale Altlasten.
+        WEB_DIR / "icons" / "favicon.png",
         WEB_DIR / "icons" / "apple-touch-icon-180.png",
         WEB_DIR / "icons" / "Icon-192.png",
         WEB_DIR / "icons" / "Icon-512.png",
@@ -104,8 +105,10 @@ def test_web_companion_service_worker_offline_cache():
 
 def test_web_companion_node_test_suite_passes():
     """Führt die native Node.js-Testsuite des Web-Companions aus."""
+    # Kommandostring statt Liste: Mit shell=True nimmt POSIX nur das erste Listenelement
+    # als Befehl, "npm" liefe dann ohne "test". Windows braucht shell=True für npm.cmd.
     res = subprocess.run(
-        ["npm", "test"],
+        "npm test",
         cwd=WEB_DIR,
         capture_output=True,
         shell=True,
